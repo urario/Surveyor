@@ -14,6 +14,7 @@ Use this skill for branch creation, staging, commit message proposals, PR prepar
 - Create a topic branch before edits: `feature/`, `fix/`, `chore/`, `docs/`, or `test/`.
 - Keep commits focused and use Conventional Commit style.
 - Preserve `RQ-xxx` traceability in commit bodies or PR descriptions for requirement-bearing work.
+- Preserve lifecycle phase and artifact IDs in PR descriptions when durable evidence exists.
 - Run relevant tests or validation scripts before proposing a PR.
 - Update OKF when a change creates durable project knowledge.
 
@@ -23,7 +24,7 @@ Use this skill for branch creation, staging, commit message proposals, PR prepar
 2. If on `main`, create a topic branch before making changes.
 3. Review staged changes before proposing a commit message.
 4. Suggest a commit subject and body that reflect the actual diff.
-5. For PRs, include requirements, tests, implementation summary, and residual risk.
+5. For PRs, include lifecycle phase, requirements, artifact IDs, tests, implementation summary, OKF updates, and residual risk.
 
 ## Local Guardrails
 

@@ -17,12 +17,21 @@ Surveyor では、Claude Code を設計・レビュー寄り、Codex を実装�
 
 1. 要求仕様書から関連 `RQ-xxx` を特定する。
 2. `main` ではなく topic branch で作業する。
-3. 実装前に、必要なら `knowledge/decisions/` または `knowledge/process/` に判断を残す。
+3. 実装前に、必要なら `knowledge/decisions/`、`knowledge/design/`、`knowledge/process/` に判断や設計成果物を残す。
 4. Codex は失敗するテストを先に追加する。
 5. Codex はテストを通す最小実装を行う。
 6. Codex は検証コマンドと結果を報告する。
 7. Claude Code は `.claude/agents/surveyor-reviewer.md` の観点でレビューする。
-8. OKF の `log.md` と該当概念を更新する。
+8. OKF の `log.md`、該当概念、必要な `knowledge/traces/` 証跡を更新する。
+
+## 工程別トレーサビリティ
+
+工程はウォーターフォールでもアジャイルでも重視する。小さな実装スライスであっても、要件定義、アーキテクチャ設計、基本設計、詳細設計、実装、単体テスト、結合テストのどの証跡に該当するかを明示する。
+
+- 正本ルール: `knowledge/process/lifecycle-traceability.md`
+- 設計成果物: `knowledge/design/`
+- 実装・単体テスト・結合テスト証跡: `knowledge/traces/`
+- 成果物ID: `ADR-xxxx`, `DES-xxxx`, `IMP-xxxx`, `UT-xxxx`, `IT-xxxx`, `TRC-xxxx`
 
 ## OKF 参照ルール
 
@@ -38,6 +47,7 @@ Surveyor では、Claude Code を設計・レビュー寄り、Codex を実装�
 ## Definition of Done
 
 - 対象 RQ と実装・テストの対応が追える。
+- 必要な工程別成果物IDまたはPR証跡が残っている。
 - 単体テストまたは代替検証が実行済みである。
 - OKF ナレッジまたはログが必要に応じて更新され、`tools/okf/Validate-Okf.ps1` が通っている。
 - RQ-048、RQ-051、RQ-052 に反する変更がない。
@@ -49,6 +59,7 @@ Surveyor では、Claude Code を設計・レビュー寄り、Codex を実装�
 - Codex skills: `.codex/skills/`
 - OKF bundle: `knowledge/`
 - OKF policy: `knowledge/process/okf-policy.md`
+- Lifecycle traceability: `knowledge/process/lifecycle-traceability.md`
 - Git policy: `knowledge/process/git-policy.md`
 
 Claude Code の project subagents は `.claude/agents/` に置くとプロジェクトスコープで読み込まれる。

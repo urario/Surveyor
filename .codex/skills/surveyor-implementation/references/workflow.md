@@ -3,6 +3,7 @@
 ## Before Editing
 
 - Relevant RQ IDs are known.
+- Lifecycle phase and durable artifact need are known.
 - Test seam is identified.
 - Existing OKF decisions are checked.
 - Risk is classified as logic, Windows integration, output/reporting, or workflow.
@@ -20,5 +21,5 @@
 - Run targeted tests.
 - Run OKF validation if knowledge files changed.
 - State which RQ IDs were touched.
+- State lifecycle phase and artifact IDs, or explain why PR evidence is enough.
 - State which validations were not possible locally.
-

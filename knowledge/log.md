@@ -2,6 +2,8 @@
 
 ## 2026-07-01
 
+* **Creation**: Added lifecycle traceability policy for phase artifacts, stable artifact IDs, and required trace evidence blocks.
+* **Creation**: Added `knowledge/design/` and `knowledge/traces/` as durable homes for design artifacts and trace evidence.
 * **Creation**: Added Git policy for topic branches, pull requests, and no direct commits or pushes to `main`.
 * **Creation**: Added Surveyor Git workflow skills and local Git hooks for branch guardrails.
 * **Update**: Made RQ index refresh stable by preserving the existing generated timestamp and ignoring that timestamp in freshness checks.

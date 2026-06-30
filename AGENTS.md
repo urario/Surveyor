@@ -7,6 +7,7 @@ This repository builds Surveyor, a Windows GUI testability analyzer for legacy C
 - Requirements source: `docs/gui-testability-analyzer-requirements.md`
 - Requirement IDs use `RQ-xxx`; preserve these IDs in designs, tests, commits, reviews, and OKF notes.
 - Project knowledge lives in `knowledge/` as an OKF-style bundle.
+- Lifecycle traceability rules live in `knowledge/process/lifecycle-traceability.md`.
 - When uncertain about requirements, architecture, process, Git workflow, or prior decisions, read `knowledge/index.md` first and follow the linked OKF concept files.
 
 ## AI Role Split
@@ -18,12 +19,19 @@ This repository builds Surveyor, a Windows GUI testability analyzer for legacy C
 ## Implementation Workflow
 
 1. Identify the relevant RQ IDs and OKF concepts before editing code.
-2. For non-trivial work, capture the design decision or implementation slice in OKF.
+2. For non-trivial work, capture the design decision, lifecycle artifact, or implementation slice in OKF.
 3. Create a topic branch before edits; direct commits and pushes to `main` are prohibited.
 4. Use TDD: add or update failing tests before production code whenever the behavior is testable without a real Windows GUI target.
 5. Implement in small vertical slices with deterministic outputs.
 6. Run targeted tests and OKF validation before handoff.
-7. Update trace notes so requirements, design decisions, tests, and implementation files remain connected.
+7. Update trace notes so requirements, design decisions, basic/detailed design, tests, and implementation files remain connected.
+
+## Lifecycle Traceability
+
+- Preserve phase evidence across requirements, architecture design, basic design, detailed design, implementation, unit test, and integration test.
+- Use stable artifact IDs for durable artifacts: `ADR-xxxx`, `DES-xxxx`, `IMP-xxxx`, `UT-xxxx`, `IT-xxxx`, and `TRC-xxxx`.
+- Durable design artifacts belong under `knowledge/design/`; durable implementation and test evidence belongs under `knowledge/traces/`.
+- Pull requests may carry local evidence, but durable or cross-phase evidence must be repo-tracked.
 
 ## Architecture Guardrails
 
