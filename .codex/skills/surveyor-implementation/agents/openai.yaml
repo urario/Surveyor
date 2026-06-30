@@ -1,0 +1,4 @@
+interface:
+  display_name: "Surveyor Implementation"
+  short_description: "TDD workflow for Surveyor implementation"
+  default_prompt: "Use $surveyor-implementation to implement a traced Surveyor feature with tests."
