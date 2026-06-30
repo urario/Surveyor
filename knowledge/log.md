@@ -10,6 +10,7 @@
 * **Update**: Strengthened OKF validation for broken markdown links, index reachability, and generated RQ index freshness.
 * **Update**: Changed generated RQ index output to UTF-8 without BOM and added OKF validation for BOM-free Markdown frontmatter previews.
 * **Decision**: Added the common rule that uncertain requirements, architecture, process, Git workflow, and prior decisions start from `knowledge/index.md`.
+* **Creation**: Added an ISO/IEC 25010-oriented quality review policy and independent quality review Agent/Skill assets.
 
 ## 2026-06-30
 
