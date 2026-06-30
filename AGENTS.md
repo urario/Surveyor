@@ -18,10 +18,11 @@ This repository builds Surveyor, a Windows GUI testability analyzer for legacy C
 
 1. Identify the relevant RQ IDs and OKF concepts before editing code.
 2. For non-trivial work, capture the design decision or implementation slice in OKF.
-3. Use TDD: add or update failing tests before production code whenever the behavior is testable without a real Windows GUI target.
-4. Implement in small vertical slices with deterministic outputs.
-5. Run targeted tests and OKF validation before handoff.
-6. Update trace notes so requirements, design decisions, tests, and implementation files remain connected.
+3. Create a topic branch before edits; direct commits and pushes to `main` are prohibited.
+4. Use TDD: add or update failing tests before production code whenever the behavior is testable without a real Windows GUI target.
+5. Implement in small vertical slices with deterministic outputs.
+6. Run targeted tests and OKF validation before handoff.
+7. Update trace notes so requirements, design decisions, tests, and implementation files remain connected.
 
 ## Architecture Guardrails
 
@@ -38,3 +39,11 @@ This repository builds Surveyor, a Windows GUI testability analyzer for legacy C
 - Claude Code project skills: `.claude/skills/`
 - Codex project skills: `.codex/skills/`
 - Optional install helpers: `tools/codex/`
+
+## Git Workflow
+
+- Read `knowledge/process/git-policy.md` before commit or PR work.
+- Do not commit directly on `main`.
+- Do not push directly to `main`.
+- Use topic branches and pull requests for integration.
+- Install local hooks with `tools/git/Install-GitHooks.ps1` when working in this repository.

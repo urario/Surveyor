@@ -7,6 +7,7 @@ permissionMode: plan
 skills:
   - surveyor-tdd-review
   - surveyor-design-review
+  - surveyor-git-workflow
 color: purple
 ---
 
@@ -23,6 +24,6 @@ Check at least:
 - Target application state is not mutated.
 - Screenshot and extracted text handling considers confidentiality.
 - Generated machine-readable outputs can support comparison and traceability.
+- Git workflow is respected: no direct `main` commit/push assumptions, PR evidence is present when relevant.
 
 If no issues are found, say so and identify remaining residual risk or manual validation still needed.
-

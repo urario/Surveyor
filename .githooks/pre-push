@@ -1,0 +1,13 @@
+#!/bin/sh
+protected="refs/heads/main"
+
+while read local_ref local_sha remote_ref remote_sha
+do
+  if [ "$local_ref" = "$protected" ] || [ "$remote_ref" = "$protected" ]; then
+    echo "Direct pushes to main are prohibited. Open a pull request from a topic branch." >&2
+    exit 1
+  fi
+done
+
+exit 0
+

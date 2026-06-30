@@ -27,5 +27,6 @@ This bundle keeps project knowledge close to the source code so agents and human
 # Process
 
 * [AI Collaboration](process/ai-collaboration.md) - Claude/Codex collaboration model.
+* [Git Policy](process/git-policy.md) - Branch, commit, pull request, and protection rules.
 * [OKF Policy](process/okf-policy.md) - Local rules for OKF scope, frontmatter, and canonical sources.
 * [TDD and Traceability](process/tdd-and-traceability.md) - Development workflow and evidence expectations.

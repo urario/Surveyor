@@ -1,0 +1,4 @@
+interface:
+  display_name: "Surveyor Git Workflow"
+  short_description: "Git branch and PR rules for Surveyor"
+  default_prompt: "Use $surveyor-git-workflow to prepare safe Surveyor Git changes."
