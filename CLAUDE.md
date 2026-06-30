@@ -19,11 +19,13 @@ Use this repository as a traced engineering workspace for the Surveyor GUI testa
 - `surveyor-okf`: maintain OKF-style knowledge files under `knowledge/`.
 - `surveyor-design-review`: review plans and designs against the requirement specification.
 - `surveyor-tdd-review`: review test-first implementation quality and evidence.
+- `surveyor-git-workflow`: enforce branch, commit, PR, and no-direct-main rules.
 
 ## Important Files
 
 - Requirements: `docs/gui-testability-analyzer-requirements.md`
 - AI workflow: `docs/ai-development-workflow.md`
 - OKF bundle root: `knowledge/index.md`
+- Git policy: `knowledge/process/git-policy.md`
 - OKF validator: `tools/okf/Validate-Okf.ps1`
 - RQ index exporter: `tools/requirements/Export-RqIndex.ps1`

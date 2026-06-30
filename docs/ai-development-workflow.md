@@ -16,12 +16,13 @@ Surveyor では、Claude Code を設計・レビュー寄り、Codex を実装�
 ## 標準フロー
 
 1. 要求仕様書から関連 `RQ-xxx` を特定する。
-2. 実装前に、必要なら `knowledge/decisions/` または `knowledge/process/` に判断を残す。
-3. Codex は失敗するテストを先に追加する。
-4. Codex はテストを通す最小実装を行う。
-5. Codex は検証コマンドと結果を報告する。
-6. Claude Code は `.claude/agents/surveyor-reviewer.md` の観点でレビューする。
-7. OKF の `log.md` と該当概念を更新する。
+2. `main` ではなく topic branch で作業する。
+3. 実装前に、必要なら `knowledge/decisions/` または `knowledge/process/` に判断を残す。
+4. Codex は失敗するテストを先に追加する。
+5. Codex はテストを通す最小実装を行う。
+6. Codex は検証コマンドと結果を報告する。
+7. Claude Code は `.claude/agents/surveyor-reviewer.md` の観点でレビューする。
+8. OKF の `log.md` と該当概念を更新する。
 
 ## Definition of Ready
 
@@ -44,6 +45,7 @@ Surveyor では、Claude Code を設計・レビュー寄り、Codex を実装�
 - Codex skills: `.codex/skills/`
 - OKF bundle: `knowledge/`
 - OKF policy: `knowledge/process/okf-policy.md`
+- Git policy: `knowledge/process/git-policy.md`
 
 Claude Code の project subagents は `.claude/agents/` に置くとプロジェクトスコープで読み込まれる。
 
@@ -51,4 +53,14 @@ Codex skills は `.codex/skills/` を正本とする。チームでレビュー�
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\codex\Install-ProjectSkills.ps1
+```
+
+## Git 運用
+
+`main` への直コミット・直 push は禁止する。通常は `feature/`, `fix/`, `chore/`, `docs/`, `test/` の topic branch を作り、pull request で `main` に統合する。詳細は `knowledge/process/git-policy.md` を参照する。
+
+ローカル hook を有効にする場合は次を実行する。
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\git\Install-GitHooks.ps1
 ```

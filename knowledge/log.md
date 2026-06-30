@@ -1,5 +1,10 @@
 # Surveyor Knowledge Log
 
+## 2026-07-01
+
+* **Creation**: Added Git policy for topic branches, pull requests, and no direct commits or pushes to `main`.
+* **Creation**: Added Surveyor Git workflow skills and local Git hooks for branch guardrails.
+
 ## 2026-06-30
 
 * **Initialization**: Created the OKF-style knowledge bundle for Surveyor.
