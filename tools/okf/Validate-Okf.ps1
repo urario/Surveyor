@@ -37,6 +37,15 @@ function Get-ContentWithoutGeneratedTimestamp {
     return (($lines | Where-Object { $_ -notmatch "^\s*timestamp\s*:" }) -join "`n")
 }
 
+function Test-HasUtf8Bom {
+    param(
+        [string]$Path
+    )
+
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    return ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
+}
+
 $linkPattern = [regex]'\[[^\]]+\]\(([^)]+)\)'
 $reachable = New-Object 'System.Collections.Generic.HashSet[string]'
 $edges = @{}
@@ -78,6 +87,10 @@ foreach ($file in $markdownFiles) {
     }
 
     $edges[$relative] = @($localKnowledgeLinks)
+
+    if (Test-HasUtf8Bom -Path $file.FullName) {
+        $errors.Add("${relative}: UTF-8 BOM prevents YAML frontmatter preview on GitHub")
+    }
 
     if ($name -eq "log.md") {
         continue

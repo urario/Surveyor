@@ -1,4 +1,4 @@
-﻿---
+---
 type: Requirement Index
 title: Surveyor RQ Index
 description: Generated index of RQ headings from the canonical requirement specification.
