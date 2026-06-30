@@ -24,6 +24,10 @@ Surveyor では、Claude Code を設計・レビュー寄り、Codex を実装�
 7. Claude Code は `.claude/agents/surveyor-reviewer.md` の観点でレビューする。
 8. OKF の `log.md` と該当概念を更新する。
 
+## OKF 参照ルール
+
+要求・設計・開発手順・Git 運用・既存判断で迷った場合は、まず `knowledge/index.md` を読み、リンクされた OKF concept を確認してから変更・レビューを行う。
+
 ## Definition of Ready
 
 - 関連 RQ が明示されている。
@@ -35,7 +39,7 @@ Surveyor では、Claude Code を設計・レビュー寄り、Codex を実装�
 
 - 対象 RQ と実装・テストの対応が追える。
 - 単体テストまたは代替検証が実行済みである。
-- OKF ナレッジまたはログが必要に応じて更新されている。
+- OKF ナレッジまたはログが必要に応じて更新され、`tools/okf/Validate-Okf.ps1` が通っている。
 - RQ-048、RQ-051、RQ-052 に反する変更がない。
 
 ## ローカル資産

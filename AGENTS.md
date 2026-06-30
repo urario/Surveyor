@@ -7,6 +7,7 @@ This repository builds Surveyor, a Windows GUI testability analyzer for legacy C
 - Requirements source: `docs/gui-testability-analyzer-requirements.md`
 - Requirement IDs use `RQ-xxx`; preserve these IDs in designs, tests, commits, reviews, and OKF notes.
 - Project knowledge lives in `knowledge/` as an OKF-style bundle.
+- When uncertain about requirements, architecture, process, Git workflow, or prior decisions, read `knowledge/index.md` first and follow the linked OKF concept files.
 
 ## AI Role Split
 

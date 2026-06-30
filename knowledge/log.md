@@ -4,6 +4,9 @@
 
 * **Creation**: Added Git policy for topic branches, pull requests, and no direct commits or pushes to `main`.
 * **Creation**: Added Surveyor Git workflow skills and local Git hooks for branch guardrails.
+* **Update**: Made RQ index refresh stable by preserving the existing generated timestamp and ignoring that timestamp in freshness checks.
+* **Update**: Strengthened OKF validation for broken markdown links, index reachability, and generated RQ index freshness.
+* **Decision**: Added the common rule that uncertain requirements, architecture, process, Git workflow, and prior decisions start from `knowledge/index.md`.
 
 ## 2026-06-30
 

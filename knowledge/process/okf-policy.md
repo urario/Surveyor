@@ -33,4 +33,10 @@ Prefer ASCII, kebab-case filenames for durable project artifacts. This reduces f
 - Link OKF concepts to source requirements, decisions, tests, and implementation artifacts as they appear.
 - Do not duplicate long requirement sections in OKF; summarize and link to the canonical source.
 - Update `knowledge/log.md` for meaningful knowledge changes.
+- When uncertain about requirements, architecture, process, Git workflow, or prior decisions, start from `knowledge/index.md` and follow the linked concepts.
 
+# Validation Policy
+
+- `tools/okf/Validate-Okf.ps1` must pass before OKF-affecting changes are handed off.
+- Validation covers required frontmatter, broken markdown links, reachability from `knowledge/index.md`, and generated RQ index freshness.
+- `tools/requirements/Export-RqIndex.ps1` preserves the existing generated `timestamp` when refreshing the RQ index; freshness comparison ignores that timestamp line.
