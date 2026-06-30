@@ -20,13 +20,22 @@ This bundle keeps project knowledge close to the source code so agents and human
 
 * [Layering Principles](architecture/layering-principles.md) - Required layer split and design guardrails.
 
+# Design
+
+* [Design Knowledge](design/index.md) - Basic and detailed design artifact home and lifecycle rules.
+
 # Decisions
 
 * [ADR-0001 AI Collaboration and OKF](decisions/adr-0001-ai-collaboration-and-okf.md) - Initial AI role split and knowledge management decision.
+
+# Trace Evidence
+
+* [Trace Evidence](traces/index.md) - Implementation, unit test, and integration test evidence notes.
 
 # Process
 
 * [AI Collaboration](process/ai-collaboration.md) - Claude/Codex collaboration model.
 * [Git Policy](process/git-policy.md) - Branch, commit, pull request, and protection rules.
+* [Lifecycle Traceability](process/lifecycle-traceability.md) - Phase artifact, ID, and trace block rules.
 * [OKF Policy](process/okf-policy.md) - Local rules for OKF scope, frontmatter, and canonical sources.
 * [TDD and Traceability](process/tdd-and-traceability.md) - Development workflow and evidence expectations.

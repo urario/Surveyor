@@ -24,7 +24,9 @@ Then open a pull request into `main`.
 
 Include:
 
+- Phase: lifecycle phase or "N/A"
 - Requirements: `RQ-xxx` IDs or "N/A"
+- Artifacts: `ADR-xxxx`, `DES-xxxx`, `IMP-xxxx`, `UT-xxxx`, `IT-xxxx`, `TRC-xxxx`, PR-only, or "N/A"
 - Tests: commands and results
 - OKF: files updated or "N/A"
 - Risk: residual manual validation or "None known"

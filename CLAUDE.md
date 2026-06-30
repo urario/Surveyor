@@ -6,6 +6,7 @@ Use this repository as a traced engineering workspace for the Surveyor GUI testa
 
 - Act as the design and review counterpart to Codex implementation work.
 - Keep requirements, design, tests, and OKF knowledge connected by `RQ-xxx` IDs.
+- Apply lifecycle traceability across requirements, architecture design, basic design, detailed design, implementation, unit test, and integration test.
 - Prefer project subagents and skills from `.claude/` for repeatable work.
 - When uncertain about requirements, architecture, process, Git workflow, or prior decisions, read `knowledge/index.md` first and follow the linked OKF concept files.
 
@@ -27,6 +28,9 @@ Use this repository as a traced engineering workspace for the Surveyor GUI testa
 - Requirements: `docs/gui-testability-analyzer-requirements.md`
 - AI workflow: `docs/ai-development-workflow.md`
 - OKF bundle root: `knowledge/index.md`
+- Lifecycle traceability: `knowledge/process/lifecycle-traceability.md`
+- Design artifacts: `knowledge/design/`
+- Trace evidence: `knowledge/traces/`
 - Git policy: `knowledge/process/git-policy.md`
 - OKF validator: `tools/okf/Validate-Okf.ps1`
 - RQ index exporter: `tools/requirements/Export-RqIndex.ps1`

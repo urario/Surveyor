@@ -35,6 +35,15 @@ Prefer ASCII, kebab-case filenames for durable project artifacts. This reduces f
 - Update `knowledge/log.md` for meaningful knowledge changes.
 - When uncertain about requirements, architecture, process, Git workflow, or prior decisions, start from `knowledge/index.md` and follow the linked concepts.
 
+# Lifecycle Artifact Policy
+
+Use [Lifecycle Traceability](lifecycle-traceability.md) for phase artifact rules across requirements, architecture design, basic design, detailed design, implementation, unit tests, and integration tests.
+
+- Durable design artifacts belong under [Design Knowledge](../design/index.md) unless they are better modeled as architecture notes or ADRs.
+- Durable implementation and test evidence belongs under [Trace Evidence](../traces/index.md) when PR evidence is not enough.
+- Use stable artifact IDs such as `ADR-xxxx`, `DES-xxxx`, `IMP-xxxx`, `UT-xxxx`, `IT-xxxx`, and `TRC-xxxx` for durable lifecycle artifacts.
+- Include the lifecycle trace block when an OKF artifact creates downstream implementation, test, or review obligations.
+
 # Validation Policy
 
 - `tools/okf/Validate-Okf.ps1` must pass before OKF-affecting changes are handed off.

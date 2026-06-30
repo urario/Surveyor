@@ -39,7 +39,7 @@ Surveyor uses pull-request based development. Direct commits and direct pushes t
 # Pull Request Rules
 
 - Use PRs for all changes into `main`.
-- Include requirement links, test evidence, OKF updates, and residual risk in the PR description.
+- Include lifecycle phase, requirement links, artifact IDs where applicable, test evidence, OKF updates, and residual risk in the PR description.
 - Request Claude Code review for design/review-heavy changes and use Codex for implementation/test follow-through.
 - Merge only after review concerns are resolved or explicitly accepted.
 
