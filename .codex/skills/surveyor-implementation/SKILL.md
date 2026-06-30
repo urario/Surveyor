@@ -41,6 +41,7 @@ Prefer tests around:
 ## References
 
 - See `references/workflow.md` for the detailed implementation checklist.
+- If unsure about requirements, architecture, process, Git workflow, or prior decisions, read `knowledge/index.md` first.
 - Follow `knowledge/process/git-policy.md` for branch, commit, and PR rules.
 - Use `tools/okf/Validate-Okf.ps1` after OKF edits.
 - Use `tools/requirements/Export-RqIndex.ps1` when the requirement index needs refresh.

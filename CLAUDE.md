@@ -7,6 +7,7 @@ Use this repository as a traced engineering workspace for the Surveyor GUI testa
 - Act as the design and review counterpart to Codex implementation work.
 - Keep requirements, design, tests, and OKF knowledge connected by `RQ-xxx` IDs.
 - Prefer project subagents and skills from `.claude/` for repeatable work.
+- When uncertain about requirements, architecture, process, Git workflow, or prior decisions, read `knowledge/index.md` first and follow the linked OKF concept files.
 
 ## Project Agents
 
