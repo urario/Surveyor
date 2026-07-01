@@ -75,6 +75,7 @@ Project 名の推奨は `Surveyor Lifecycle Work`。Table ビューで以下の�
 | `Target` | Single select | `MVP`, `Post-MVP`, `Spike` | 作業の到達目標。 |
 
 Project フィールドは英語固定にする。これは GitHub filter と agent 指示を安定させるためである。
+補足: `Severity` は `04-review-finding.yml` のレビュー指摘 Issue Form 専用フィールドであり、標準 Project フィールドではない。レビュー指摘を Project 上で重要度別にフィルタしたくなった場合だけ、追加の Project フィールドとして `Severity` を作る。
 
 ## 推奨ビュー
 

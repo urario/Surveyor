@@ -50,6 +50,37 @@ body:
         - None
     validations:
       required: true
+  - type: dropdown
+    id: owner_role
+    attributes:
+      label: Owner Role
+      options:
+        - Human
+        - Claude Code
+        - Codex
+      default: 2
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: Target
+      options:
+        - MVP
+        - Post-MVP
+        - Spike
+    validations:
+      required: true
   - type: textarea
     id: behavior
     attributes:

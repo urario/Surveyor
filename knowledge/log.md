@@ -1,5 +1,9 @@
 # Surveyor Knowledge Log
 
+## 2026-07-02
+
+* **Update**: PR #14 のレビューコメント対応として、`Severity` が review-finding 専用 Issue Form フィールドであることを `github-issue-project-workflow.md` に明記し、`03-test-evidence.yml` に `Owner Role` / `Priority` / `Target` を追加して他の Issue Form と揃え、レビュー指摘対象ファイルの末尾改行を補正した。
+
 ## 2026-07-01
 
 * **Creation**: GitHub Issue / Project の日本語運用ルールを `knowledge/process/github-issue-project-workflow.md` として追加。Issue 本文は日本語、Project フィールドは英語固定とし、`Status`/`Phase`/`Artifact`/`RQ`/`RD`/`Guardrail`/`Owner Role`/`Priority`/`Target`、4つの標準ビュー、親 Issue と sub-issues、Human / Claude Code / Codex の使い分け、Done 条件を定義した。
