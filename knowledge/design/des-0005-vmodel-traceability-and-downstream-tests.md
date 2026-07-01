@@ -106,7 +106,7 @@ Candidate assembly names (`Surveyor.Domain`, `Surveyor.Application`, `Surveyor.A
 | `UT-0008` | Confidentiality secure-by-default + key/path sanitization; both policy branches | `RQ-052`; `RD-022` |
 | `UT-0009` | Result store atomic write, partial semantics, sanitized paths | `RQ-052`, `RQ-053`; `RD-021`, `RD-022` |
 | `UT-0010` | Fixed clock → reproducible timestamped output | `RQ-051`; `RD-020` |
-| `UT-0011` | ViewModel run state machine + presentation-port fakes (no live WinUI); **extended (`DES-0006`)**: navigation gating by run state, `SCR-03` metadata captured and threaded unchanged (`RD-016`), `SCR-05`↔`SCR-06` snapshot-correspondence selection state, confidentiality opt-out recording (`RD-022`) | `RQ-052`, `RQ-054`; `RD-016`, `RD-022`, `RD-025`, `RD-030` |
+| `UT-0011` | ViewModel run state machine + presentation-port fakes (no live WinUI); **extended (`DES-0006`)**: navigation gating by run state, `SCR-03` **metadata gate** blocking Run on `SCR-02` until `ScreenSelectionMetadata` is recorded (entered or defaults explicitly accepted, `RQ-046`/`RD-028`), `SCR-03` metadata captured and threaded unchanged (`RD-016`), `SCR-05`↔`SCR-06` snapshot-correspondence selection state, confidentiality opt-out recording (`RD-022`) | `RQ-046`, `RQ-052`, `RQ-054`; `RD-016`, `RD-022`, `RD-025`, `RD-028`, `RD-030` |
 | `UT-0012` | Use-case orchestration end to end over all fakes; cancellation/partial paths; `M03` threads user-supplied `ScreenSelectionMetadata` through unchanged and never fabricates priority (`RD-016`) | `RQ-046`, `RQ-048`, `RQ-054`; `RD-001`, `RD-016`, `RD-025`, `RD-032` |
 
 ## Planned Integration-Test Obligations (`IT-xxxx`)

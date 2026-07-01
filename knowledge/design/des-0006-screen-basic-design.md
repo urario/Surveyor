@@ -20,7 +20,7 @@ This artifact fixes the basic design of **Surveyor's own operating UI** — the 
 | Field | Content |
 | -- | -- |
 | Artifact | `DES-0006`, Screen (Operating UI) Basic Design, basic design phase |
-| Upstream | [DES-0002](des-0002-module-responsibility-basic-design.md) `M01`/`M02`; [DES-0003](des-0003-module-interface-basic-design.md) presentation ports + use cases; [DES-0004](des-0004-analysis-flow-basic-design.md) run state machine; [DES-0001](../architecture/des-0001-initial-architecture.md) UI layer + HTML-display open item; guardrails `RQ-052`, `RQ-054`, `RQ-051`; `RQ-009`, `RQ-011`–`RQ-016`, `RQ-024`, `RQ-025`, `RQ-026`, `RQ-028`, `RQ-030`, `RQ-043`, `RQ-044`, `RQ-046`, `RQ-049`; `RD-012`, `RD-013`, `RD-016`, `RD-017`, `RD-018`, `RD-022`, `RD-025`, `RD-030` |
+| Upstream | [DES-0002](des-0002-module-responsibility-basic-design.md) `M01`/`M02`; [DES-0003](des-0003-module-interface-basic-design.md) presentation ports + use cases; [DES-0004](des-0004-analysis-flow-basic-design.md) run state machine; [DES-0001](../architecture/des-0001-initial-architecture.md) UI layer + HTML-display open item; guardrails `RQ-052`, `RQ-054`, `RQ-051`; `RQ-009`, `RQ-011`–`RQ-016`, `RQ-024`, `RQ-025`, `RQ-026`, `RQ-028`, `RQ-030`, `RQ-043`, `RQ-044`, `RQ-046`, `RQ-049`; `RD-012`, `RD-013`, `RD-016`, `RD-017`, `RD-018`, `RD-022`, `RD-025`, `RD-028`, `RD-030` |
 | Downstream | Detailed-design `DES-xxxx` for XAML layout, control set, visual/interaction spec, `INavigationService`/`IDialogService` concrete intents; [ADR-0003](../decisions/adr-0003-review-surface-native-vs-html.md) ratifies the review-surface decision ([§4](#4-review-surface-decision-native-vs-html-resolves-gap-a)); `UT-0011` (extended), proposed `IT-0007` manual usability walkthrough in [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md) |
 | Evidence | Screen inventory (`SCR-01`–`SCR-08`), navigation/transition map keyed to the run state machine, per-screen item→binding tables, review-surface decision, snapshot correspondence model, confidentiality-choice and status/error surfaces, usability principles, guardrail checkpoints |
 | Verification | `tools/okf/Validate-Okf.ps1`; `git diff --check`; basic-design gate of [Quality Review Policy](../process/quality-review-policy.md) |
@@ -53,12 +53,13 @@ Modal surfaces (via `IDialogService`, not standalone screens): run-cancel confir
 
 Navigation is expressed by ViewModels through `INavigationService` intents; WinUI (`M01`) realizes them (`RQ-054`). A persistent shell navigation (basic-design intent: a left `NavigationView`-style rail; the concrete control is detailed design) hosts the post-run review screens so the user can move freely among Overview, Findings, Snapshot, and Report after a run — review is **non-linear**, acquisition is linear.
 
+**Run pre-condition (metadata gate).** `AnalyzeScreenUseCase` requires a resolved `TargetRef` **and** a recorded `ScreenSelectionMetadata` (including the selection-rationale note, `RD-028`) before it can accept a Run request. Accordingly, `SCR-03` is a **required step on the acquisition path**, not an optional detour: the user either fills the metadata or explicitly accepts the recorded defaults on `SCR-03` (see [§5 SCR-03](#scr-03-selection-metadata-input-the-previously-missing-input-screen)), and this acceptance is itself recorded as a deliberate user action (`RQ-046`, `RD-016`/`RD-028`). This closes the direct `SCR-01`→`SCR-02` gap and guarantees the analyzer never assembles an `AnalysisResult` without a recorded priority basis.
+
 ```mermaid
 stateDiagram-v2
   [*] --> SCR01
-  SCR01 --> SCR03: target resolved (optional)
-  SCR01 --> SCR02: Run
-  SCR03 --> SCR02: Run
+  SCR01 --> SCR03: target resolved
+  SCR03 --> SCR02: Run (metadata recorded — entered or defaults accepted)
   SCR02 --> SCR04: run reaches Completed / PartialResult
   SCR04 --> SCR05: open a screen's elements
   SCR04 --> SCR06: view a screen's snapshot
@@ -68,19 +69,20 @@ stateDiagram-v2
   SCR05 --> SCR07: report / export
   SCR07 --> SCR08: adjust handling before sharing
   SCR02 --> SCR01: run Failed/Cancelled -> reset
+  SCR02 --> SCR03: revise metadata before re-run
 ```
 
 **Navigation gating (keyed to the [run state machine](des-0004-analysis-flow-basic-design.md#run-state-machine)):**
 
-| Run state | Enabled destinations |
-| -- | -- |
-| `Idle` / `Selecting` | `SCR-01`, `SCR-03` (metadata may be entered before Run) |
-| `Analyzing` / `Capturing` / `Reporting` / `Exporting` | `SCR-02` only (review screens disabled; **Cancel** available) |
-| `Completed` (incl. `PartialResult`) | `SCR-04`–`SCR-08` all enabled |
-| `Failed` | error dialog → `SCR-02`/`SCR-01`; review screens disabled |
-| `Cancelled` | back to `SCR-01`; no persisted partial artifact ([DES-0004](des-0004-analysis-flow-basic-design.md#cancellation-timeout-and-partial-results)) |
+| Run state | Enabled destinations | Run enablement |
+| -- | -- | -- |
+| `Idle` / `Selecting` | `SCR-01`, `SCR-03` | Run on `SCR-02` **disabled** until both `TargetRef` is resolved *and* `ScreenSelectionMetadata` has been recorded on `SCR-03` (either entered or defaults explicitly accepted) |
+| `Analyzing` / `Capturing` / `Reporting` / `Exporting` | `SCR-02` only (review screens disabled; **Cancel** available) | Run start is idempotent; further Run requests ignored |
+| `Completed` (incl. `PartialResult`) | `SCR-04`–`SCR-08` all enabled; `SCR-03` reachable for a **new** run's metadata revision | New Run re-requires metadata acknowledgement (previous run's metadata is not silently reused) |
+| `Failed` | error dialog → `SCR-02`/`SCR-01`; review screens disabled | Re-Run requires the metadata gate again |
+| `Cancelled` | back to `SCR-01`; no persisted partial artifact ([DES-0004](des-0004-analysis-flow-basic-design.md#cancellation-timeout-and-partial-results)) | Re-Run requires the metadata gate again |
 
-Detailed design decides the concrete `INavigationService` intent members, whether the shell is a single window with a nav rail or multiple pages, and dialog types for `IDialogService`.
+Detailed design decides the concrete `INavigationService` intent members (including the metadata-gate signal exposed to `SCR-02`), whether the shell is a single window with a nav rail or multiple pages, and dialog types for `IDialogService`.
 
 ## 4. Review-Surface Decision: Native vs HTML (Resolves Gap A)
 
@@ -106,17 +108,18 @@ Logical items and their **binding source** in `AnalysisResult` (concrete columns
 
 ### SCR-03 Selection Metadata Input (the previously missing input screen)
 
-Captures the **user-supplied** `ScreenSelectionMetadata` (`RD-016`) — the analyzer records these, it does **not** compute them; inline help states this explicitly to avoid the misconception that scores derive priority.
+`SCR-03` is a **required step on the acquisition path** (see [§3 Run pre-condition](#3-navigation-and-transition-resolves-gap-d)). It captures the **user-supplied** `ScreenSelectionMetadata` (`RD-016`) and selection rationale (`RD-028`) — the analyzer records these, it does **not** compute them; inline help states this explicitly to avoid the misconception that scores derive priority. Each field carries a recorded default; a user who wants to skip data entry must **explicitly acknowledge the defaults** ("Accept defaults and continue" — a distinct, recorded action, not a silent skip), and that acknowledgement is itself threaded into the result as the recorded basis (`RQ-046`).
 
 | Item | Source/target | Notes |
 | -- | -- | -- |
-| Regression-test cost | `ScreenSelectionMetadata` | User input; optional with sensible default |
-| Change frequency / Exec frequency | `ScreenSelectionMetadata` | User input |
-| UI-pattern representativeness | `ScreenSelectionMetadata` | User input |
-| Judgment-split flag | `ScreenSelectionMetadata` | User input |
-| Selection rationale note | `ScreenSelectionMetadata` (`RD-028`) | Free text; recorded for stakeholder review |
+| Regression-test cost | `ScreenSelectionMetadata` | User input; recorded default available, but selection (entered value or default acceptance) is required |
+| Change frequency / Exec frequency | `ScreenSelectionMetadata` | User input; recorded default as above |
+| UI-pattern representativeness | `ScreenSelectionMetadata` | User input; recorded default as above |
+| Judgment-split flag | `ScreenSelectionMetadata` | User input; recorded default as above |
+| Selection rationale note | `ScreenSelectionMetadata` (`RD-028`) | Free text; recorded for stakeholder review. When left blank, the metadata acknowledgement records that "no rationale was provided" rather than dropping the field |
+| Metadata acknowledgement | `ScreenSelectionMetadata` (basis flag) | Records whether the user entered values or accepted defaults; blocks Run on `SCR-02` until set (`RQ-046`, `RD-028`) |
 
-Threaded unchanged by `M03` into the result ([DES-0002](des-0002-module-responsibility-basic-design.md) `M03`); presented on `SCR-04` and in reports.
+Threaded unchanged by `M03` into the result ([DES-0002](des-0002-module-responsibility-basic-design.md) `M03`); presented on `SCR-04` and in reports. Concrete default values and the acknowledgement UI (banner vs. confirmation dialog) are detailed design.
 
 ### SCR-04 Result Overview / Screen List
 
@@ -212,13 +215,14 @@ These bind the screens and are accountable to `RD-030` (multi-role communication
 | `RQ-052` confidentiality | `SCR-06` shows only post-`M09` images; `SCR-07`/`SCR-08` gate sharing behind the handling notice; opt-outs recorded; keys/paths never expose raw sensitive text |
 | `RQ-051` determinism | List/overlay order follows core-owned keys; UI never re-sorts by hash/arrival, never re-rounds/re-classifies scores |
 | `RQ-048` read-only | `SCR-01` re-enumeration and all review are read-only; persistent reassurance indicator; no screen offers a target-mutating action |
+| `RQ-046` recorded priority basis | `SCR-03` metadata gate blocks Run on `SCR-02` until `ScreenSelectionMetadata` and the selection-rationale acknowledgement are recorded (entered values or explicit default acceptance); no acquisition path bypasses this gate ([§3](#3-navigation-and-transition-resolves-gap-d), `RD-016`/`RD-028`) |
 
 ## 10. Downstream Design And Test Obligations
 
 - **Detailed design** must fix: XAML layout and control set per `SCR-xx`; the concrete `INavigationService`/`IDialogService` intent/dialog enums; the in-app HTML host (WebView2 vs external) under [§4](#4-review-surface-decision-native-vs-html-resolves-gap-a); overlay/zoom rendering for `SCR-06`; visual encoding of class/risk; resource strings; and the accessibility conformance target.
 - **Ratification**: the review-surface decision ([§4](#4-review-surface-decision-native-vs-html-resolves-gap-a)) is recorded as [ADR-0003](../decisions/adr-0003-review-surface-native-vs-html.md).
 - **Verification obligations** (to be absorbed into [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md)):
-  - `UT-0011` (**extended**): ViewModel coverage for navigation gating by run state ([§3](#3-navigation-and-transition-resolves-gap-d)), `SCR-03` metadata capture threaded unchanged (`RD-016`), `SCR-05`↔`SCR-06` correspondence state ([§6](#6-snapshot-correspondence-model-resolves-gap-c)), and confidentiality opt-out recording (`RD-022`) — all with presentation-port fakes, no live WinUI.
+  - `UT-0011` (**extended**): ViewModel coverage for navigation gating by run state ([§3](#3-navigation-and-transition-resolves-gap-d)), the `SCR-03` **metadata gate** blocking Run until entered-or-defaults-accepted (`RQ-046`, `RD-028`), `SCR-03` metadata capture threaded unchanged (`RD-016`), `SCR-05`↔`SCR-06` correspondence state ([§6](#6-snapshot-correspondence-model-resolves-gap-c)), and confidentiality opt-out recording (`RD-022`) — all with presentation-port fakes, no live WinUI.
   - `IT-0007` (**proposed, manual**): usability/manual UI walkthrough of the `SCR-01`→`SCR-07` flow against a fixture app, recording multi-role readability (`RD-030`), read-only reassurance (`RQ-048`), and confidentiality-notice behavior (`RD-022`).
 
 ## Related
