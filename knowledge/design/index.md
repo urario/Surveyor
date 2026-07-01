@@ -9,3 +9,10 @@ Follow [Lifecycle Traceability](../process/lifecycle-traceability.md):
 - Include the required trace block when the design creates downstream implementation or test obligations.
 - Keep transient design discussion in PRs or task notes unless it needs to survive as project knowledge.
 
+## Basic Design Artifacts
+
+- [DES-0002 Module Responsibility Basic Design](des-0002-module-responsibility-basic-design.md) - 13-module responsibility map, ownership layers, data ownership, and guardrail assignment refining `DES-0001`.
+- [DES-0003 Module Interface Basic Design](des-0003-module-interface-basic-design.md) - Review-grade contracts for every port and use case: direction, I/O, result/error model, cancellation, read-only/determinism/confidentiality constraints, fake strategy, and RQ/RD/UT/IT trace.
+- [DES-0004 Analysis Flow Basic Design](des-0004-analysis-flow-basic-design.md) - End-to-end run flow, run state machine, staged contracts, cancellation/partial-result rules, and guardrail checkpoints.
+- [DES-0005 V-Model Traceability and Downstream Test Design Obligations](des-0005-vmodel-traceability-and-downstream-tests.md) - Basic-design item to detailed-design/implementation/UT/IT map, RQ/RD to DES to UT/IT trace, planned test obligations, and Codex slice candidates.
+
