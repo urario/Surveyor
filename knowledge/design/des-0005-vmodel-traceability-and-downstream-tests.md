@@ -83,7 +83,7 @@ Candidate assembly names (`Surveyor.Domain`, `Surveyor.Application`, `Surveyor.A
 | Coordinate/image-dependence eval | `RQ-023`, `RQ-006` | `RD-011` | DES-0002 M08, DES-0004 S3 | `UT-0002` | `IT-0006` |
 | Classification + do-not-automate rationale | `RQ-013`, `RQ-034`, `RQ-040` | `RD-014`, `RD-015` | DES-0002 M08/M10, DES-0004 S3/S7 | `UT-0002`, `UT-0007` | `IT-0004` |
 | Screen/state evaluation unit | `RQ-025`, `RQ-046` | `RD-002` | DES-0002 M04, DES-0004 S6 | `UT-0001` | — |
-| Prioritization support (user-supplied basis) | `RQ-001`, `RQ-008`, `RQ-013`, `RQ-046` | `RD-016` | DES-0002 M04/M03/M10, DES-0004 S6/S7 | `UT-0007` (presentation) | `IT-0004` |
+| Prioritization support (user-supplied basis) | `RQ-001`, `RQ-008`, `RQ-013`, `RQ-046` | `RD-016` | DES-0002 M04/M03/M10, DES-0004 S6/S7 | `UT-0002` (M08 fabricates no priority), `UT-0012` (M03 threads metadata unchanged), `UT-0007` (presentation) | `IT-0004` |
 | Acquisition of Win32/MFC info | `RQ-017`, `RQ-026`, `RQ-049` | `RD-003`, `RD-004` | DES-0003 acquisition port | `UT-0004` | `IT-0002` |
 | Capture + correspondence | `RQ-011`, `RQ-016`, `RQ-027`, `RQ-028` | `RD-012`, `RD-013` | DES-0003 capture port, DES-0004 S4 | `UT-0012` (fake) | `IT-0003` |
 | Reports (human + machine) | `RQ-025`, `RQ-026`, `RQ-030`, `RQ-031` | `RD-017`, `RD-018`, `RD-019` | DES-0003 writer, DES-0004 S7 | `UT-0006`, `UT-0007` | `IT-0004` |
@@ -96,7 +96,7 @@ Candidate assembly names (`Surveyor.Domain`, `Surveyor.Application`, `Surveyor.A
 | ID | Behavior | RQ / RD |
 | -- | -- | -- |
 | `UT-0001` | Domain key stability, sanitization, `DisplayLabel`/key separation, availability semantics, and screen/state-unit identity (same window, different state → distinct `ScreenKey`) | `RQ-025`, `RQ-046`, `RQ-053`; `RD-002`, `RD-004`, `RD-020`, `RD-021` |
-| `UT-0002` | Deterministic scoring across all evaluation axes — identifiability/operability/result-determinability/controllability/screen-stability/custom-UI/coordinate-dependence (`RD-005`–`RD-011`); `Unavailable`≠low score; no double-count of one root cause; improvement-candidate generation with rationale (`RD-015`) | `RQ-005`, `RQ-017`–`RQ-023`, `RQ-029`, `RQ-034`, `RQ-051`; `RD-005`–`RD-011`, `RD-014`, `RD-015`, `RD-020` |
+| `UT-0002` | Deterministic scoring across all evaluation axes — identifiability/operability/result-determinability/controllability/screen-stability/custom-UI/coordinate-dependence (`RD-005`–`RD-011`); `Unavailable`≠low score; no double-count of one root cause; improvement-candidate generation with rationale (`RD-015`); scoring fabricates no priority basis — user-supplied metadata is never computed by `M08` (`RD-016`) | `RQ-005`, `RQ-017`–`RQ-023`, `RQ-029`, `RQ-034`, `RQ-051`; `RD-005`–`RD-011`, `RD-014`, `RD-015`, `RD-016`, `RD-020` |
 | `UT-0003` | Target discovery candidate ordering + permission/integrity/unavailable status mapping | `RQ-049`; `RD-001`, `RD-023` |
 | `UT-0004` | Acquisition fixture tree → model with unavailable/confidence markers | `RQ-017`, `RQ-026`; `RD-003`, `RD-004` |
 | `UT-0005` | Read-only adapter audit: spy fails on any state-changing UIA pattern | `RQ-048`; `RD-032` |
@@ -106,7 +106,7 @@ Candidate assembly names (`Surveyor.Domain`, `Surveyor.Application`, `Surveyor.A
 | `UT-0009` | Result store atomic write, partial semantics, sanitized paths | `RQ-052`, `RQ-053`; `RD-021`, `RD-022` |
 | `UT-0010` | Fixed clock → reproducible timestamped output | `RQ-051`; `RD-020` |
 | `UT-0011` | ViewModel run state machine + presentation-port fakes (no live WinUI) | `RQ-054`; `RD-025`, `RD-030` |
-| `UT-0012` | Use-case orchestration end to end over all fakes; cancellation/partial paths | `RQ-048`, `RQ-054`; `RD-001`, `RD-025`, `RD-032` |
+| `UT-0012` | Use-case orchestration end to end over all fakes; cancellation/partial paths; `M03` threads user-supplied `ScreenSelectionMetadata` through unchanged and never fabricates priority (`RD-016`) | `RQ-046`, `RQ-048`, `RQ-054`; `RD-001`, `RD-016`, `RD-025`, `RD-032` |
 
 ## Planned Integration-Test Obligations (`IT-xxxx`)
 
@@ -146,7 +146,7 @@ Adapter-agnostic slices can proceed before the technology-allocation ratificatio
 - `RSK-RD-003`: confidentiality default paths/retention and exact secure-by-default values undefined (`RD-022`).
 - Custom-drawn/non-HWND regions inherently limit acquisition and capture completeness; `Unavailable`-reporting carries residual uncertainty.
 - Planned `UT`/`IT` IDs are obligations; evidence must be created under `knowledge/traces/` when tests exist.
-- `RSK-DES-001` (from basic-design review, `RD-016`): the correctness property that the analyzer *records* user-supplied `ScreenSelectionMetadata` and never *fabricates* priority must be asserted by a named test in detailed design — add a behavior to `UT-0012` (M03 threads metadata unchanged) and `UT-0002` (M08 computes no priority), beyond the `UT-0007` presentation coverage.
+- `RSK-DES-001` (from basic-design review, `RD-016`): the correctness property that the analyzer *records* user-supplied `ScreenSelectionMetadata` and never *fabricates* priority is now mapped to named obligations in the trace table and UT catalogue — `UT-0012` (M03 threads metadata unchanged) and `UT-0002` (M08 computes no priority), beyond the `UT-0007` presentation coverage. Detailed design and implementation must realize these assertions when the tests are written so `RD-016` is not verified by presentation alone.
 - `RSK-DES-002` (from basic-design review, `RD-020`/`RQ-053`): with the sensitive-fallback key hash delegated to `M09` (invoked by `M03`, outside the domain), detailed design must pin *when* a fallback `ScreenKey` is finalized (domain construction vs application/policy stage) so "core-owned keys" stays coherent. Determinism is preserved (`M09` is deterministic); this is a sequencing-clarity item, not a contradiction.
 
 ## Related
