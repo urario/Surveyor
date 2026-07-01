@@ -17,7 +17,7 @@ This artifact defines how Surveyor enters the detailed-design phase. It is inten
 | -- | -- |
 | Artifact | `DES-0007`, Detailed Design Phase Execution Strategy, detailed design phase |
 | Upstream | [DES-0001](../architecture/des-0001-initial-architecture.md); [DES-0002](des-0002-module-responsibility-basic-design.md); [DES-0003](des-0003-module-interface-basic-design.md); [DES-0004](des-0004-analysis-flow-basic-design.md); [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md); [DES-0006](des-0006-screen-basic-design.md); [ADR-0003](../decisions/adr-0003-review-surface-native-vs-html.md); [Requirement Definition](../requirements/requirements-definition.md); guardrails `RQ-048`, `RQ-051`, `RQ-052`, `RQ-054`; detailed-design drivers `RD-005` to `RD-021`, `RD-024`, `RD-026`, `RD-029`, `RD-032` |
-| Downstream | Planned detailed-design package IDs `DES-0008` to `DES-0017`; later implementation trace `IMP-xxxx`; unit evidence `UT-0001` to `UT-0012`; integration evidence `IT-0001` to `IT-0007` |
+| Downstream | Planned detailed-design package IDs `DES-0008` to `DES-0018`; later implementation trace `IMP-xxxx`; unit evidence `UT-0001` to `UT-0013`; integration evidence `IT-0001` to `IT-0007` |
 | Evidence | OKF-vs-standalone decision, design-package topology, execution order, detailed-design artifact template, trace rules, unit-test intent strategy, residual-risk closure map, Mermaid UML; review-feedback integration from [DES-0007 Multi-Perspective Expert Review](des-0007-review-multiperspective.md) (§4.1) |
 | Verification | `tools/okf/Validate-Okf.ps1`; `git diff --check`; detailed-design review against [Quality Review Policy](../process/quality-review-policy.md) |
 | Residual Risk | This strategy does not itself decide score formulas, schemas, UIA/capture technologies, storage defaults, or UI layouts. Those decisions are assigned to planned downstream detailed-design packages below. The repository has no source project scaffold yet, so implementation file paths remain candidate areas until project-structure detailed design is accepted. Human-decision items raised by the multi-perspective review (spike/adapter selection, IT runner, at-rest/ACL, approver roles, phase sign-off) are carried in §8.1, not resolved here. |
@@ -112,18 +112,19 @@ The IDs below are reserved as planned packages. They become durable artifacts on
 
 | Order | Planned artifact | Main scope | Modules | Why this order | Upstream | Primary tests |
 | -- | -- | -- | -- | -- | -- | -- |
-| 1 | `DES-0008` Project Structure, Composition Root, and Test Harness Detailed Design | Solution/project layout, assembly boundaries, namespaces, test projects, fixture locations, dependency rules, **composition-root / DI detailed design** (provider selection keys, lifetimes/scoping, injection invariants), **project determinism/quality settings** (TFM, `<Nullable>`, `<InvariantGlobalization>`, `<Deterministic>`, analyzers) | `M13` | The repository has no source scaffold yet; this prevents implementation from inventing structure ad hoc, and the composition root is the one seam where abstractions meet concretes (`RQ-054`) | `DES-0001`, `DES-0002`, `DES-0003`, `RQ-054`, `RD-025` | All `UT`, especially `UT-0011`/`UT-0012` setup; composition-root invariant test |
+| 1 | `DES-0008` Project Structure and Test Harness Detailed Design | Solution/project layout, assembly boundaries, namespaces, test projects, synthetic UT fixture-tree locations, **IT fixture-app harness** (location/scaffold; **mixed** small real MFC/Win32 app for authentic legacy edges + lighter WinForms/synthetic surface; legacy-edge content specified by `DES-0014`/`DES-0015`, built incrementally), dependency rules, **project determinism/quality settings** (TFM, `<Nullable>`, `<InvariantGlobalization>`, `<Deterministic>`, analyzers) | Cross-cutting scaffold | The repository has no source scaffold yet; this prevents implementation from inventing structure ad hoc | `DES-0001`, `DES-0002`, `DES-0003`, `RQ-054`, `RD-025` | All `UT`, especially `UT-0011`/`UT-0012` setup |
 | 2 | `DES-0009` Domain Model, Stable Keys, and Availability Detailed Design | `ScreenModel`, `UiElement`, keys, labels, fallback-key finalization stage + **fallback-key minimal contract** (deterministic, non-reversible, no raw sensitive text in the domain), availability/confidence semantics, **stable-hash/ordinal determinism rule** | `M04`, `M11` (`IClock` abstraction) | Pure core design unlocks TDD without Windows GUI and closes `RSK-DES-002` | `DES-0002` M04/M09, `DES-0005`, `RQ-051`, `RQ-052`, `RQ-053` | `UT-0001`, `UT-0008` key/path cases |
 | 3 | `DES-0010` Scoring, Classification, and Improvement Candidate Detailed Design | Evaluation axes, **axis↔UIA/MSAA property-and-pattern mapping**, formulas, **versioned externalized thresholds/weights/rounding** (report records config version), non-orthogonal de-dup, strategy classification, improvement candidates | `M08` | Scoring is the product's core decision logic and must avoid coverage-only tests | `DES-0002` M08, `DES-0004` Stage 3, `RD-005` to `RD-016`, `RD-020` | `UT-0002`, `UT-0007`, `IT-0006` |
 | 4 | `DES-0011` Port DTOs, Status Model, and Use-Case Orchestration Detailed Design | Concrete DTO fields, status enums, timeout/cancellation rules, error aggregation, partial-result semantics, ROI selection handoff, **run-level diagnostics/logging model** (owner of cross-cutting diagnostics shape) | `M03`, `M11` (`IClock` threading) | This fixes the contracts that implementation and fakes share | `DES-0003`, `DES-0004`, `RQ-048`, `RQ-050`, `RQ-054` | `UT-0003`, `UT-0004`, `UT-0012` |
 | 5 | `DES-0012` Report Schema and Deterministic Serialization Detailed Design | JSON schema/version, HTML content structure, stable ordering, timestamp format, atomic write behavior, **serializer determinism contract** (explicit property order, `InvariantCulture`, fixed numeric format, UTF-8 no-BOM, newline normalization), **golden-file governance** | `M10` | Machine-readable output and comparison require deterministic design before code | `DES-0003` M10, `DES-0004` Stage 7, `RQ-030`, `RQ-031`, `RQ-051`, `RQ-053` | `UT-0006`, `UT-0007`, `UT-0010` |
-| 6 | `DES-0013` Confidentiality, Storage, and Export Detailed Design | Masking/redaction decisions, secure-by-default values, storage paths, retention, sanitized paths, export bundle, **log/diagnostics/exception-message sanitization**, **store at-rest protection/ACL** | `M09`, `M12` | Closes `RSK-RD-003` before reports, store, **or logs/diagnostics** can leak sensitive data | `DES-0002` M09/M12, `DES-0003`, `RQ-052`, `RD-022` | `UT-0008`, `UT-0009`, `IT-0004` |
+| 6 | `DES-0013` Confidentiality, Storage, and Export Detailed Design | Masking/redaction decisions, secure-by-default values, storage paths, retention, sanitized paths, export bundle, **log/diagnostics/exception-message sanitization**, **store at-rest protection** (default: DPAPI `CurrentUser` encryption + user-restricted ACL under `%LOCALAPPDATA%`; export = explicit policy-gated masked shareable bundle) | `M09`, `M12` | Closes `RSK-RD-003` before reports, store, **or logs/diagnostics** can leak sensitive data | `DES-0002` M09/M12, `DES-0003`, `RQ-052`, `RD-022` | `UT-0008`, `UT-0009`, `IT-0004` |
 | 7 | `DES-0014` Discovery, UIA/MSAA Acquisition, and Read-Only Audit Detailed Design | Discovery statuses, `TargetRef`, UIA client choice, MSAA fallback, **UIA threading/apartment (STA/MTA) + cooperative cancellation/timeout**, **legacy acquisition edge table** (MSAA proxy / owner-draw / MDI / windowless / `WM_GETTEXT`), **virtualized/lazy-tree handling**, confidence rubric, prohibited call spy, **minimal-privilege policy** | `M05`, `M06` | Adapter-bound design must be explicit before live Windows testing; closes part of `RSK-RD-001` | `DES-0003` M05/M06, `DES-0004` Stages 1/2, `RQ-048`, `RQ-049` | `UT-0003`, `UT-0004`, `UT-0005`, `IT-0001`, `IT-0002`, `IT-0005` |
 | 8 | `DES-0015` Capture and Snapshot Correspondence Detailed Design | Capture API, **analyzer Per-Monitor-V2 DPI awareness + bounds normalized to target DPI context**, multi-monitor/occlusion behavior, image format, overlay coordinate mapping, uncapturable markers, **capture failure-mode table** (black frame / layered / DWM → `Unavailable(reason)`) | `M07` | Snapshot trust is user-facing and integration-heavy, so design must separate pure mapping from live capture | `DES-0003` M07, `DES-0006` SCR-05/SCR-06, `RQ-011`, `RQ-016`, `RQ-027`, `RQ-028` | `UT-0011`, `UT-0012`, `IT-0003` |
 | 9 | `DES-0016` Operating UI Detailed Design | XAML/page structure, ViewModel state, navigation/dialog intent enums, metadata gate, accessibility target, HTML preview host | `M01`, `M02` | Follows result model/report decisions so UI binds to stable contracts | `DES-0006`, `ADR-0003`, `RQ-030`, `RQ-052`, `RQ-054` | `UT-0011`, `IT-0007` |
 | 10 | `DES-0017` Performance and Expert Calibration Detailed Design | Measurement environment, caps/timeouts, large-tree fixture, expert review sample size, agreement target, discrepancy records, optional real-automation cross-check of "immediately automatable" screens | Cross-cutting (`M08`/`M03` measurement) | Turns `RD-024` and `RD-029` from risk into measurable acceptance work | `DES-0005`, `RQ-034`, `RQ-047`, `RQ-050`, `RD-024`, `RD-029` | `UT-0002` bounded cases, `IT-0006`, expert-review trace |
+| 11 | `DES-0018` Composition Root and DI Detailed Design | Provider selection keys, lifetime/scoping, injection invariants (read-only-only adapters, single `IClock`, single `IConfidentialityPolicy`), wiring diagnostics | `M13` | The composition root is the one seam where abstractions meet concretes (`RQ-054`); its injection-invariant rules can be drafted early, but concrete provider wiring can only be finalized once adapter technology is chosen, so it comes after the adapter packages | `DES-0002` M13, `DES-0014`, `DES-0015`, `ADR-0002`, `RQ-054`, `RQ-051`, `RQ-052` | `UT-0013` composition-root invariants; end-to-end wiring smoke |
 
-Module coverage check (`R-ARC-01`): the ten packages together cover `M01`–`M13` with no module left without a detailed-design owner. `M11` `IClock` is designed as an abstraction in `DES-0009` and threaded/wired in `DES-0011`/`DES-0008`; `M13` composition root is owned by `DES-0008`. Whether `M13` should instead become a standalone `DES-0018` is an **open decision (human review)** — see §4.1.
+Module coverage check (`R-ARC-01`): the eleven packages together cover `M01`–`M13` with no module left without a detailed-design owner. `M11` `IClock` is designed as an abstraction in `DES-0009` and threaded/wired in `DES-0011`; `M13` composition root is owned by the standalone **`DES-0018`** (decided 2026-07-01 — see §8.1). `DES-0018`'s injection-invariant rules and `UT-0013` intent may be drafted early, but concrete provider wiring is finalized after the adapter spike.
 
 ### 4.1 Review-driven scope additions (traceability to DES-0007 review)
 
@@ -131,7 +132,7 @@ The bold scope items in the table above were folded in from the [DES-0007 Multi-
 
 | Package | Added obligation | Finding | Guardrail touched |
 | -- | -- | -- | -- |
-| `DES-0008` | Composition-root / DI detailed design (provider keys, lifetimes, injection invariants: read-only-only adapters, single `IClock`, single `IConfidentialityPolicy`) | `R-ARC-01` | `RQ-054`, `RQ-051`, `RQ-052` |
+| `DES-0018` | Composition-root / DI detailed design (provider keys, lifetimes, injection invariants: read-only-only adapters, single `IClock`, single `IConfidentialityPolicy`) — standalone package (decided 2026-07-01) | `R-ARC-01` | `RQ-054`, `RQ-051`, `RQ-052` |
 | `DES-0008` | Project determinism/quality settings (TFM, `<Nullable>`, `<InvariantGlobalization>`, `<Deterministic>`, analyzers) | `R-NET-02` | `RQ-051` |
 | `DES-0009` | Stable-hash/ordinal rule: key material, ordering, and tie-breaks use a stable hash (e.g. SHA-256) and `StringComparison.Ordinal`; never `Object.GetHashCode`/`Dictionary` iteration order | `R-NET-01` (Critical) | `RQ-051` |
 | `DES-0009` | Fallback-key minimal contract front-loaded (deterministic, non-reversible, domain never handles raw sensitive text), extended by `DES-0013` | `R-IMP-01` | `RQ-051`, `RQ-052` |
@@ -141,7 +142,7 @@ The bold scope items in the table above were folded in from the [DES-0007 Multi-
 | `DES-0012` | Serializer determinism contract (explicit property order, `InvariantCulture`, fixed numeric/date format, UTF-8 no-BOM, newline normalization) | `R-NET-03` | `RQ-051` |
 | `DES-0012` | Golden-file governance (regeneration command, semantic-diff review, approval) | `R-QA-02` | `RQ-051` |
 | `DES-0013` | Log/diagnostics/exception-message sanitization (title/`Name`/paths masked) — a `RQ-052` egress the report/store gate did not cover | `R-SEC-01` | `RQ-052` |
-| `DES-0013` | Store at-rest protection/ACL | `R-SEC-02` | `RQ-052` |
+| `DES-0013` | Store at-rest protection: DPAPI `CurrentUser` encryption by default + user-restricted ACL under `%LOCALAPPDATA%`; export = explicit policy-gated masked bundle (decided 2026-07-01) | `R-SEC-02` | `RQ-052` |
 | `DES-0014` | UIA threading/apartment model + cooperative cancellation/timeout | `R-WIN-02` | `RQ-050` |
 | `DES-0014` | Legacy acquisition edge table (MSAA proxy / owner-draw / MDI / windowless / `WM_GETTEXT`) with per-case confidence/`Unavailable` policy | `R-WIN-03` | — |
 | `DES-0014` | Virtualized/lazy-tree detection → `PartialResult`/`Unavailable(not-realized)`, distinct from genuine absence | `R-GTA-02` | — |
@@ -167,18 +168,24 @@ flowchart LR
   D13 --> D12
   SPIKE{{RSK-RD-001 spike}} --> D14[DES-0014 acquisition]
   SPIKE --> D15[DES-0015 capture]
+  SPIKE -.informs.-> D11
   D11 --> D14
   D12 --> D16[DES-0016 UI]
   D14 --> D17[DES-0017 perf/calibration]
+  D14 --> D18[DES-0018 composition root]
+  D15 --> D18
+  D16 --> D18
 ```
 
 - **Parallelizable once `DES-0008`/`DES-0009` land**: `DES-0010` (pure scoring) and `DES-0013` (confidentiality policy) can proceed independently; both feed `DES-0012`.
-- **Critical path**: `DES-0008 → DES-0009 → DES-0010/DES-0013 → DES-0012 → DES-0016`, with the **`RSK-RD-001` spike gating `DES-0014`/`DES-0015`** as a parallel branch that must not silently block the pure-core path.
+- **Critical path**: `DES-0008 → DES-0009 → DES-0010/DES-0013 → DES-0012 → DES-0016`, with the **`RSK-RD-001` spike gating `DES-0014`/`DES-0015`** as a parallel branch. The spike runs early, in parallel with the core packages, and its threading/async findings inform `DES-0011` (see §4.2 spike *Owner*/*Timing*); it must not silently block the pure-core path.
 
 **Spike as an explicit, ownable work item** (`R-ARC-02`, `R-PM-01`, `R-AI-01`). The `RSK-RD-001` spike is defined here as a framed investigation task, not an implicit "wait for a human":
 
 - *Comparison axes* (already listed in §8): read-only feasibility, determinism, fixtureability, permissions/integrity, packaging, performance.
 - *Method*: minimal PoC per candidate (UIA client: raw COM vs FlaUI; capture: PrintWindow vs Windows.Graphics.Capture) with a recorded, reproducible measurement procedure per axis.
+- *Owner (decided 2026-07-01, `R-ARC-02`/`R-PM-01`)*: **hybrid** — AI (Claude Code/Codex) scaffolds the candidate PoCs and the per-axis measurement harness; the human owner runs them against real legacy targets and records live behavior (read-only reality, threading/apartment, high-DPI, legacy common controls, permissions); AI synthesizes the results into the draft `ADR-0002`.
+- *Timing (decided 2026-07-01, `R-PM-01`)*: runs **in parallel with the core packages (`DES-0009`–`DES-0012`), early**, so live threading/async constraints (`R-WIN-02`) can inform the acquisition-port contracts in `DES-0011` before they are fixed, rather than forcing later rework.
 - *Exit criteria*: each axis has a pass/fail result with evidence; a candidate is recommended; the reproduction steps are captured as acceptance evidence.
 - *Output*: a **draft `ADR-0002`** (adapter technology decision). This is a valid Claude Code / Codex investigation task up to the draft; **final technology selection and `ADR-0002` promotion are a human decision** (see §5, approver roles).
 - *Gate*: adapter-bound packages (`DES-0014`/`DES-0015`) and their implementation slices do not start until the spike is complete and `ADR-0002` is raised.
@@ -239,7 +246,7 @@ Step 8 requires review before implementation for packages that decide algorithms
 | Adapter technology (`DES-0014`/`DES-0015`, `ADR-0002`) | Architect (final selection: human) | After spike, before adapter implementation |
 | UI interaction (`DES-0016`) | Design/review counterpart | Before UI implementation |
 
-Roles may map to the same people on a small team; the point is that the responsible perspective, not availability, decides. Concrete owners are a **human-review item** (see §8 carried risks).
+**Approval model (decided 2026-07-01, `R-PM-02`).** AI reviewer agents pre-clear each gate by producing review evidence — `surveyor-design-review` for design/altitude, `surveyor-quality-auditor`/`surveyor-quality-review` for quality-characteristic and guardrail checks, `surveyor-reviewer`/`surveyor-tdd-review` for implementation/TDD — and the **human owner gives the final approval on every gate** based on that evidence. On this small team the four approver roles above all resolve to the single human owner; the role names denote which perspective's evidence must be present, not separate people. No gate closes on AI approval alone.
 
 ### 5.3 Design revision and supersede convention
 
@@ -310,20 +317,27 @@ These review findings are **not decided in this strategy**; they are surfaced he
 
 | Carried risk | Finding | Decision needed | Blocks |
 | -- | -- | -- | -- |
-| Adapter technology selection and `ADR-0002` promotion | `R-ARC-02`, `R-PM-01`, `R-AI-01` | Who owns the spike; who approves the final UIA/capture choice | `DES-0014`/`DES-0015` implementation |
-| IT execution surface | `R-OPS-01` | Self-hosted interactive Windows runner vs manual gate; `uiAccess` signing/install | `IT-0001`–`IT-0007` actually running |
-| Fixture app (legacy MFC/Win32) ownership | `R-OPS-03` | Who builds the fixture app and when (assign to `DES-0008` or `DES-0014`/`DES-0015` deliverables) | `IT` and legacy edge coverage |
-| Store at-rest encryption/ACL and minimal privilege | `R-SEC-02` | Whether at-rest encryption is required; default integrity level | `DES-0013`/`DES-0014` acceptance |
-| Gate approver roles and phase-completion sign-off | `R-PM-02`, `R-PM-03` | Concrete people per role; who closes the phase | Gate throughput |
-| `M13` composition root as standalone `DES-0018` vs folded into `DES-0008` | `R-ARC-01` | Package granularity choice | `DES-0008` structure |
+| Adapter technology **selection** (final UIA/capture pick) | `R-ARC-02`, `R-PM-01` | Data-driven pick awaiting spike results; human approves and promotes `ADR-0002` (spike owner/timing/process now decided — see resolved log) | `DES-0014`/`DES-0015` implementation |
+
+> The single remaining carried item above is **not a governance decision** — it is a data-driven technology pick that awaits the spike results and is then human-approved via `ADR-0002`. All governance/process human-decision items from the review have been resolved (see below).
+
+**Resolved decisions** (as human-decision items are cleared one by one):
+
+- **2026-07-01** (`R-ARC-01`): `M13` composition root → **standalone `DES-0018`** (order 11, finalized after the adapter spike), not folded into `DES-0008`. Reflected in §4 package 11, §4.1, §4.2 DAG, and `UT-0013`.
+- **2026-07-01** (`R-PM-02`): gate approval model → **AI reviewer agents pre-clear each gate; the human owner gives final approval on every gate**; the four §5.2 roles resolve to the single human owner. Reflected in §5.2.
+- **2026-07-01** (`R-PM-03`): phase completion → **human owner gives an explicit close sign-off** when the §8.2 criteria are met (no auto-close). Reflected in §8.2.
+- **2026-07-01** (`R-ARC-02`/`R-PM-01`/`R-AI-01`): `RSK-RD-001` spike → **hybrid owner** (AI scaffolds PoCs/measurement harness, human runs on real legacy targets, AI drafts `ADR-0002`) run **early, in parallel with core packages** and feeding `DES-0011`. Only the data-driven final technology pick remains carried above. Reflected in §4.2 (*Owner*/*Timing*), §4.2 DAG, and the critical-path note.
+- **2026-07-01** (`R-OPS-01`): IT execution surface → **documented manual gate on local Windows 11 now**; self-hosted-runner automation of the automatable subset revisited once the fixture app and adapters exist. Reflected in §8.2 integration lane.
+- **2026-07-01** (`R-OPS-03`): IT fixture-app → **`DES-0008` owns the harness/scaffold, `DES-0014`/`DES-0015` specify the legacy-edge/capture content, built incrementally**; **mixed** technology (small real MFC/Win32 for authentic legacy edges + lighter WinForms/synthetic surface). UT keeps synthetic deterministic fixture trees. Reflected in §4 package 1 scope.
+- **2026-07-01** (`R-SEC-02`): store at-rest → **DPAPI `CurrentUser` encryption by default + user-restricted ACL under `%LOCALAPPDATA%`**; export produces an explicit policy-gated masked shareable bundle. Minimal privilege → **same-integrity by default; `uiAccess`/elevation opt-in only when a target requires it (signed build)**. Reflected in §4 packages 6 (`DES-0013`) and 7 (`DES-0014`), §4.1.
 
 ### 8.2 CI and execution topology
 
 Determinism and integration testing need an execution model, not just design (`R-OPS-01`, `R-OPS-02`):
 
 - **Unit lane (unattended CI)**: all `UT` are adapter-independent (fakes/fixtures) and must be deterministically green on a headless agent. Pin `DOTNET_SYSTEM_GLOBALIZATION_INVARIANT` / invariant culture, `TZ=UTC`, and newline normalization so byte-stable output holds across machines.
-- **Integration lane (interactive/self-hosted or manual gate)**: `IT-0001`–`IT-0007` need a live Windows desktop, fixture app, specific DPI/monitor/integrity, and (for `uiAccess`) a signed/installed build; they run on an interactive self-hosted runner or as a documented manual gate. Each `IT` states its environment assumptions in the package's Integration-assumptions section.
-- **Phase completion (`R-PM-03`)**: the detailed-design phase closes when every planned package is accepted (or accepted-with-risk with the risk carried), the four guardrails each have at least one failing-first test in the UT/IT intent (§9), and no `M01`–`M13` module is left without a detailed-design owner.
+- **Integration lane (documented manual gate now; decided 2026-07-01, `R-OPS-01`)**: `IT-0001`–`IT-0007` need a live Windows desktop, fixture app, specific DPI/monitor/integrity, and (for `uiAccess`, per §8.1) a signed/installed build. For now they run as a **documented manual gate** on the developer's local Windows 11 machine (no CI infra while the source scaffold and fixture app do not exist). Self-hosted interactive-runner automation for the automatable subset (e.g. read-only invariants `IT-0001`, capture `IT-0003`) is **revisited once the fixture app and adapters exist**. Each `IT` states its environment assumptions and its current run mode (manual vs automated) in the package's Integration-assumptions section.
+- **Phase completion (`R-PM-03`)**: the detailed-design phase closes when every planned package is accepted (or accepted-with-risk with the risk carried), the four guardrails each have at least one failing-first test in the UT/IT intent (§9), and no `M01`–`M13` module is left without a detailed-design owner. The **human owner gives the explicit close sign-off** once these criteria are met (decided 2026-07-01, `R-PM-03`); the phase does not auto-close.
 
 ## 9. Detailed-Design Review Checklist
 

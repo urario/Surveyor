@@ -53,8 +53,8 @@ Legend for 対応状況: ☐ 未対応 / ◑ 対応中 / ☑ 対応済 / ✕ 却
 
 | ID | 観点 | 重大度 | 優先 | 対応先 | 対応状況 |
 | -- | -- | -- | -- | -- | -- |
-| R-ARC-01 | ソフトウェアアーキテクト | High | P1 | 人間レビュー / Cowork | ◑ |
-| R-ARC-02 | ソフトウェアアーキテクト | High | P1 | 人間レビュー | ◑ |
+| R-ARC-01 | ソフトウェアアーキテクト | High | P1 | 人間レビュー / Cowork | ☑ |
+| R-ARC-02 | ソフトウェアアーキテクト | High | P1 | 人間レビュー | ☑ |
 | R-ARC-03 | ソフトウェアアーキテクト | Medium | P2 | Cowork | ☑ |
 | R-ARC-04 | ソフトウェアアーキテクト | Low | P3 | Cowork | ☑ |
 | R-WIN-01 | レガシーWindows/MFC/Win32/C++ | High | P1 | 人間レビュー / Cowork | ☑ |
@@ -70,18 +70,18 @@ Legend for 対応状況: ☐ 未対応 / ◑ 対応中 / ☑ 対応済 / ✕ 却
 | R-QA-01 | 品質保証・テスト設計 | Medium | P2 | Cowork | ☑ |
 | R-QA-02 | 品質保証・テスト設計 | Medium | P2 | Cowork | ☑ |
 | R-QA-03 | 品質保証・テスト設計 | Low | P3 | Cowork | ☑ |
-| R-OPS-01 | DevOps/CI | High | P1 | 人間レビュー / Cowork | ◑ |
+| R-OPS-01 | DevOps/CI | High | P1 | 人間レビュー / Cowork | ☑ |
 | R-OPS-02 | DevOps/CI | Medium | P2 | Cowork | ☑ |
-| R-OPS-03 | DevOps/CI | Medium | P2 | 人間レビュー | ◑ |
+| R-OPS-03 | DevOps/CI | Medium | P2 | 人間レビュー | ☑ |
 | R-MNT-01 | 保守開発リーダー | High | P2 | Cowork | ☑ |
 | R-MNT-02 | 保守開発リーダー | Medium | P3 | Cowork | ☑ |
 | R-IMP-01 | 実装担当者 | High | P1 | Cowork | ☑ |
 | R-IMP-02 | 実装担当者 | Medium | P2 | Cowork | ☑ |
-| R-PM-01 | プロジェクトマネージャ | High | P1 | 人間レビュー | ◑ |
-| R-PM-02 | プロジェクトマネージャ | Medium | P2 | 人間レビュー | ◑ |
+| R-PM-01 | プロジェクトマネージャ | High | P1 | 人間レビュー | ☑ |
+| R-PM-02 | プロジェクトマネージャ | Medium | P2 | 人間レビュー | ☑ |
 | R-PM-03 | プロジェクトマネージャ | Medium | P3 | 人間レビュー | ☑ |
 | R-SEC-01 | セキュリティ・運用 | High | P1 | Cowork | ☑ |
-| R-SEC-02 | セキュリティ・運用 | Medium | P2 | 人間レビュー | ◑ |
+| R-SEC-02 | セキュリティ・運用 | Medium | P2 | 人間レビュー | ☑ |
 | R-AI-01 | Claude Code/Codex活用 | Medium | P2 | Cowork | ☑ |
 | R-AI-02 | Claude Code/Codex活用 | Medium | P2 | Cowork | ☑ |
 | R-AI-03 | Claude Code/Codex活用 | Low | P3 | Cowork | ☑ |
@@ -743,8 +743,8 @@ The reviewed strategy [DES-0007](des-0007-detailed-design-execution-strategy.md)
 
 | ID | 状況 | DES-0007 反映箇所 |
 | -- | -- | -- |
-| R-ARC-01 | ◑ | §4 Modules 列 + module-coverage note; DES-0008 scope (composition root/DI); standalone `DES-0018` choice carried §8.1 |
-| R-ARC-02 | ◑ | §4.2 spike framed as ownable task → draft `ADR-0002`; owner/approver carried §5.2/§8.1 |
+| R-ARC-01 | ☑ | Human decision 2026-07-01 → standalone `DES-0018` (§4 package 11); Modules 列 + module-coverage note; §4.1/§4.2 DAG; `UT-0013` |
+| R-ARC-02 | ☑ | §4.2 spike process fully defined (axes/method/exit/output/gate) + hybrid owner + early timing (decided 2026-07-01); only data-driven final pick carried §8.1 |
 | R-ARC-03 | ☑ | §4 DES-0011 diagnostics/logging model; §6 template "Diagnostics and logging" row |
 | R-ARC-04 | ☑ | §4.2 dependency DAG + parallelizable sets |
 | R-WIN-01 | ☑ | §4 DES-0015 scope (PMv2 DPI awareness, bounds normalized to target DPI) |
@@ -760,18 +760,18 @@ The reviewed strategy [DES-0007](des-0007-detailed-design-execution-strategy.md)
 | R-QA-01 | ☑ | §6 template + §7 counter-example fixture rule |
 | R-QA-02 | ☑ | §4 DES-0012 + §7 golden-file governance |
 | R-QA-03 | ☑ | §9 guardrail failing-first coverage matrix |
-| R-OPS-01 | ◑ | §8.2 CI/execution topology; self-hosted runner procurement carried §8.1 |
+| R-OPS-01 | ☑ | Human decision 2026-07-01 → documented manual gate now, self-hosted automation revisited after fixture app/adapters (§8.2) |
 | R-OPS-02 | ☑ | §8.2 invariant culture / TZ=UTC / newline normalization |
-| R-OPS-03 | ◑ | §8.1 fixture-app ownership carried (assign to DES-0008 or DES-0014/0015) |
+| R-OPS-03 | ☑ | Human decision 2026-07-01 → DES-0008 owns harness, DES-0014/0015 specify legacy content, incremental, mixed real-MFC + lighter surface (§4 package 1) |
 | R-MNT-01 | ☑ | §4 DES-0010 versioned externalized thresholds + property-style tests |
 | R-MNT-02 | ☑ | §5.3 design revision/supersede convention |
 | R-IMP-01 | ☑ | §4 DES-0009 fallback-key minimal contract front-loaded; §5.3; §8 RSK-DES-002 updated |
 | R-IMP-02 | ☑ | §5.1 per-slice Definition of Done |
-| R-PM-01 | ◑ | §4.2 spike work item + critical path; owner carried §8.1 |
-| R-PM-02 | ◑ | §5.2 approver roles + response target; concrete owners carried §8.1 |
-| R-PM-03 | ☑ | §8.2 phase-completion criteria |
+| R-PM-01 | ☑ | §4.2 spike as scheduled/owned work item (hybrid owner, early parallel timing) + critical path; decided 2026-07-01 |
+| R-PM-02 | ☑ | Human decision 2026-07-01 → AI pre-clears + human final approval on every gate (§5.2); §8.1 resolved log |
+| R-PM-03 | ☑ | §8.2 phase-completion criteria + human close sign-off (decided 2026-07-01) |
 | R-SEC-01 | ☑ | §4 DES-0013 log/diagnostics/exception sanitization; §9 confidentiality check extended |
-| R-SEC-02 | ◑ | §4 DES-0013 at-rest/ACL + DES-0014 minimal privilege scope; encryption-required decision carried §8.1 |
+| R-SEC-02 | ☑ | Human decision 2026-07-01 → DPAPI CurrentUser encryption by default + ACL (DES-0013); same-integrity default, uiAccess opt-in signed (DES-0014); §8.1 resolved log |
 | R-AI-01 | ☑ | §4.2 spike as agent investigation task |
 | R-AI-02 | ☑ | §7 + §9 second-pass smell check for generated tests |
 | R-AI-03 | ☑ | §6 template minimal context bundle |
