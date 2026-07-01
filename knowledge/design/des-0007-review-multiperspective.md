@@ -53,38 +53,38 @@ Legend for 対応状況: ☐ 未対応 / ◑ 対応中 / ☑ 対応済 / ✕ 却
 
 | ID | 観点 | 重大度 | 優先 | 対応先 | 対応状況 |
 | -- | -- | -- | -- | -- | -- |
-| R-ARC-01 | ソフトウェアアーキテクト | High | P1 | 人間レビュー / Cowork | ☐ |
-| R-ARC-02 | ソフトウェアアーキテクト | High | P1 | 人間レビュー | ☐ |
-| R-ARC-03 | ソフトウェアアーキテクト | Medium | P2 | Cowork | ☐ |
-| R-ARC-04 | ソフトウェアアーキテクト | Low | P3 | Cowork | ☐ |
-| R-WIN-01 | レガシーWindows/MFC/Win32/C++ | High | P1 | 人間レビュー / Cowork | ☐ |
-| R-WIN-02 | レガシーWindows/MFC/Win32/C++ | High | P2 | 人間レビュー | ☐ |
-| R-WIN-03 | レガシーWindows/MFC/Win32/C++ | High | P1 | Cowork | ☐ |
-| R-WIN-04 | レガシーWindows/MFC/Win32/C++ | Medium | P2 | Cowork | ☐ |
-| R-NET-01 | C#/.NET設計者 | Critical | P1 | Cowork / 人間レビュー | ☐ |
-| R-NET-02 | C#/.NET設計者 | High | P1 | Cowork | ☐ |
-| R-NET-03 | C#/.NET設計者 | Medium | P2 | Cowork | ☐ |
-| R-GTA-01 | GUIテスト自動化 | High | P1 | Cowork / 人間レビュー | ☐ |
-| R-GTA-02 | GUIテスト自動化 | Medium | P2 | Cowork | ☐ |
-| R-GTA-03 | GUIテスト自動化 | Medium | P3 | 人間レビュー | ☐ |
-| R-QA-01 | 品質保証・テスト設計 | Medium | P2 | Cowork | ☐ |
-| R-QA-02 | 品質保証・テスト設計 | Medium | P2 | Cowork | ☐ |
-| R-QA-03 | 品質保証・テスト設計 | Low | P3 | Cowork | ☐ |
-| R-OPS-01 | DevOps/CI | High | P1 | 人間レビュー / Cowork | ☐ |
-| R-OPS-02 | DevOps/CI | Medium | P2 | Cowork | ☐ |
-| R-OPS-03 | DevOps/CI | Medium | P2 | 人間レビュー | ☐ |
-| R-MNT-01 | 保守開発リーダー | High | P2 | Cowork | ☐ |
-| R-MNT-02 | 保守開発リーダー | Medium | P3 | Cowork | ☐ |
-| R-IMP-01 | 実装担当者 | High | P1 | Cowork | ☐ |
-| R-IMP-02 | 実装担当者 | Medium | P2 | Cowork | ☐ |
-| R-PM-01 | プロジェクトマネージャ | High | P1 | 人間レビュー | ☐ |
-| R-PM-02 | プロジェクトマネージャ | Medium | P2 | 人間レビュー | ☐ |
-| R-PM-03 | プロジェクトマネージャ | Medium | P3 | 人間レビュー | ☐ |
-| R-SEC-01 | セキュリティ・運用 | High | P1 | Cowork | ☐ |
-| R-SEC-02 | セキュリティ・運用 | Medium | P2 | 人間レビュー | ☐ |
-| R-AI-01 | Claude Code/Codex活用 | Medium | P2 | Cowork | ☐ |
-| R-AI-02 | Claude Code/Codex活用 | Medium | P2 | Cowork | ☐ |
-| R-AI-03 | Claude Code/Codex活用 | Low | P3 | Cowork | ☐ |
+| R-ARC-01 | ソフトウェアアーキテクト | High | P1 | 人間レビュー / Cowork | ◑ |
+| R-ARC-02 | ソフトウェアアーキテクト | High | P1 | 人間レビュー | ◑ |
+| R-ARC-03 | ソフトウェアアーキテクト | Medium | P2 | Cowork | ☑ |
+| R-ARC-04 | ソフトウェアアーキテクト | Low | P3 | Cowork | ☑ |
+| R-WIN-01 | レガシーWindows/MFC/Win32/C++ | High | P1 | 人間レビュー / Cowork | ☑ |
+| R-WIN-02 | レガシーWindows/MFC/Win32/C++ | High | P2 | 人間レビュー | ◑ |
+| R-WIN-03 | レガシーWindows/MFC/Win32/C++ | High | P1 | Cowork | ☑ |
+| R-WIN-04 | レガシーWindows/MFC/Win32/C++ | Medium | P2 | Cowork | ☑ |
+| R-NET-01 | C#/.NET設計者 | Critical | P1 | Cowork / 人間レビュー | ◑ |
+| R-NET-02 | C#/.NET設計者 | High | P1 | Cowork | ☑ |
+| R-NET-03 | C#/.NET設計者 | Medium | P2 | Cowork | ☑ |
+| R-GTA-01 | GUIテスト自動化 | High | P1 | Cowork / 人間レビュー | ☑ |
+| R-GTA-02 | GUIテスト自動化 | Medium | P2 | Cowork | ☑ |
+| R-GTA-03 | GUIテスト自動化 | Medium | P3 | 人間レビュー | ◑ |
+| R-QA-01 | 品質保証・テスト設計 | Medium | P2 | Cowork | ☑ |
+| R-QA-02 | 品質保証・テスト設計 | Medium | P2 | Cowork | ☑ |
+| R-QA-03 | 品質保証・テスト設計 | Low | P3 | Cowork | ☑ |
+| R-OPS-01 | DevOps/CI | High | P1 | 人間レビュー / Cowork | ◑ |
+| R-OPS-02 | DevOps/CI | Medium | P2 | Cowork | ☑ |
+| R-OPS-03 | DevOps/CI | Medium | P2 | 人間レビュー | ◑ |
+| R-MNT-01 | 保守開発リーダー | High | P2 | Cowork | ☑ |
+| R-MNT-02 | 保守開発リーダー | Medium | P3 | Cowork | ☑ |
+| R-IMP-01 | 実装担当者 | High | P1 | Cowork | ☑ |
+| R-IMP-02 | 実装担当者 | Medium | P2 | Cowork | ☑ |
+| R-PM-01 | プロジェクトマネージャ | High | P1 | 人間レビュー | ◑ |
+| R-PM-02 | プロジェクトマネージャ | Medium | P2 | 人間レビュー | ◑ |
+| R-PM-03 | プロジェクトマネージャ | Medium | P3 | 人間レビュー | ☑ |
+| R-SEC-01 | セキュリティ・運用 | High | P1 | Cowork | ☑ |
+| R-SEC-02 | セキュリティ・運用 | Medium | P2 | 人間レビュー | ◑ |
+| R-AI-01 | Claude Code/Codex活用 | Medium | P2 | Cowork | ☑ |
+| R-AI-02 | Claude Code/Codex活用 | Medium | P2 | Cowork | ☑ |
+| R-AI-03 | Claude Code/Codex活用 | Low | P3 | Cowork | ☑ |
 
 Severity totals: Critical 1 / High 12 / Medium 14 / Low 4 (31 findings).
 
@@ -736,6 +736,47 @@ Severity totals: Critical 1 / High 12 / Medium 14 / Low 4 (31 findings).
 - 反例 fixture 雛形・golden 意味的差分レビュー補助・生成テスト smell 点検(R-QA-01/02, R-AI-02)。
 - サニタイズ済みロギング規約と検証 UT(R-SEC-01)。
 - spike のエージェント調査タスク定義・最小コンテキスト束(R-AI-01/03)。
+
+## Disposition Log — 2026-07-01 DES-0007 Integration
+
+The reviewed strategy [DES-0007](des-0007-detailed-design-execution-strategy.md) was revised on 2026-07-01 to fold in the Cowork-owned findings and to surface human-decision items as explicit carried risks and gates (it decides no technology choice on its own). This log is authoritative for status; the per-finding **対応状況** lines below predate this integration and are reconciled here. `☑` = reflected into DES-0007; `◑` = Cowork/design part reflected, a human decision still carried in DES-0007 §8.1.
+
+| ID | 状況 | DES-0007 反映箇所 |
+| -- | -- | -- |
+| R-ARC-01 | ◑ | §4 Modules 列 + module-coverage note; DES-0008 scope (composition root/DI); standalone `DES-0018` choice carried §8.1 |
+| R-ARC-02 | ◑ | §4.2 spike framed as ownable task → draft `ADR-0002`; owner/approver carried §5.2/§8.1 |
+| R-ARC-03 | ☑ | §4 DES-0011 diagnostics/logging model; §6 template "Diagnostics and logging" row |
+| R-ARC-04 | ☑ | §4.2 dependency DAG + parallelizable sets |
+| R-WIN-01 | ☑ | §4 DES-0015 scope (PMv2 DPI awareness, bounds normalized to target DPI) |
+| R-WIN-02 | ◑ | §4 DES-0014 scope (UIA threading/apartment + cooperative cancel/timeout); live behavior verification carried to spike |
+| R-WIN-03 | ☑ | §4 DES-0014 legacy acquisition edge table |
+| R-WIN-04 | ☑ | §4 DES-0015 capture failure-mode table |
+| R-NET-01 | ◑ | §4.1/§7 stable-hash/ordinal rule + cross-process UT-0001/UT-0006; hash algorithm/collision final choice carried (security intersection) |
+| R-NET-02 | ☑ | §4 DES-0008 determinism/quality project settings |
+| R-NET-03 | ☑ | §4 DES-0012 serializer determinism contract |
+| R-GTA-01 | ☑ | §4 DES-0010 axis↔UIA/MSAA property-and-pattern mapping obligation |
+| R-GTA-02 | ☑ | §4 DES-0014 virtualized/lazy-tree handling; §6 edge-case row |
+| R-GTA-03 | ◑ | §4 DES-0017 optional real-automation cross-check; cost decision human |
+| R-QA-01 | ☑ | §6 template + §7 counter-example fixture rule |
+| R-QA-02 | ☑ | §4 DES-0012 + §7 golden-file governance |
+| R-QA-03 | ☑ | §9 guardrail failing-first coverage matrix |
+| R-OPS-01 | ◑ | §8.2 CI/execution topology; self-hosted runner procurement carried §8.1 |
+| R-OPS-02 | ☑ | §8.2 invariant culture / TZ=UTC / newline normalization |
+| R-OPS-03 | ◑ | §8.1 fixture-app ownership carried (assign to DES-0008 or DES-0014/0015) |
+| R-MNT-01 | ☑ | §4 DES-0010 versioned externalized thresholds + property-style tests |
+| R-MNT-02 | ☑ | §5.3 design revision/supersede convention |
+| R-IMP-01 | ☑ | §4 DES-0009 fallback-key minimal contract front-loaded; §5.3; §8 RSK-DES-002 updated |
+| R-IMP-02 | ☑ | §5.1 per-slice Definition of Done |
+| R-PM-01 | ◑ | §4.2 spike work item + critical path; owner carried §8.1 |
+| R-PM-02 | ◑ | §5.2 approver roles + response target; concrete owners carried §8.1 |
+| R-PM-03 | ☑ | §8.2 phase-completion criteria |
+| R-SEC-01 | ☑ | §4 DES-0013 log/diagnostics/exception sanitization; §9 confidentiality check extended |
+| R-SEC-02 | ◑ | §4 DES-0013 at-rest/ACL + DES-0014 minimal privilege scope; encryption-required decision carried §8.1 |
+| R-AI-01 | ☑ | §4.2 spike as agent investigation task |
+| R-AI-02 | ☑ | §7 + §9 second-pass smell check for generated tests |
+| R-AI-03 | ☑ | §6 template minimal context bundle |
+
+New/strengthened `UT`/`IT` obligations from these dispositions are recorded in [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md).
 
 ## Disposition Workflow
 
