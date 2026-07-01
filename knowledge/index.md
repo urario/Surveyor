@@ -14,6 +14,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 # Requirements
 
 * [Requirement Source](requirements/source-spec.md) - Canonical requirements document and trace rules.
+* [Requirement Definition](requirements/requirements-definition.md) - Derived `RD-xxx` requirement definitions and downstream trace guidance.
 * [Generated RQ Index](requirements/rq-index.generated.md) - Generated list of `RQ-xxx` headings.
 
 # Architecture
