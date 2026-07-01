@@ -29,10 +29,12 @@ This bundle keeps project knowledge close to the source code so agents and human
 * [DES-0003 Module Interface Basic Design](design/des-0003-module-interface-basic-design.md) - Basic-design contracts for every port and use-case boundary.
 * [DES-0004 Analysis Flow Basic Design](design/des-0004-analysis-flow-basic-design.md) - Run flow, state machine, staged contracts, and guardrail checkpoints.
 * [DES-0005 V-Model Traceability and Downstream Tests](design/des-0005-vmodel-traceability-and-downstream-tests.md) - V-model mapping and planned unit/integration test obligations.
+* [DES-0006 Screen (Operating UI) Basic Design](design/des-0006-screen-basic-design.md) - Operating-UI screen inventory, navigation, per-screen bindings, review-surface decision, snapshot correspondence, and usability principles.
 
 # Decisions
 
 * [ADR-0001 AI Collaboration and OKF](decisions/adr-0001-ai-collaboration-and-okf.md) - Initial AI role split and knowledge management decision.
+* [ADR-0003 Review Surface - Native WinUI Primary, HTML Portable](decisions/adr-0003-review-surface-native-vs-html.md) - Native WinUI is the primary interactive review surface; the HTML/JSON report is the portable distribution artifact.
 
 # Trace Evidence
 
