@@ -34,17 +34,22 @@ stateDiagram-v2
   Selecting --> Analyzing: TargetRef resolved + Run
   Analyzing --> Capturing: model acquired
   Capturing --> Reporting: snapshots attached
-  Reporting --> Completed: reports written
+  Reporting --> Exporting: reports written
+  Exporting --> Completed: export stored
   Analyzing --> Failed: unexpected fault
   Capturing --> Failed: unexpected fault
   Reporting --> Failed: unexpected fault
+  Exporting --> Failed: unexpected fault
   Analyzing --> Cancelled: cancel
   Capturing --> Cancelled: cancel
   Reporting --> Cancelled: cancel
+  Exporting --> Cancelled: cancel
   Completed --> Idle: reset
   Failed --> Idle: reset
   Cancelled --> Idle: reset
 ```
+
+The run only reaches `Completed` after Stage 8 export/store finishes; `Reporting` transitions to the intermediate `Exporting` state when reports are written (Stage 7), and `Exporting` reaches `Completed` once the export bundle is stored (Stage 8). This keeps the state machine aligned with the Stages 2–8 cancellation span: an export that is still running, faults, or is cancelled is represented as `Exporting`, `Failed`, or `Cancelled` respectively, never as a premature `Completed`.
 
 Expected outcomes (`Unavailable`, `PermissionDenied`, `Timeout`, `PartialResult`) do **not** move the run to `Failed`; they are carried in the result and the run still reaches `Completed` with diagnostics. Only unexpected faults reach `Failed`. External cancel reaches `Cancelled` and leaves no persisted partial artifact.
 
