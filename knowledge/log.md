@@ -2,6 +2,9 @@
 
 ## 2026-07-01
 
+* **Creation**: Added `DES-0001` initial architecture design (Clean Architecture layers, MVVM boundaries, ports, determinism/read-only/confidentiality policies, technology allocation recommendation, and Codex slices) under `knowledge/architecture/`.
+* **Update**: Applied third-party architecture review corrections to `DES-0001` — added `ITargetDiscoveryPort`/`SelectTargetUseCase` for the process/window boundary, separated `DisplayLabel` from key material with sanitization/hashing rules, made report/store operations cancellable with atomic writes, promoted read-only verification to a required adapter audit test plus an `IT-xxxx` invariant set, and aligned the trace block and per-slice `RQ`/`RD` with the driving requirements.
+* **Enhancement**: Strengthened the `surveyor-architect` agent and `surveyor-design-review` skill for Clean Architecture, MVVM, interface-design, technology-allocation, and Mermaid-artifact review, with `RQ-048`/`RQ-051`/`RQ-052`/`RQ-054` as blocking guardrails, and added target-discovery-boundary, key/label separation, output/store cancellation, and read-only adapter-audit review items from the review.
 * **Update**: Corrected requirement-definition review findings `F-01`, `F-03`, `F-04`, `F-05`, `F-08`, `O-01`, and `O-02` by aligning `RQ-002` traces, strengthening acceptance criteria, and linking OKF review summaries to the source document.
 * **Creation**: Added OKF requirement-definition knowledge for the `RD-xxx` requirement definitions derived from the canonical `RQ-xxx` specification.
 * **Creation**: Added lifecycle traceability policy for phase artifacts, stable artifact IDs, and required trace evidence blocks.

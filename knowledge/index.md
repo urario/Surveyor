@@ -20,6 +20,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 # Architecture
 
 * [Layering Principles](architecture/layering-principles.md) - Required layer split and design guardrails.
+* [DES-0001 Initial Architecture](architecture/des-0001-initial-architecture.md) - Clean Architecture and MVVM design, ports, technology allocation, and downstream slices for the initial version.
 
 # Design
 
