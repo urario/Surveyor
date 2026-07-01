@@ -18,7 +18,7 @@ Companion artifacts: [DES-0003 Module Interface Basic Design](des-0003-module-in
 | Field | Content |
 | -- | -- |
 | Artifact | `DES-0002`, Module Responsibility Basic Design, basic design phase |
-| Upstream | [DES-0001](../architecture/des-0001-initial-architecture.md); guardrails `RQ-048`, `RQ-051`, `RQ-052`, `RQ-054`; `RQ-011`, `RQ-013`, `RQ-016`–`RQ-031`, `RQ-034`, `RQ-036`, `RQ-049`, `RQ-050`, `RQ-053`, `RQ-055`; derived `RD-001`–`RD-032` (see per-module RQ/RD columns); [Layering Principles](../architecture/layering-principles.md); [ADR-0001](../decisions/adr-0001-ai-collaboration-and-okf.md) |
+| Upstream | [DES-0001](../architecture/des-0001-initial-architecture.md); guardrails `RQ-048`, `RQ-051`, `RQ-052`, `RQ-054`; `RQ-011`, `RQ-013`, `RQ-016`–`RQ-031`, `RQ-034`, `RQ-036`, `RQ-046`, `RQ-049`, `RQ-050`, `RQ-053`, `RQ-055`; derived `RD-001`–`RD-026`, `RD-030`, `RD-032` mapped in the per-module RQ/RD columns (covering the §5 basic-design scope `RD-002`–`RD-018`). `RD-027` is an out-of-scope constraint surfaced in [Downstream-Design Carve-Outs](#downstream-design-carve-outs); `RD-028`/`RD-029` are detailed-design (calibration/selection-rationale depth); `RD-031` is preserved at architecture/output-structure level in `DES-0001`. [Layering Principles](../architecture/layering-principles.md); [ADR-0001](../decisions/adr-0001-ai-collaboration-and-okf.md) |
 | Downstream | [DES-0003](des-0003-module-interface-basic-design.md), [DES-0004](des-0004-analysis-flow-basic-design.md), [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md); detailed-design `DES-xxxx` for scoring rules, key generation, capture, report schema; Codex `IMP-xxxx`/`UT-xxxx`/`IT-xxxx` slices named in [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md) |
 | Evidence | 13-module responsibility map, ownership layers, allowed/forbidden dependencies, module-level data ownership, guardrail assignment, downstream-design carve-outs |
 | Verification | `tools/okf/Validate-Okf.ps1`; `git diff --check`; basic-design gate of [Quality Review Policy](../process/quality-review-policy.md) |
@@ -107,18 +107,18 @@ Each module below states its responsibility, ownership layer, what it must not d
 - **Responsibility**: orchestrate a run — `SelectTargetUseCase`, `AnalyzeScreenUseCase`, `GenerateReportUseCase`, `ExportResultUseCase`. Own the port interfaces (`ITargetDiscoveryPort`, `IUiTreeAcquisitionPort`, `IScreenCapturePort`, `IReportWriter`, `IResultStore`, `IConfidentialityPolicy`, `IClock`). Sequence acquire → evaluate → capture → apply policy → assemble result → write/store.
 - **Layer**: Application. Depends on `M04`/`M08` (domain) and on its own port interfaces; never on adapter implementations.
 - **Must not**: reference WinUI, UIA, capture, filesystem, or WebView2 types; embed scoring rules (delegates to `M08`); make policy decisions itself (delegates to `M09`).
-- **Owns**: port interface definitions, use-case request/result DTOs (`AnalysisRunRequest`, `AnalysisResult` assembly), run sequencing, cancellation propagation.
+- **Owns**: port interface definitions, use-case request/result DTOs (`AnalysisRunRequest`, `AnalysisResult` assembly), run sequencing, cancellation propagation, and threading `ScreenSelectionMetadata` (user-supplied priority basis, `RD-016`) and generated `ImprovementCandidate`s (`RD-015`) into the assembled result for `M10`/`M12`.
 - **Guardrails**: accountable for enforcing the read-only sequence (`RQ-048`), routing all text/images through `M09` before emission (`RQ-052`), passing `IClock` for timestamps (`RQ-051`), and keeping the core UI-independent (`RQ-054`).
 - **RQ/RD**: `RQ-048`, `RQ-054`, `RQ-050`; `RD-001`, `RD-024`, `RD-025`, `RD-032`.
 
 ### M04 Domain Model / Analysis Core
 
-- **Responsibility**: the screen/element model and value objects: `ScreenModel`, `UiElement`, `ElementIdentity`, `BoundingRect`, `ControlKind`, `AcquisitionConfidence`, `Availability` (with reason), `ScreenKey`, `ElementKey`, `DisplayLabel` (separate from keys), `SnapshotRef`, `Finding`, `ImprovementCandidate`, `TestabilityClass`. Owns key derivation semantics and the availability/confidence semantics.
+- **Responsibility**: the screen/element model and value objects: `ScreenModel`, `UiElement`, `ElementIdentity`, `BoundingRect`, `ControlKind`, `AcquisitionConfidence`, `Availability` (with reason), `ScreenKey`, `ElementKey`, `DisplayLabel` (separate from keys), `SnapshotRef`, `Finding`, `ImprovementCandidate`, `TestabilityClass`. Owns key derivation semantics and the availability/confidence semantics. **`ScreenModel` is the evaluation/output unit** — a top-level window, dialog, MDI/SDI child, tab, or pane, and, where a screen has multiple states (tab/mode switch), a state-differentiated screen is a distinct `ScreenModel` with its own `ScreenKey` (`RD-002`). The model also carries `ScreenSelectionMetadata` (regression cost, change/exec frequency, UI-pattern representativeness, judgment-split flag) as a domain value so prioritization can be recorded and surfaced without the analyzer computing those user-supplied inputs (`RD-016`).
 - **Layer**: Domain (innermost). Depends on nothing outward.
 - **Must not**: perform any I/O; touch clock, locale, filesystem, UIA, capture, or WinUI; embed report formatting; read ambient state.
-- **Owns**: the canonical data model, `ScreenKey`/`ElementKey` derivation rule (stable identity → normalized → collision-handled), and the `Availability.Unavailable(reason)` vs low-score distinction.
-- **Guardrails**: `RQ-051` (keys/ordering are core-owned and deterministic), `RQ-052` (keys separated from `DisplayLabel`; sensitive text normalized/hashed before it can appear in a key), `RQ-053` (stable identity keys).
-- **RQ/RD**: `RQ-004`, `RQ-017`–`RQ-021`, `RQ-026`, `RQ-053`; `RD-004`, `RD-020`, `RD-021`.
+- **Owns**: the canonical data model; the `ScreenKey`/`ElementKey` derivation rule from **non-sensitive stable identity** (stable identity → normalized → collision-handled), delegating the sensitive-fallback path (when stable identity is absent and `Name`/title must be hashed into a fallback key) to `M09` so no raw sensitive text is ever hashed inside the domain (`RQ-052`/`RQ-053` seam); the screen/state evaluation-unit rule; and the `Availability.Unavailable(reason)` vs low-score distinction.
+- **Guardrails**: `RQ-051` (keys/ordering are core-owned and deterministic), `RQ-052` (keys separated from `DisplayLabel`; sensitive text normalized/hashed via `M09` before it can appear in a key), `RQ-053` (stable identity keys).
+- **RQ/RD**: `RQ-004`, `RQ-017`–`RQ-021`, `RQ-025`, `RQ-026`, `RQ-046`, `RQ-053`; `RD-002`, `RD-004`, `RD-016`, `RD-020`, `RD-021`.
 
 ### M05 Target Discovery
 
@@ -149,19 +149,19 @@ Each module below states its responsibility, ownership layer, what it must not d
 
 ### M08 Scoring and Classification
 
-- **Responsibility**: pure deterministic evaluation — per-element findings, per-screen scores, and automation-strategy classification (`即自動化 / 小改善後 / 限定 / 改善優先 / 対象外`). Owns rounding and thresholds. Composed of independent rule units. **Not a port** — pure domain logic exercised directly in tests.
+- **Responsibility**: pure deterministic evaluation across all evaluation axes — identifiability (`RQ-017`), operability (`RQ-018`), result-determinability (`RQ-019`), precondition-controllability (`RQ-020`), screen-stability (`RQ-021`), custom-UI risk (`RQ-005`/`RQ-022`), coordinate/image-dependence (`RQ-023`) — producing per-element findings, per-screen scores, and automation-strategy classification (`即自動化 / 小改善後 / 限定 / 改善優先 / 対象外`). Also **generates `ImprovementCandidate`s and the "do-not-automate" rationale** (identifier remediation, Name fixes, result-info exposure, UIA/IAccessible implementation, coordinate-dependence avoidance, defer-to-lower-layer) with residual-risk/cost notes (`RD-015`). Owns rounding and thresholds. Composed of independent rule units. **Not a port** — pure domain logic exercised directly in tests.
 - **Layer**: Domain. Depends on `M04` only.
 - **Must not**: perform I/O, read clock/locale/ambient state, re-derive keys (uses `M04` keys), double-count the same root cause across non-orthogonal axes, conflate `Unavailable` with a low score.
-- **Owns**: the deterministic scoring pipeline, threshold/rounding ownership, classification mapping, and the "same input → same output" property.
+- **Owns**: the deterministic scoring pipeline, threshold/rounding ownership, classification mapping, improvement-candidate derivation, and the "same input → same output" property.
 - **Guardrails**: `RQ-051` (determinism — primary owner), plus honoring the `Unavailable` vs low-score distinction from `M04`.
-- **RQ/RD**: `RQ-003`, `RQ-006`, `RQ-013`, `RQ-017`–`RQ-023`, `RQ-034`, `RQ-051`; `RD-005`–`RD-011`, `RD-014`, `RD-020`. Concrete formulas, weights, thresholds, and rounding are **detailed design** (`RD-020`, `RSK-RD-002`).
+- **RQ/RD**: `RQ-003`, `RQ-005`, `RQ-006`, `RQ-007`, `RQ-013`, `RQ-017`–`RQ-023`, `RQ-029`, `RQ-034`, `RQ-051`; `RD-005`–`RD-011`, `RD-014`, `RD-015`, `RD-020`. Concrete formulas, weights, thresholds, and rounding are **detailed design** (`RD-020`, `RSK-RD-002`).
 
 ### M09 Confidentiality Policy
 
 - **Responsibility**: decide masking/blur/redaction and persistence limits for captures and extracted text; secure-by-default. Central enforcement point for `RQ-052`. Implements `IConfidentialityPolicy`.
 - **Layer**: Interface Adapters / domain policy (behind an application-owned port). Applied by `M03` before `M10`/`M12`.
 - **Must not**: be bypassed by writers or store; leak raw sensitive text into keys, paths, or machine-readable ids; default to unmasked/wide storage.
-- **Owns**: masking/blur/redaction decisions, key/path sanitization rule for sensitive text, secure-by-default configuration surface.
+- **Owns**: masking/blur/redaction decisions; the key/path sanitization rule for sensitive text, including the **sensitive-fallback key path** delegated by `M04` (normalize/hash `Name`/title into a stable, non-reversible fallback key when no non-sensitive stable identity exists), so this hashing lives in one place and never inside the domain; secure-by-default configuration surface.
 - **Guardrails**: `RQ-052`/`RD-022` (primary owner — secure-by-default), supports `RQ-051` (deterministic decision for same input).
 - **RQ/RD**: `RQ-030`, `RQ-052`; `RD-022`. Concrete default retention/paths and exact "secure-by-default" values are **detailed design** (`RSK-RD-003`).
 
@@ -170,9 +170,9 @@ Each module below states its responsibility, ownership layer, what it must not d
 - **Responsibility**: serialize the shared result model to HTML (human-readable) and JSON (machine-readable) artifacts. Implements `IReportWriter`.
 - **Layer**: Interface Adapters. Implements an application-owned port; depends outward on filesystem via atomic write.
 - **Must not**: re-round or re-classify scores; re-derive keys; emit images/text not passed through `M09`; use ambient time (only `IClock`); order output by hash/arrival.
-- **Owns**: HTML rendering, JSON serialization, byte-stable ordering using core-owned keys, atomic (temp-then-rename) write, distribution handling notice on HTML.
+- **Owns**: HTML rendering, JSON serialization, byte-stable ordering using core-owned keys, atomic (temp-then-rename) write, distribution handling notice on HTML. **Surfaces the prioritization view** — improvement candidates (`RD-015`) and `ScreenSelectionMetadata`/priority basis (`RD-016`) are rendered/serialized as carried by the result model; the writer presents, it does not compute priority.
 - **Guardrails**: `RQ-051` (byte-stable ordering/keys), `RQ-052` (emits only `M09`-processed content; HTML carries handling notice), `RQ-054` (UI-independent).
-- **RQ/RD**: `RQ-025`, `RQ-026`, `RQ-030`, `RQ-031`; `RD-017`, `RD-018`, `RD-019`, `RD-022`. Full JSON schema and HTML layout are **detailed design**.
+- **RQ/RD**: `RQ-025`, `RQ-026`, `RQ-029`, `RQ-030`, `RQ-031`; `RD-015`, `RD-016`, `RD-017`, `RD-018`, `RD-019`, `RD-022`. Full JSON schema and HTML layout are **detailed design**.
 
 ### M11 Clock and Deterministic Support
 
@@ -210,6 +210,8 @@ Each module below states its responsibility, ownership layer, what it must not d
 | `DisplayLabel` | M04 | Volatile/sensitive text; kept separate from keys |
 | `Availability`, `AcquisitionConfidence` | M04 (assigned by M06) | Unavailable(reason) distinct from low score |
 | `Finding`, score, `TestabilityClass` | M08 | Deterministic; owns rounding/thresholds |
+| `ImprovementCandidate` (value object) / generation | M04 (type) / M08 (generation) | Do-not-automate rationale + cost/residual-risk notes (`RD-015`) |
+| `ScreenSelectionMetadata` (priority basis) | M04 (type) / M03 (threading) / M10 (presentation) | User-supplied inputs (cost/frequency/representativeness); analyzer records, does not compute (`RD-016`) |
 | `SnapshotRef` + capture metadata | M07 → M04 reference | Image bytes excluded from scoring |
 | Masking/redaction decision | M09 | Secure-by-default |
 | Timestamp | M11 (`IClock`) | Never ambient time |

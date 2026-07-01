@@ -108,10 +108,10 @@ sequenceDiagram
 
 ### Stage 3 — Scoring (`M08`, pure domain)
 
-- **In**: `ScreenModel`. **Out**: `Finding` list, per-screen scores, `TestabilityClass`.
+- **In**: `ScreenModel`. **Out**: `Finding` list, per-screen scores, `TestabilityClass`, and generated `ImprovementCandidate`s with rationale (`RD-015`). Evaluation spans all axes: identifiability (`RQ-017`), operability (`RQ-018`), result-determinability (`RQ-019`), precondition-controllability (`RQ-020`), screen-stability (`RQ-021`), custom-UI risk (`RQ-005`/`RQ-022`), coordinate/image-dependence (`RQ-023`).
 - **Failure/partial**: none by I/O — pure; `Unavailable` inputs are represented as findings/limits, never silently scored as low. Same input → same output.
 - **Guardrail checkpoint**: `RQ-051` (determinism — no clock/locale/ambient); **unavailable-vs-low-score rule enforced here** (an unacquirable element yields an `Unavailable`-tagged finding, not a fabricated low score); non-orthogonal axes (identifiability → coordinate-dependence) must not double-count one root cause (`RQ-006`, ch.4).
-- **RQ/RD**: `RQ-003`, `RQ-006`, `RQ-013`, `RQ-017`–`RQ-023`, `RQ-034`, `RQ-051`; `RD-005`–`RD-011`, `RD-014`, `RD-020`. Formulas/thresholds are detailed design.
+- **RQ/RD**: `RQ-003`, `RQ-005`, `RQ-006`, `RQ-007`, `RQ-013`, `RQ-017`–`RQ-023`, `RQ-029`, `RQ-034`, `RQ-051`; `RD-005`–`RD-011`, `RD-014`, `RD-015`, `RD-020`. Formulas/thresholds are detailed design.
 
 ### Stage 4 — Capture (`AnalyzeScreenUseCase` / `IScreenCapturePort`)
 
@@ -129,17 +129,17 @@ sequenceDiagram
 
 ### Stage 6 — Result Assembly (`AnalyzeScreenUseCase`)
 
-- **In**: model, findings/scores/class, snapshot refs, diagnostics (all post-policy). **Out**: `AnalysisResult`.
+- **In**: model (incl. screen/state-unit identity `RD-002` and any user-supplied `ScreenSelectionMetadata` `RD-016`), findings/scores/class, improvement candidates (`RD-015`), snapshot refs, diagnostics (all post-policy). **Out**: `AnalysisResult`.
 - **Failure/partial**: aggregates stage statuses into a run-level result carrying `PartialResult` and per-item `Unavailable` markers; the distinction between "unavailable" and "low score" is preserved into the result model.
 - **Guardrail checkpoint**: `RQ-051` (stable keys/order in the assembled result); `RQ-054` (result is a domain-safe DTO, no Windows types).
-- **RQ/RD**: `RQ-025`, `RQ-053`; `RD-014`, `RD-019`, `RD-020`, `RD-021`.
+- **RQ/RD**: `RQ-025`, `RQ-046`, `RQ-053`; `RD-002`, `RD-014`, `RD-015`, `RD-016`, `RD-019`, `RD-020`, `RD-021`.
 
 ### Stage 7 — Report (`GenerateReportUseCase` / `IReportWriter`, `IClock`)
 
 - **In**: `AnalysisResult`. **Out**: HTML + JSON artifacts.
 - **Failure/partial**: `IoError`/`Timeout`/schema-validation as result; atomic write leaves no partial file on cancel/failure.
-- **Guardrail checkpoint**: `RQ-051` (byte-stable order/keys; time via `IClock`; no re-round/re-classify); `RQ-052` (only post-policy content; HTML handling notice); `RQ-054` (UI-independent writer).
-- **RQ/RD**: `RQ-025`, `RQ-026`, `RQ-030`, `RQ-031`; `RD-017`, `RD-018`, `RD-019`, `RD-022`.
+- **Guardrail checkpoint**: `RQ-051` (byte-stable order/keys; time via `IClock`; no re-round/re-classify); `RQ-052` (only post-policy content; HTML handling notice); `RQ-054` (UI-independent writer). Presents improvement candidates (`RD-015`) and priority basis (`RD-016`) as carried; the writer does not compute priority.
+- **RQ/RD**: `RQ-025`, `RQ-026`, `RQ-029`, `RQ-030`, `RQ-031`; `RD-015`, `RD-016`, `RD-017`, `RD-018`, `RD-019`, `RD-022`.
 
 ### Stage 8 — Export/Store (`ExportResultUseCase` / `IResultStore`)
 

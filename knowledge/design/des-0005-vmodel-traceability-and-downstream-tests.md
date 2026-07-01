@@ -48,8 +48,9 @@ Each row: a basic-design item, what detailed design must still decide, the candi
 
 | Basic-design item | Detailed design must decide | Impl module (candidate file/area) | Unit-test viewpoint | Integration-test viewpoint |
 | -- | -- | -- | -- | -- |
-| Domain model + key/label separation (`M04`) | Key derivation algorithm, normalization/hash, collision rule, field set | `Surveyor.Domain` (model, keys) | `UT-0001`: key stability, sanitization, label/key separation, availability semantics | — (pure) |
-| Scoring + classification (`M08`) | Formulas, weights, thresholds, rounding, non-orthogonality de-dup | `Surveyor.Domain` (scoring rules) | `UT-0002`: deterministic scoring, unavailable≠low-score, no double-count | `IT-0006` (perf on large trees) |
+| Domain model + key/label separation + screen/state-unit (`M04`) | Key derivation algorithm, normalization/hash, collision rule, field set, screen-state-unit key rule | `Surveyor.Domain` (model, keys) | `UT-0001`: key stability, sanitization, label/key separation, availability semantics, screen/state-unit identity (`RD-002`) | — (pure) |
+| Scoring + classification + improvement candidates (`M08`) | Formulas, weights, thresholds, rounding, non-orthogonality de-dup, candidate-derivation rules | `Surveyor.Domain` (scoring rules) | `UT-0002`: deterministic scoring across all eval axes (`RD-005`–`RD-011`), unavailable≠low-score, no double-count, improvement-candidate generation (`RD-015`) | `IT-0006` (perf on large trees) |
+| Prioritization support (`M04`/`M03`/`M10`) | Metadata field set, presentation format; note inputs are user-supplied not analyzer-derived | `Surveyor.Domain` (metadata type), `Surveyor.Application`, `Surveyor.Reports` | `UT-0002` (candidate generation), `UT-0006`/`UT-0007` (priority/candidate presentation, `RD-016`) | `IT-0004` |
 | `ITargetDiscoveryPort` (`M05`) | Status enum, integrity/`uiAccess` handling, `TargetRef` fields | `Surveyor.Adapters.Discovery` | `UT-0003`: candidate ordering + status mapping | `IT-0005`: real integrity/permission |
 | `IUiTreeAcquisitionPort` (`M06`) | UIA library, MSAA fallback, confidence rubric, cap defaults | `Surveyor.Adapters.Uia` | `UT-0004`: fixture tree→model, unavailable markers | `IT-0002`: real UIA acquisition; `IT-0001`: state-unchanged |
 | Read-only enforcement (`M06`) | Spy layer design, prohibited-pattern list detail | `Surveyor.Adapters.Uia` (spy) | `UT-0005`: audit fails on any state-changing pattern | `IT-0001`: target-state-unchanged invariants |
@@ -73,7 +74,16 @@ Candidate assembly names (`Surveyor.Domain`, `Surveyor.Application`, `Surveyor.A
 | Determinism | `RQ-051` | `RD-020`, `RD-025` | DES-0002 M04/M08, DES-0003 clock/writer, DES-0004 S3/S6/S7 | `UT-0002`, `UT-0006`, `UT-0010` | `IT-0004` |
 | Confidential data | `RQ-052` | `RD-012`, `RD-022` | DES-0002 M07/M09/M12, DES-0003 policy/store, DES-0004 S5 | `UT-0008` | `IT-0004` |
 | WinUI/core separation | `RQ-054` | `RD-025` | DES-0002 M01/M02/M03/M13, DES-0003 presentation ports/use cases | `UT-0011`, `UT-0012` | thin UI verification |
-| Identifiability/operability eval | `RQ-017`, `RQ-018`, `RQ-034` | `RD-005`, `RD-006`, `RD-014` | DES-0002 M08, DES-0004 S3 | `UT-0002` | `IT-0006` |
+| Identifiability eval | `RQ-017`, `RQ-041` | `RD-005` | DES-0002 M08, DES-0004 S3 | `UT-0002` | `IT-0006` |
+| Operability eval | `RQ-018` | `RD-006` | DES-0002 M08, DES-0004 S3 | `UT-0002` | `IT-0006` |
+| Result-determinability eval | `RQ-019` | `RD-007` | DES-0002 M08, DES-0004 S3 | `UT-0002` | `IT-0006` |
+| Precondition-controllability eval | `RQ-020` | `RD-008` | DES-0002 M08, DES-0004 S3 | `UT-0002` | `IT-0006` |
+| Screen-stability eval | `RQ-021`, `RQ-006` | `RD-009` | DES-0002 M08, DES-0004 S3 | `UT-0002` | `IT-0006` |
+| Custom-UI risk eval | `RQ-005`, `RQ-022`, `RQ-042` | `RD-010` | DES-0002 M08, DES-0004 S3 | `UT-0002` | `IT-0002` |
+| Coordinate/image-dependence eval | `RQ-023`, `RQ-006` | `RD-011` | DES-0002 M08, DES-0004 S3 | `UT-0002` | `IT-0006` |
+| Classification + do-not-automate rationale | `RQ-013`, `RQ-034`, `RQ-040` | `RD-014`, `RD-015` | DES-0002 M08/M10, DES-0004 S3/S7 | `UT-0002`, `UT-0007` | `IT-0004` |
+| Screen/state evaluation unit | `RQ-025`, `RQ-046` | `RD-002` | DES-0002 M04, DES-0004 S6 | `UT-0001` | — |
+| Prioritization support (user-supplied basis) | `RQ-001`, `RQ-008`, `RQ-013`, `RQ-046` | `RD-016` | DES-0002 M04/M03/M10, DES-0004 S6/S7 | `UT-0007` (presentation) | `IT-0004` |
 | Acquisition of Win32/MFC info | `RQ-017`, `RQ-026`, `RQ-049` | `RD-003`, `RD-004` | DES-0003 acquisition port | `UT-0004` | `IT-0002` |
 | Capture + correspondence | `RQ-011`, `RQ-016`, `RQ-027`, `RQ-028` | `RD-012`, `RD-013` | DES-0003 capture port, DES-0004 S4 | `UT-0012` (fake) | `IT-0003` |
 | Reports (human + machine) | `RQ-025`, `RQ-026`, `RQ-030`, `RQ-031` | `RD-017`, `RD-018`, `RD-019` | DES-0003 writer, DES-0004 S7 | `UT-0006`, `UT-0007` | `IT-0004` |
@@ -85,13 +95,13 @@ Candidate assembly names (`Surveyor.Domain`, `Surveyor.Application`, `Surveyor.A
 
 | ID | Behavior | RQ / RD |
 | -- | -- | -- |
-| `UT-0001` | Domain key stability, sanitization, `DisplayLabel`/key separation, availability semantics | `RQ-053`; `RD-004`, `RD-020`, `RD-021` |
-| `UT-0002` | Deterministic scoring; `Unavailable`≠low score; no double-count of one root cause | `RQ-034`, `RQ-051`; `RD-011`, `RD-014`, `RD-020` |
+| `UT-0001` | Domain key stability, sanitization, `DisplayLabel`/key separation, availability semantics, and screen/state-unit identity (same window, different state → distinct `ScreenKey`) | `RQ-025`, `RQ-046`, `RQ-053`; `RD-002`, `RD-004`, `RD-020`, `RD-021` |
+| `UT-0002` | Deterministic scoring across all evaluation axes — identifiability/operability/result-determinability/controllability/screen-stability/custom-UI/coordinate-dependence (`RD-005`–`RD-011`); `Unavailable`≠low score; no double-count of one root cause; improvement-candidate generation with rationale (`RD-015`) | `RQ-005`, `RQ-017`–`RQ-023`, `RQ-029`, `RQ-034`, `RQ-051`; `RD-005`–`RD-011`, `RD-014`, `RD-015`, `RD-020` |
 | `UT-0003` | Target discovery candidate ordering + permission/integrity/unavailable status mapping | `RQ-049`; `RD-001`, `RD-023` |
 | `UT-0004` | Acquisition fixture tree → model with unavailable/confidence markers | `RQ-017`, `RQ-026`; `RD-003`, `RD-004` |
 | `UT-0005` | Read-only adapter audit: spy fails on any state-changing UIA pattern | `RQ-048`; `RD-032` |
 | `UT-0006` | JSON writer golden-file determinism + cancellation/failure atomic-write | `RQ-031`, `RQ-051`; `RD-019`, `RD-020` |
-| `UT-0007` | HTML writer output + confidentiality handling notice | `RQ-030`, `RQ-052`; `RD-017`, `RD-022` |
+| `UT-0007` | HTML writer output + confidentiality handling notice + presentation of improvement candidates and priority basis | `RQ-029`, `RQ-030`, `RQ-052`; `RD-015`, `RD-016`, `RD-017`, `RD-022` |
 | `UT-0008` | Confidentiality secure-by-default + key/path sanitization; both policy branches | `RQ-052`; `RD-022` |
 | `UT-0009` | Result store atomic write, partial semantics, sanitized paths | `RQ-052`, `RQ-053`; `RD-021`, `RD-022` |
 | `UT-0010` | Fixed clock → reproducible timestamped output | `RQ-051`; `RD-020` |

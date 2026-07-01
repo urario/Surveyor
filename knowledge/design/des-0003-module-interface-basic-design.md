@@ -55,11 +55,11 @@ DTO names (`DiscoveryQuery`, `TargetCandidate`, `TargetRef`, `AcquisitionResult`
 | Exceptions | Only contract violations / unexpected faults (e.g., invalid query object) |
 | Cancellation / timeout | `async` + `CancellationToken`; enumeration timeout → `Timeout` status |
 | Read-only (`RQ-048`) | Enumeration only — no activation, focus, move, or input |
-| Determinism (`RQ-051`) | Candidate ordering by stable identity (e.g., class + handle-stable key), not z-order/arrival |
+| Determinism (`RQ-051`) | **Within-session** ordering is stable by a within-session stable identity (e.g., class + process/window key), not z-order/arrival — this feeds live user selection and is scoped separately from machine-readable report determinism. Raw `HWND` values are not stable across runs and are never used as report/`ScreenKey` material; report-output determinism is owned by `M04` keys (`RQ-053`), not by this ordering. |
 | Confidentiality (`RQ-052`) | Window titles surfaced as `DisplayLabel` for user choice, not embedded in keys/paths |
 | WinUI/Core (`RQ-054`) | No `HWND`/process types leak inward; `TargetRef` is an opaque domain-safe handle |
 | Fake/fixture | Fake returning a fixed candidate list with seeded status codes (incl. `PermissionDenied`/`IntegrityMismatch`) |
-| Open (detailed design) | Concrete status enum members; integrity/`uiAccess`/elevation handling; identity fields of `TargetRef` (`RSK-RD-001`) |
+| Open (detailed design) | Concrete status enum members; integrity/`uiAccess`/elevation handling; identity fields of `TargetRef` and the within-session ordering key (`RSK-RD-001`) |
 | RQ / RD | `RQ-048`, `RQ-049`, `RQ-054`; `RD-001`, `RD-023`, `RD-026` |
 | UT / IT | `UT-0003` (ordering + status handling); `IT-0005` (real integrity/permission) |
 
