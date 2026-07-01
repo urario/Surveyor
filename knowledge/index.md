@@ -25,6 +25,10 @@ This bundle keeps project knowledge close to the source code so agents and human
 # Design
 
 * [Design Knowledge](design/index.md) - Basic and detailed design artifact home and lifecycle rules.
+* [DES-0002 Module Responsibility Basic Design](design/des-0002-module-responsibility-basic-design.md) - Module responsibilities, ownership layers, and guardrail assignment for the initial version.
+* [DES-0003 Module Interface Basic Design](design/des-0003-module-interface-basic-design.md) - Basic-design contracts for every port and use-case boundary.
+* [DES-0004 Analysis Flow Basic Design](design/des-0004-analysis-flow-basic-design.md) - Run flow, state machine, staged contracts, and guardrail checkpoints.
+* [DES-0005 V-Model Traceability and Downstream Tests](design/des-0005-vmodel-traceability-and-downstream-tests.md) - V-model mapping and planned unit/integration test obligations.
 
 # Decisions
 
