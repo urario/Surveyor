@@ -347,5 +347,6 @@ flowchart LR
 - [DES-0002 Module Responsibility Basic Design](des-0002-module-responsibility-basic-design.md)
 - [DES-0004 Analysis Flow Basic Design](des-0004-analysis-flow-basic-design.md)
 - [DES-0005 V-Model Traceability and Downstream Tests](des-0005-vmodel-traceability-and-downstream-tests.md)
+- [DES-0006 Screen (Operating UI) Basic Design](des-0006-screen-basic-design.md)
 - [Lifecycle Traceability](../process/lifecycle-traceability.md)
 - [Quality Review Policy](../process/quality-review-policy.md)

@@ -235,6 +235,7 @@ The following are explicitly deferred to detailed design and are **not** fixed h
 - [DES-0003 Module Interface Basic Design](des-0003-module-interface-basic-design.md)
 - [DES-0004 Analysis Flow Basic Design](des-0004-analysis-flow-basic-design.md)
 - [DES-0005 V-Model Traceability and Downstream Tests](des-0005-vmodel-traceability-and-downstream-tests.md)
+- [DES-0006 Screen (Operating UI) Basic Design](des-0006-screen-basic-design.md)
 - [Layering Principles](../architecture/layering-principles.md)
 - [Lifecycle Traceability](../process/lifecycle-traceability.md)
 - [Quality Review Policy](../process/quality-review-policy.md)

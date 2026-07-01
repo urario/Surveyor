@@ -60,6 +60,7 @@ Each row: a basic-design item, what detailed design must still decide, the candi
 | `IResultStore` (`M12`) | Default paths, retention, export bundle format, partial semantics | `Surveyor.Adapters.Store` | `UT-0009`: atomic/partial/sanitized paths | `IT-0004` |
 | `IClock` (`M11`) | Timestamp format/precision | `Surveyor.Application`/adapter | `UT-0010`: fixed clock → deterministic output | — |
 | Presentation ports + ViewModels (`M01`/`M02`) | Intent set, dialog types, WinUI page mapping | `Surveyor.App` (WinUI), `Surveyor.Presentation` (VMs) | `UT-0011`: VM run state machine with fakes | thin/manual UI verification |
+| Operating-UI screen design (`DES-0006`, `SCR-01`–`SCR-08`) | XAML layout/control set, navigation/dialog intent enums, in-app HTML host, overlay/zoom rendering, accessibility target | `Surveyor.App` (WinUI views), `Surveyor.Presentation` (VMs) | `UT-0011` (extended): navigation gating by run state, metadata capture threaded unchanged (`RD-016`), `SCR-05`↔`SCR-06` correspondence, confidentiality opt-out recording | `IT-0007`: manual usability walkthrough |
 | Use cases (`M03`) | Stage error-aggregation, ROI selection rules | `Surveyor.Application` | `UT-0012`: full orchestration with fakes | `IT-0001`/`IT-0002`/`IT-0003`/`IT-0006` |
 | Composition root (`M13`) | Provider selection, lifetime/scoping | `Surveyor.App` (host wiring) | wiring smoke test | end-to-end run assembly |
 | Run flow + cancellation/partial (`DES-0004`) | Timeout/cap defaults, aggregation rules | `Surveyor.Application` | cancellation/partial-result paths in `UT-0012` | `IT-0001`–`IT-0006` staged assumptions |
@@ -105,7 +106,7 @@ Candidate assembly names (`Surveyor.Domain`, `Surveyor.Application`, `Surveyor.A
 | `UT-0008` | Confidentiality secure-by-default + key/path sanitization; both policy branches | `RQ-052`; `RD-022` |
 | `UT-0009` | Result store atomic write, partial semantics, sanitized paths | `RQ-052`, `RQ-053`; `RD-021`, `RD-022` |
 | `UT-0010` | Fixed clock → reproducible timestamped output | `RQ-051`; `RD-020` |
-| `UT-0011` | ViewModel run state machine + presentation-port fakes (no live WinUI) | `RQ-054`; `RD-025`, `RD-030` |
+| `UT-0011` | ViewModel run state machine + presentation-port fakes (no live WinUI); **extended (`DES-0006`)**: navigation gating by run state, `SCR-03` **metadata gate** blocking Run on `SCR-02` until `ScreenSelectionMetadata` is recorded (entered or defaults explicitly accepted, `RQ-046`/`RD-028`), `SCR-03` metadata captured and threaded unchanged (`RD-016`), `SCR-05`↔`SCR-06` snapshot-correspondence selection state, confidentiality opt-out recording (`RD-022`) | `RQ-046`, `RQ-052`, `RQ-054`; `RD-016`, `RD-022`, `RD-025`, `RD-028`, `RD-030` |
 | `UT-0012` | Use-case orchestration end to end over all fakes; cancellation/partial paths; `M03` threads user-supplied `ScreenSelectionMetadata` through unchanged and never fabricates priority (`RD-016`) | `RQ-046`, `RQ-048`, `RQ-054`; `RD-001`, `RD-016`, `RD-025`, `RD-032` |
 
 ## Planned Integration-Test Obligations (`IT-xxxx`)
@@ -118,6 +119,7 @@ Candidate assembly names (`Surveyor.Domain`, `Surveyor.Application`, `Surveyor.A
 | `IT-0004` | Confidential end-to-end: emitted HTML/JSON/stored bundle contain only masked content; no raw sensitive text in keys/paths | `RQ-052`; `RD-022` |
 | `IT-0005` | Environment/permission/integrity + packaging assumptions (same vs higher integrity, `uiAccess`) | `RQ-049`, `RQ-054`; `RD-023`, `RD-026` |
 | `IT-0006` | Performance/scale: per-screen time target, caps on large trees, partial-result behavior | `RQ-050`; `RD-024` |
+| `IT-0007` | Operating-UI usability/manual walkthrough (`DES-0006`): `SCR-01`→`SCR-07` flow against a fixture app; records multi-role readability (`RD-030`), read-only reassurance (`RQ-048`), and confidentiality-notice behavior (`RD-022`) | `RQ-009`, `RQ-030`, `RQ-044`, `RQ-048`, `RQ-052`; `RD-022`, `RD-030` |
 
 ## Codex Implementation-Slice Candidates
 
@@ -154,6 +156,7 @@ Adapter-agnostic slices can proceed before the technology-allocation ratificatio
 - [DES-0002 Module Responsibility Basic Design](des-0002-module-responsibility-basic-design.md)
 - [DES-0003 Module Interface Basic Design](des-0003-module-interface-basic-design.md)
 - [DES-0004 Analysis Flow Basic Design](des-0004-analysis-flow-basic-design.md)
+- [DES-0006 Screen (Operating UI) Basic Design](des-0006-screen-basic-design.md)
 - [DES-0001 Initial Architecture](../architecture/des-0001-initial-architecture.md)
 - [Lifecycle Traceability](../process/lifecycle-traceability.md)
 - [Quality Review Policy](../process/quality-review-policy.md)
