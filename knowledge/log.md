@@ -2,6 +2,8 @@
 
 ## 2026-07-01
 
+* **Update**: Corrected requirement-definition review findings `F-01`, `F-03`, `F-04`, `F-05`, `F-08`, `O-01`, and `O-02` by aligning `RQ-002` traces, strengthening acceptance criteria, and linking OKF review summaries to the source document.
+* **Creation**: Added OKF requirement-definition knowledge for the `RD-xxx` requirement definitions derived from the canonical `RQ-xxx` specification.
 * **Creation**: Added lifecycle traceability policy for phase artifacts, stable artifact IDs, and required trace evidence blocks.
 * **Creation**: Added `knowledge/design/` and `knowledge/traces/` as durable homes for design artifacts and trace evidence.
 * **Creation**: Added Git policy for topic branches, pull requests, and no direct commits or pushes to `main`.
