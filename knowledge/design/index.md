@@ -21,3 +21,7 @@ Follow [Lifecycle Traceability](../process/lifecycle-traceability.md):
 
 - [DES-0007 Detailed Design Phase Execution Strategy](des-0007-detailed-design-execution-strategy.md) - OKF-hosted execution strategy for detailed design, including package order, trace rules, artifact template, unit-test intent strategy, and residual-risk closure map.
 
+## Design Reviews
+
+- [DES-0007 Multi-Perspective Expert Review](des-0007-review-multiperspective.md) - Independent 11-perspective expert review of the DES-0007 execution strategy with 31 structured, disposition-tracked findings (Critical 1 / High 12 / Medium 14 / Low 4); does not modify the reviewed artifact.
+
