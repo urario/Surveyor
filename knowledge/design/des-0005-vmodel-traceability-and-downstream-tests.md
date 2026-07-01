@@ -19,7 +19,7 @@ Planned `UT-xxxx`/`IT-xxxx` IDs here are **obligations**, not yet evidence. Actu
 | -- | -- |
 | Artifact | `DES-0005`, V-Model Traceability and Downstream Test Design Obligations, basic design phase |
 | Upstream | [DES-0002](des-0002-module-responsibility-basic-design.md), [DES-0003](des-0003-module-interface-basic-design.md), [DES-0004](des-0004-analysis-flow-basic-design.md); [DES-0001](../architecture/des-0001-initial-architecture.md); requirement-definition lifecycle trace (§5); guardrails `RQ-048`, `RQ-051`, `RQ-052`, `RQ-054` |
-| Downstream | Detailed-design `DES-xxxx`; Codex `IMP-xxxx`; unit evidence `UT-0001`–`UT-0012`; integration evidence `IT-0001`–`IT-0006` under `knowledge/traces/` |
+| Downstream | Detailed-design `DES-xxxx`; Codex `IMP-xxxx`; unit evidence `UT-0001`–`UT-0013`; integration evidence `IT-0001`–`IT-0007` under `knowledge/traces/` |
 | Evidence | V-model item→detail/impl/UT/IT map, RQ/RD→DES→UT/IT trace table, planned UT/IT catalogue, Codex slice candidates, unresolved risks |
 | Verification | `tools/okf/Validate-Okf.ps1`; `git diff --check`; basic-design gate of [Quality Review Policy](../process/quality-review-policy.md) |
 | Residual Risk | UT/IT IDs are obligations pending implementation; UIA/capture/packaging/storage-default choices open (`RSK-RD-001`, `RSK-RD-003`); calibration non-numeric until detailed design (`RSK-RD-002`) |
@@ -120,6 +120,27 @@ Candidate assembly names (`Surveyor.Domain`, `Surveyor.Application`, `Surveyor.A
 | `IT-0005` | Environment/permission/integrity + packaging assumptions (same vs higher integrity, `uiAccess`) | `RQ-049`, `RQ-054`; `RD-023`, `RD-026` |
 | `IT-0006` | Performance/scale: per-screen time target, caps on large trees, partial-result behavior | `RQ-050`; `RD-024` |
 | `IT-0007` | Operating-UI usability/manual walkthrough (`DES-0006`): `SCR-01`→`SCR-07` flow against a fixture app; records multi-role readability (`RD-030`), read-only reassurance (`RQ-048`), and confidentiality-notice behavior (`RD-022`) | `RQ-009`, `RQ-030`, `RQ-044`, `RQ-048`, `RQ-052`; `RD-022`, `RD-030` |
+
+## Review-Driven Test Obligation Strengthening (DES-0007 review)
+
+The [DES-0007 Multi-Perspective Expert Review](des-0007-review-multiperspective.md), integrated into [DES-0007](des-0007-detailed-design-execution-strategy.md) on 2026-07-01, strengthens or adds these obligations. The `UT-0001`–`UT-0012` / `IT-0001`–`IT-0007` anchors are unchanged; the additions below are viewpoints those tests (or one new `UT-0013`) must also cover.
+
+| Obligation | Strengthening | Finding |
+| -- | -- | -- |
+| `UT-0001` | Recompute keys in a **fresh process** → same value; fallback key non-reversible and cross-process stable | `R-NET-01`, `R-IMP-01` |
+| `UT-0002` | Property-style assertions (order/distinction/monotonicity) stable under threshold **config version** change, not value-equality to implementation constants; per-axis "specific UIA/MSAA property/pattern missing → corresponding finding" cases | `R-MNT-01`, `R-GTA-01` |
+| `UT-0004` | Fixture cases for **virtualized/lazy** subtree (`Unavailable(not-realized)` ≠ absent) and **legacy acquisition edges** (MSAA-only, owner-draw, MDI child, `WM_GETTEXT`) | `R-GTA-02`, `R-WIN-03` |
+| `UT-0006` | Byte-identical output across a **fresh process and a changed culture** (invariant serialization) | `R-NET-01`, `R-NET-03`, `R-OPS-02` |
+| `UT-0008` | Log/diagnostics/exception output contains **no raw** title/`Name`/path (both allow-all and mask-all branches) | `R-SEC-01` |
+| `UT-0013` (new) | Composition-root invariants: registration rejects state-changing adapters, injects a single `IClock` and single `IConfidentialityPolicy`, no real clock leaks | `R-ARC-01` |
+| `IT-0002`/`IT-0003` | Real MFC/Win32 fixture-app acquisition of legacy edges; mixed-DPI (e.g. 100%/150%) overlay-coordinate match; layered/GPU/DWM window → `Unavailable` mark | `R-WIN-01`, `R-WIN-03`, `R-WIN-04` |
+| `IT-0004` | Diagnostics/log egress included in the confidential end-to-end assertion | `R-SEC-01` |
+| `UT-0009` | Stored bundle is DPAPI-`CurrentUser`-encrypted at rest by default under user-restricted ACL; export produces an explicit policy-gated masked shareable bundle | `R-SEC-02` |
+| `IT-0005` | Same-integrity default works; elevation/`uiAccess` only when explicitly required | `R-SEC-02` |
+| `IT-0006` | UIA cancellation response time and timeout → `Timeout` status on a large legacy tree | `R-WIN-02` |
+| Cross-cutting | Every behavior test carries ≥1 confirmed-red **counter-example**; agent-generated tests pass a **second-pass smell check** | `R-QA-01`, `R-AI-02` |
+
+Guardrail failing-first coverage is tracked in [DES-0007 §9](des-0007-detailed-design-execution-strategy.md). Execution surface: `UT` run unattended (headless, invariant culture / `TZ=UTC`); `IT` need an interactive/self-hosted Windows runner or a documented manual gate (`R-OPS-01`).
 
 ## Codex Implementation-Slice Candidates
 
