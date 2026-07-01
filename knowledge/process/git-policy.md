@@ -43,6 +43,13 @@ Surveyor uses pull-request based development. Direct commits and direct pushes t
 - Request Claude Code review for design/review-heavy changes and use Codex for implementation/test follow-through.
 - Merge only after review concerns are resolved or explicitly accepted.
 
+# GitHub Issue / Project Rules
+
+- GitHub Issue は日本語で書く。Project フィールド名と選択肢は英語で固定する。
+- 作業開始前に関連 Issue の `RQ`, `RD`, `Artifact`, `Phase`, `Status` を確認する。
+- PR は関連 Issue にリンクし、Issue または PR に検証結果と残リスクを残す。
+- Issue / Project の詳しい運用は [GitHub Issue and Project Workflow](github-issue-project-workflow.md) に従う。
+
 # Local Guardrails
 
 The repository includes Git hooks under `.githooks/` that block commits and pushes while on `main`.

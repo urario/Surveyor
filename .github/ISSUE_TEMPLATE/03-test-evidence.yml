@@ -1,0 +1,111 @@
+name: テスト証跡
+description: UT-xxxx / IT-xxxx の証跡またはテスト作業を起票します。
+title: "UT-xxxx: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issue は日本語で記入してください。テストは実装詳細ではなく、守るべき振る舞いとリスクを説明します。
+  - type: input
+    id: artifact
+    attributes:
+      label: Artifact
+      placeholder: UT-0001 または IT-0001
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      options:
+        - Unit Test
+        - Integration Test
+      default: 0
+    validations:
+      required: true
+  - type: textarea
+    id: rq
+    attributes:
+      label: 関連 RQ
+      placeholder: RQ-048 RQ-051
+    validations:
+      required: true
+  - type: textarea
+    id: upstream
+    attributes:
+      label: 上流設計・実装
+      description: 関連する DES / IMP / PR を書いてください。
+      placeholder: DES-0009, IMP-0001
+    validations:
+      required: true
+  - type: dropdown
+    id: guardrail
+    attributes:
+      label: Guardrail
+      options:
+        - Read-only
+        - Determinism
+        - Confidentiality
+        - Layering
+        - None
+    validations:
+      required: true
+  - type: dropdown
+    id: owner_role
+    attributes:
+      label: Owner Role
+      options:
+        - Human
+        - Claude Code
+        - Codex
+      default: 2
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: Target
+      options:
+        - MVP
+        - Post-MVP
+        - Spike
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 検証する振る舞い
+      description: テスト名にしたい日本語の振る舞いを書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: fixture
+    attributes:
+      label: Fixture / Oracle
+      description: 入力 fixture、fake、spy、golden file、期待値を説明してください。
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: 検証コマンドまたは手順
+      description: 自動テストコマンド、または手動手順を再現可能に書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: 残リスク
+      description: 自動化できない確認、Windows 環境条件、未検証分を記録してください。なければ None known。
+    validations:
+      required: true

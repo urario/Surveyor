@@ -1,4 +1,4 @@
 interface:
   display_name: "Surveyor Implementation"
-  short_description: "TDD workflow for Surveyor implementation"
-  default_prompt: "Use $surveyor-implementation to implement a traced Surveyor feature with tests."
+  short_description: "TDD workflow for Surveyor implementation and linked Issues"
+  default_prompt: "Use $surveyor-implementation to implement a traced Surveyor feature with tests and linked Japanese Issue evidence."

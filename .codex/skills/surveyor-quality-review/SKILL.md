@@ -14,6 +14,7 @@ Use this skill as an independent quality reviewer. Do not implement fixes while 
 3. Read `knowledge/process/lifecycle-traceability.md` when reviewing durable phase evidence.
 4. Read the relevant requirement sections in `docs/gui-testability-analyzer-requirements.md`; preserve `RQ-xxx` IDs in findings.
 5. Prefer existing OKF concepts over private chat memory.
+6. Read `knowledge/process/github-issue-project-workflow.md` when GitHub Issue / Project evidence is part of the artifact under review.
 
 ## Review Method
 
@@ -25,7 +26,7 @@ Use this skill as an independent quality reviewer. Do not implement fixes while 
    - `RQ-051`: scoring and machine-readable output must be deterministic.
    - `RQ-052`: screenshots and extracted text can contain confidential data.
    - `RQ-054`: WinUI 3 stays in the shell; core analysis, scoring, and reports stay UI-independent.
-5. Review evidence quality: measurable acceptance criteria, test seams, automated tests, manual validation, trace blocks, and residual risk.
+5. Review evidence quality: measurable acceptance criteria, test seams, automated tests, manual validation, trace blocks, GitHub Issue / Project fields, and residual risk.
 
 ## Output Shape
 

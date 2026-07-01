@@ -16,7 +16,8 @@ Use this skill when working with Git in the Surveyor repository.
 5. Keep commits focused and use Conventional Commit style.
 6. Include `RQ-xxx` IDs in commit bodies or PR descriptions for requirement-bearing changes.
 7. Include lifecycle phase and artifact IDs in PR descriptions when durable evidence exists.
-8. Run relevant tests or validation before suggesting merge readiness.
+8. Link the related Japanese GitHub Issue in the PR and keep Project fields current when issue context exists.
+9. Run relevant tests or validation before suggesting merge readiness.
 
 ## Branch Naming
 
@@ -45,4 +46,5 @@ Use `chore:` for tooling, workflow, generated indexes, and agent setup. Use `doc
 
 - Read `references/rules.md` for detailed Git policy.
 - Read `knowledge/process/git-policy.md` for the OKF policy record.
+- Read `knowledge/process/github-issue-project-workflow.md` for Japanese Issue / Project task handoff rules.
 

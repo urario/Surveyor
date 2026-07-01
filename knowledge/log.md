@@ -1,6 +1,12 @@
 # Surveyor Knowledge Log
 
+## 2026-07-02
+
+* **Update**: PR #14 のレビューコメント対応として、`Severity` が review-finding 専用 Issue Form フィールドであることを `github-issue-project-workflow.md` に明記し、`03-test-evidence.yml` に `Owner Role` / `Priority` / `Target` を追加して他の Issue Form と揃え、レビュー指摘対象ファイルの末尾改行を補正した。
+
 ## 2026-07-01
+
+* **Creation**: GitHub Issue / Project の日本語運用ルールを `knowledge/process/github-issue-project-workflow.md` として追加。Issue 本文は日本語、Project フィールドは英語固定とし、`Status`/`Phase`/`Artifact`/`RQ`/`RD`/`Guardrail`/`Owner Role`/`Priority`/`Target`、4つの標準ビュー、親 Issue と sub-issues、Human / Claude Code / Codex の使い分け、Done 条件を定義した。
 
 * **Decision**: Resolved carried human-decision item `R-SEC-02` (store at-rest protection + minimal privilege) — the local result store is **DPAPI (`CurrentUser`) encrypted at rest by default plus a user-restricted ACL under `%LOCALAPPDATA%`**, and export produces an explicit policy-gated masked shareable bundle (aligns with the secure-by-default ethos at low Windows cost, no manual key management; store is not portable across users/machines by design). The analyzer runs **same-integrity by default with no admin/`uiAccess` requirement**; elevation/`uiAccess` is an explicit opt-in (signed build) only when a target requires it — which also resolves the `uiAccess` signing/install aspect noted under `R-OPS-01`. Reflected in `DES-0007` §4 packages 6 (`DES-0013`) and 7 (`DES-0014`), §4.1, and the §8.1 resolved log; `DES-0005` adds a `UT-0009` at-rest obligation; review synced (`R-SEC-02` → ☑). With this, **all governance/process human-decision items from the review are resolved**; only the data-driven adapter technology pick (awaiting spike, human-approved via `ADR-0002`) remains carried.
 * **Decision**: Resolved carried human-decision item `R-OPS-03` (IT fixture-app ownership) — **`DES-0008` owns the fixture-app harness (location/scaffold), `DES-0014`/`DES-0015` specify the legacy-edge and capture-failure content, built incrementally** (minimal early, expanded when the adapter packages land); technology is **mixed** — a small real MFC/Win32 app for authentic legacy edges (owner-draw, MSAA-only proxies, MDI, windowless, `WM_GETTEXT`) plus a lighter WinForms/synthetic surface for the general UIA cases, while UT keeps synthetic deterministic fixture trees. Reflected in `DES-0007` §4 package 1 scope and the §8.1 resolved log; review synced (`R-OPS-03` → ☑).

@@ -45,6 +45,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 
 * [AI Collaboration](process/ai-collaboration.md) - Claude/Codex collaboration model.
 * [Git Policy](process/git-policy.md) - Branch, commit, pull request, and protection rules.
+* [GitHub Issue and Project Workflow](process/github-issue-project-workflow.md) - Japanese Issue writing rules, Project fields, views, and role-based task flow.
 * [Lifecycle Traceability](process/lifecycle-traceability.md) - Phase artifact, ID, and trace block rules.
 * [OKF Policy](process/okf-policy.md) - Local rules for OKF scope, frontmatter, and canonical sources.
 * [Quality Review Policy](process/quality-review-policy.md) - ISO/IEC 25010-oriented quality review gates for lifecycle artifacts and agents.

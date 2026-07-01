@@ -1,0 +1,136 @@
+name: 詳細設計タスク
+description: DES-xxxx の詳細設計を起票します。
+title: "DES-xxxx: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issue は日本語で記入してください。`RQ-xxx`, `RD-xxx`, `DES-xxxx` などの識別子はそのまま使います。
+  - type: input
+    id: artifact
+    attributes:
+      label: Artifact
+      description: 主要な詳細設計 ID を書いてください。
+      placeholder: DES-0009
+    validations:
+      required: true
+  - type: textarea
+    id: rq
+    attributes:
+      label: 関連 RQ
+      description: 関連する上流要求 ID を空白区切りで書いてください。
+      placeholder: RQ-051 RQ-052 RQ-053
+    validations:
+      required: true
+  - type: textarea
+    id: rd
+    attributes:
+      label: 関連 RD
+      description: 関連する派生要求 ID を空白区切りで書いてください。
+      placeholder: RD-004 RD-020 RD-021 RD-022
+    validations:
+      required: false
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      description: Project フィールドと同じ値を選びます。
+      options:
+        - Requirements
+        - Architecture
+        - Basic Design
+        - Detailed Design
+        - Implementation
+        - Unit Test
+        - Integration Test
+        - Review
+      default: 3
+    validations:
+      required: true
+  - type: dropdown
+    id: guardrail
+    attributes:
+      label: Guardrail
+      description: 主 guardrail を1つ選びます。複数ある場合は本文にも書いてください。
+      options:
+        - Read-only
+        - Determinism
+        - Confidentiality
+        - Layering
+        - None
+    validations:
+      required: true
+  - type: dropdown
+    id: owner_role
+    attributes:
+      label: Owner Role
+      options:
+        - Human
+        - Claude Code
+        - Codex
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: Target
+      options:
+        - MVP
+        - Post-MVP
+        - Spike
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 目的
+      description: この詳細設計で、後続実装者が推測しなくてよくなることを書いてください。
+      placeholder: ドメインモデル、安定キー、可用性の契約を実装可能な粒度で決める。
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 範囲と範囲外
+      description: 今回扱うこと、扱わないことを分けて書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: upstream
+    attributes:
+      label: 上流入力
+      description: 関連する ADR / DES / OKF 文書を列挙してください。
+      placeholder: DES-0001, DES-0005, DES-0007
+    validations:
+      required: true
+  - type: textarea
+    id: downstream
+    attributes:
+      label: 下流作業
+      description: 予定する実装、ユニットテスト、結合テスト、レビューを列挙してください。
+      placeholder: UT-0001, IMP-0001, review issue
+    validations:
+      required: false
+  - type: checkboxes
+    id: done
+    attributes:
+      label: 完了条件
+      options:
+        - label: Trace Block を OKF 文書に含める
+          required: true
+        - label: Unit-test intent を書く
+          required: true
+        - label: 残リスクまたは None known を書く
+          required: true
+        - label: OKF validation を実行する
+          required: true
