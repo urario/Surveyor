@@ -1,0 +1,87 @@
+name: レビュー指摘
+description: 設計、実装、テスト、OKF のレビュー指摘を起票します。
+title: "レビュー: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issue は日本語で記入してください。指摘は証拠、影響、最小修正を分けて書きます。
+  - type: input
+    id: target_artifact
+    attributes:
+      label: 対象 Artifact / PR
+      placeholder: DES-0010 または PR #12
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      options:
+        - Requirements
+        - Architecture
+        - Basic Design
+        - Detailed Design
+        - Implementation
+        - Unit Test
+        - Integration Test
+        - Review
+      default: 7
+    validations:
+      required: true
+  - type: textarea
+    id: rq
+    attributes:
+      label: 関連 RQ / RD
+      placeholder: RQ-051 RD-020
+    validations:
+      required: false
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Blocking
+        - Major
+        - Medium
+        - Minor
+    validations:
+      required: true
+  - type: dropdown
+    id: owner_role
+    attributes:
+      label: Owner Role
+      options:
+        - Human
+        - Claude Code
+        - Codex
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 証拠
+      description: ファイル、行、Issue、PR、OKF 文書など、確認できる根拠を書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: 影響
+      description: 要求、品質、トレーサビリティ、テスト、実装への影響を書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: 最小修正
+      description: レビュー可能な最小の修正案を書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: residual
+    attributes:
+      label: 残リスク
+      description: 修正後も残るリスク、または None known。
+    validations:
+      required: true

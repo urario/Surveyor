@@ -20,6 +20,14 @@ git push -u origin chore/example-topic
 
 Then open a pull request into `main`.
 
+## GitHub Issue / Project Work
+
+- Issue タイトルと本文は日本語を基本にする。
+- Project フィールド名と選択肢は英語固定にする。
+- 作業前に関連 Issue の `Status`, `Phase`, `Artifact`, `RQ`, `RD`, `Owner Role` を確認する。
+- PR には関連 Issue をリンクし、検証結果と残リスクを残す。
+- 詳細は `knowledge/process/github-issue-project-workflow.md` に従う。
+
 ## PR Evidence
 
 Include:

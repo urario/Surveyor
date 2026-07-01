@@ -1,4 +1,4 @@
 interface:
   display_name: "Surveyor Quality Review"
-  short_description: "ISO 25010 phase quality review."
-  default_prompt: "Use $surveyor-quality-review to review this Surveyor change against ISO 25010 and lifecycle phase quality gates."
+  short_description: "ISO 25010 phase quality review with Issue traceability"
+  default_prompt: "Use $surveyor-quality-review to review this Surveyor change against ISO 25010, lifecycle gates, and linked Issue/Project evidence."

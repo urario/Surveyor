@@ -25,3 +25,11 @@ Claude Code is responsible for design pressure, review discipline, and knowledge
 - Keep `RQ-xxx` visible in tasks, tests, and reviews.
 - Prefer narrow implementation slices that can be reviewed independently.
 
+# GitHub Issue / Project 運用
+
+- 共通タスク管理は GitHub Issue / Project で行い、永続知識は OKF に残す。
+- Issue のタイトルと本文は日本語を基本とし、`RQ-xxx`, `RD-xxx`, `DES-xxxx`, `IMP-xxxx`, `UT-xxxx`, `IT-xxxx`, `TRC-xxxx` は識別子としてそのまま使う。
+- Project フィールドと標準ビューは [GitHub Issue and Project Workflow](github-issue-project-workflow.md) に従う。
+- Claude Code は `Ready for Design` / `Design Review` の Issue を中心に扱う。
+- Codex は `Ready for Implementation` 以降の Issue を中心に扱い、TDD 実装、検証、PR 証跡、必要な OKF 更新を行う。
+- Human は優先度、仕様判断、実環境確認、最終 gate close を担当する。

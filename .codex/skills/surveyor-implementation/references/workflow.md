@@ -3,6 +3,7 @@
 ## Before Editing
 
 - Relevant RQ IDs are known.
+- Linked GitHub Issue is read when one exists; Japanese body and Project fields are treated as the task handoff.
 - Lifecycle phase and durable artifact need are known.
 - Test seam is identified.
 - Existing OKF decisions are checked.
@@ -23,3 +24,4 @@
 - State which RQ IDs were touched.
 - State lifecycle phase and artifact IDs, or explain why PR evidence is enough.
 - State which validations were not possible locally.
+- Update or summarize the linked Issue with verification results and residual risk when Issue context exists.

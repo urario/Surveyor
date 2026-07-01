@@ -1,4 +1,4 @@
 interface:
   display_name: "Surveyor OKF"
-  short_description: "OKF traceability for Surveyor knowledge"
-  default_prompt: "Use $surveyor-okf to update Surveyor OKF knowledge and trace links."
+  short_description: "OKF traceability for Surveyor knowledge and workflow"
+  default_prompt: "Use $surveyor-okf to update Surveyor OKF knowledge, trace links, and Issue/Project workflow notes."

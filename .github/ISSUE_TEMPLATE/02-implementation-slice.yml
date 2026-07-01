@@ -1,0 +1,127 @@
+name: 実装スライス
+description: Codex が TDD で実装する小さな作業単位を起票します。
+title: "IMP-xxxx: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issue は日本語で記入してください。実装前に関連 RQ/RD/DES と最初の failing test を明確にします。
+  - type: input
+    id: artifact
+    attributes:
+      label: Artifact
+      description: 永続証跡が必要なら IMP-xxxx、PR 証跡で十分なら PR-only と書いてください。
+      placeholder: IMP-0001 または PR-only
+    validations:
+      required: true
+  - type: textarea
+    id: rq
+    attributes:
+      label: 関連 RQ
+      placeholder: RQ-051 RQ-052
+    validations:
+      required: true
+  - type: textarea
+    id: rd
+    attributes:
+      label: 関連 RD
+      placeholder: RD-020 RD-022
+    validations:
+      required: false
+  - type: input
+    id: design
+    attributes:
+      label: 上流設計
+      description: 関連する DES / ADR を書いてください。
+      placeholder: DES-0009
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      options:
+        - Requirements
+        - Architecture
+        - Basic Design
+        - Detailed Design
+        - Implementation
+        - Unit Test
+        - Integration Test
+        - Review
+      default: 4
+    validations:
+      required: true
+  - type: dropdown
+    id: guardrail
+    attributes:
+      label: Guardrail
+      options:
+        - Read-only
+        - Determinism
+        - Confidentiality
+        - Layering
+        - None
+    validations:
+      required: true
+  - type: dropdown
+    id: owner_role
+    attributes:
+      label: Owner Role
+      options:
+        - Human
+        - Claude Code
+        - Codex
+      default: 2
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: Target
+      options:
+        - MVP
+        - Post-MVP
+        - Spike
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 実装範囲
+      description: 変更する予定のファイル、プロジェクト領域、範囲外を日本語で書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: first_test
+    attributes:
+      label: 最初の failing test
+      description: テスト名、検証したい振る舞い、fixture / fake を書いてください。
+      placeholder: 表示名が変わっても ElementKey が変わらないことを fixture で検証する。
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: 検証予定
+      description: 実行するテスト、OKF validation、手動確認があれば書いてください。
+      placeholder: dotnet test ... / .\tools\okf\Validate-Okf.ps1
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: 残リスク
+      description: Windows GUI、DPI、権限、手動確認などの残リスクを書いてください。なければ None known。
+    validations:
+      required: true

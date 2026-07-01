@@ -12,12 +12,13 @@ Use this skill when implementing or changing Surveyor code, tests, project struc
 1. Read the relevant requirement sections in `docs/gui-testability-analyzer-requirements.md`.
 2. Identify the `RQ-xxx` IDs that the change serves.
 3. Check `git status --short --branch` and create a topic branch if on `main`.
-4. Check `knowledge/index.md` and related OKF files for existing decisions.
-5. Check `knowledge/process/lifecycle-traceability.md` for phase artifact and trace evidence rules.
-6. Write or update the smallest useful failing test first whenever the behavior is testable.
-7. Implement the smallest production change that makes the test pass.
-8. Run targeted tests and any relevant validation scripts.
-9. Update OKF logs or trace notes when the change creates durable knowledge.
+4. If working from a GitHub Issue, read the Japanese Issue body and Project fields, then keep `Status`, `Phase`, `Artifact`, `RQ`, `RD`, and `Owner Role` current.
+5. Check `knowledge/index.md` and related OKF files for existing decisions.
+6. Check `knowledge/process/lifecycle-traceability.md` for phase artifact and trace evidence rules.
+7. Write or update the smallest useful failing test first whenever the behavior is testable.
+8. Implement the smallest production change that makes the test pass.
+9. Run targeted tests and any relevant validation scripts.
+10. Update OKF logs or trace notes when the change creates durable knowledge.
 
 ## Architecture Rules
 
@@ -45,5 +46,6 @@ Prefer tests around:
 - If unsure about requirements, architecture, process, Git workflow, or prior decisions, read `knowledge/index.md` first.
 - Follow `knowledge/process/lifecycle-traceability.md` for `DES-xxxx`, `IMP-xxxx`, `UT-xxxx`, `IT-xxxx`, and `TRC-xxxx` evidence.
 - Follow `knowledge/process/git-policy.md` for branch, commit, and PR rules.
+- Follow `knowledge/process/github-issue-project-workflow.md` for Japanese Issue wording, Project fields, and Issue/PR handoff rules.
 - Use `tools/okf/Validate-Okf.ps1` after OKF edits.
 - Use `tools/requirements/Export-RqIndex.ps1` when the requirement index needs refresh.
