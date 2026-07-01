@@ -146,6 +146,8 @@ Adapter-agnostic slices can proceed before the technology-allocation ratificatio
 - `RSK-RD-003`: confidentiality default paths/retention and exact secure-by-default values undefined (`RD-022`).
 - Custom-drawn/non-HWND regions inherently limit acquisition and capture completeness; `Unavailable`-reporting carries residual uncertainty.
 - Planned `UT`/`IT` IDs are obligations; evidence must be created under `knowledge/traces/` when tests exist.
+- `RSK-DES-001` (from basic-design review, `RD-016`): the correctness property that the analyzer *records* user-supplied `ScreenSelectionMetadata` and never *fabricates* priority must be asserted by a named test in detailed design — add a behavior to `UT-0012` (M03 threads metadata unchanged) and `UT-0002` (M08 computes no priority), beyond the `UT-0007` presentation coverage.
+- `RSK-DES-002` (from basic-design review, `RD-020`/`RQ-053`): with the sensitive-fallback key hash delegated to `M09` (invoked by `M03`, outside the domain), detailed design must pin *when* a fallback `ScreenKey` is finalized (domain construction vs application/policy stage) so "core-owned keys" stays coherent. Determinism is preserved (`M09` is deterministic); this is a sequencing-clarity item, not a contradiction.
 
 ## Related
 
