@@ -177,6 +177,8 @@ DTO names (`DiscoveryQuery`, `TargetCandidate`, `TargetRef`, `AcquisitionResult`
 | RQ / RD | `RQ-030`, `RQ-052`; `RD-022` |
 | UT / IT | `UT-0008` (secure-by-default + key/path sanitization); `IT-0004` |
 
+> **Version note (2026-07-02, refined by [DES-0009](des-0009-domain-model-stable-keys-and-availability.md), per DES-0007 §5.3):** the "key material candidate → sanitized key/path material" part of this contract is realized as the narrow `IFallbackKeyDerivation` seam of this port, invoked during **Stage 2 model construction** (`M03` supplies the `M09`-backed service; the `M06` mapping calls it), so keys are final before scoring and key material does not pass through the Stage-5 emission gate. Masking/emission decisions of this port are unchanged. `DES-0011`/`DES-0013` design against this refined wording.
+
 ### IClock
 
 | Aspect | Contract |
