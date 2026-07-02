@@ -1,0 +1,4 @@
+interface:
+  display_name: "Surveyor Project Management"
+  short_description: "Plans and updates Surveyor GitHub Project work"
+  default_prompt: "Use $surveyor-project-management to plan Surveyor work, assign owners, manage risks, and update the GitHub Project."

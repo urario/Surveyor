@@ -14,6 +14,7 @@ This repository builds Surveyor, a Windows GUI testability analyzer for legacy C
 
 - Claude Code is design/review oriented. Use it to refine architecture, review implementation plans, check RQ traceability, and curate OKF knowledge.
 - Codex is implementation oriented. Use it to make scoped code changes, write tests first, run verification, and update trace artifacts.
+- The project manager agent coordinates GitHub Project state, execution planning, owner assignment, and risks. Workers report completion to it before Project status is moved forward.
 - Keep both agents working from repo-tracked artifacts, not private chat memory.
 
 ## Implementation Workflow
@@ -25,6 +26,7 @@ This repository builds Surveyor, a Windows GUI testability analyzer for legacy C
 5. Implement in small vertical slices with deterministic outputs.
 6. Run targeted tests and OKF validation before handoff.
 7. Update trace notes so requirements, design decisions, basic/detailed design, tests, and implementation files remain connected.
+8. Report completion to the project manager agent with Issue, artifact, verification, OKF update, residual risk, and recommended next Project status.
 
 ## Lifecycle Traceability
 
@@ -46,6 +48,8 @@ This repository builds Surveyor, a Windows GUI testability analyzer for legacy C
 
 - Claude Code project agents: `.claude/agents/`
 - Claude Code project skills: `.claude/skills/`
+- Shared/legacy project skills: `.agents/skills/`
+- Codex project agents: `.codex/agents/`
 - Codex project skills: `.codex/skills/`
 - Optional install helpers: `tools/codex/`
 

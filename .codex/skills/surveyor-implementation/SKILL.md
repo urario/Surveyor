@@ -19,6 +19,7 @@ Use this skill when implementing or changing Surveyor code, tests, project struc
 8. Implement the smallest production change that makes the test pass.
 9. Run targeted tests and any relevant validation scripts.
 10. Update OKF logs or trace notes when the change creates durable knowledge.
+11. Report completion to `surveyor-project-management` with the Issue, artifact, verification result, OKF update, residual risk, and recommended next Project `Status` / `Owner Role`.
 
 ## Architecture Rules
 
@@ -47,5 +48,6 @@ Prefer tests around:
 - Follow `knowledge/process/lifecycle-traceability.md` for `DES-xxxx`, `IMP-xxxx`, `UT-xxxx`, `IT-xxxx`, and `TRC-xxxx` evidence.
 - Follow `knowledge/process/git-policy.md` for branch, commit, and PR rules.
 - Follow `knowledge/process/github-issue-project-workflow.md` for Japanese Issue wording, Project fields, and Issue/PR handoff rules.
+- Use `surveyor-project-management` or the `surveyor-project-manager` agent for execution planning, completion handoff, risk tracking, and Project field updates.
 - Use `tools/okf/Validate-Okf.ps1` after OKF edits.
 - Use `tools/requirements/Export-RqIndex.ps1` when the requirement index needs refresh.
