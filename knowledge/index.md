@@ -31,6 +31,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 * [DES-0005 V-Model Traceability and Downstream Tests](design/des-0005-vmodel-traceability-and-downstream-tests.md) - V-model mapping and planned unit/integration test obligations.
 * [DES-0006 Screen (Operating UI) Basic Design](design/des-0006-screen-basic-design.md) - Operating-UI screen inventory, navigation, per-screen bindings, review-surface decision, snapshot correspondence, and usability principles.
 * [DES-0007 Detailed Design Phase Execution Strategy](design/des-0007-detailed-design-execution-strategy.md) - Detailed-design execution order, OKF storage decision, trace template, unit-test intent strategy, and residual-risk closure map.
+* [DES-0008 Project Structure and Test Harness Detailed Design](design/des-0008-project-structure-and-test-harness.md) - Solution/project layout, assembly boundaries, namespaces, inward dependency rule with mechanical verification, determinism/quality build settings, unit fixture-tree placement, and the mixed integration fixture-app harness.
 
 # Decisions
 

@@ -20,6 +20,7 @@ Follow [Lifecycle Traceability](../process/lifecycle-traceability.md):
 ## Detailed Design Artifacts
 
 - [DES-0007 Detailed Design Phase Execution Strategy](des-0007-detailed-design-execution-strategy.md) - OKF-hosted execution strategy for detailed design, including package order, trace rules, artifact template, unit-test intent strategy, and residual-risk closure map.
+- [DES-0008 Project Structure and Test Harness Detailed Design](des-0008-project-structure-and-test-harness.md) - Detailed-design package 1: the one solution / ten `src` projects / test-project layout, `M01`–`M13` project homes, the inward dependency rule enforced by the `ProjectReference` graph plus a `NetArchTest`/banned-API architecture test, central determinism/quality MSBuild settings (`R-NET-02`), synthetic UT fixture-tree placement, and the mixed (WinForms + real MFC/Win32) integration fixture-app harness (`R-OPS-03`) with unit/integration CI lanes (`R-OPS-01`).
 
 ## Design Reviews
 
