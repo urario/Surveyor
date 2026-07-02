@@ -37,6 +37,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 # Decisions
 
 * [ADR-0001 AI Collaboration and OKF](decisions/adr-0001-ai-collaboration-and-okf.md) - Initial AI role split and knowledge management decision.
+* [ADR-0002 Adapter Technology Selection (draft)](decisions/adr-0002-adapter-technology-selection.md) - Proposed (draft) decision record for the RSK-RD-001 spike: UIA client (raw COM vs FlaUI), capture API (PrintWindow vs Windows.Graphics.Capture), packaging; desk analysis + PoC scaffold done, per-axis measurements and final selection pending the human owner.
 * [ADR-0003 Review Surface - Native WinUI Primary, HTML Portable](decisions/adr-0003-review-surface-native-vs-html.md) - Native WinUI is the primary interactive review surface; the HTML/JSON report is the portable distribution artifact.
 
 # Trace Evidence
