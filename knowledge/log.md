@@ -2,6 +2,8 @@
 
 ## 2026-07-02
 
+* **Creation**: Added Surveyor project management agent/skill assets for Codex and Claude Code. The new workflow manages GitHub Project fields, dependency/parallel planning, Owner Role assignment, risk tracking, and worker completion handoffs before Project status updates.
+
 * **Update**: PR #14 のレビューコメント対応として、`Severity` が review-finding 専用 Issue Form フィールドであることを `github-issue-project-workflow.md` に明記し、`03-test-evidence.yml` に `Owner Role` / `Priority` / `Target` を追加して他の Issue Form と揃え、レビュー指摘対象ファイルの末尾改行を補正した。
 
 ## 2026-07-01

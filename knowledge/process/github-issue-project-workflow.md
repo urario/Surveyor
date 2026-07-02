@@ -110,8 +110,66 @@ Project フィールドは英語固定にする。これは GitHub filter と ag
 | Human | 優先度、受け入れ判断、仕様判断、実環境確認、最終 gate close を行う。 |
 | Claude Code | `Ready for Design` から詳細設計を作成・レビューし、必要な OKF 更新を提案する。 |
 | Codex | `Ready for Implementation` 以降の Issue を取り、TDD 実装、検証、PR 証跡、必要な `IMP`/`UT`/`IT` 更新を行う。 |
+| Project Manager Agent | GitHub Project の状態、実行順序、依存関係、担当ロール、リスク、完了時の Project 更新を管理する。 |
 
 AI agent は Issue の日本語本文を尊重し、必要な ID を消さない。曖昧な判断が残る場合は Issue に残リスクまたは open question として追記する。
+
+## 実行計画と依存管理
+
+Project Manager Agent は、作業開始前または Project 整理時に Issue 群を次の観点で分類する。
+
+| 分類 | 意味 | 例 |
+| -- | -- | -- |
+| `Prerequisite` | 先に完了しないと下流が進められない作業 | `DES-0009` が未レビューのため `IMP-0001` を始めない |
+| `Parallel` | 同時に進めても衝突しにくい作業 | 別 artifact の詳細設計、独立した UT 設計 |
+| `Gate` | レビューまたは人間判断が必要な節目 | adapter spike の技術選定、最終受け入れ |
+| `Blocked` | 具体的な unblocker がないと進められない作業 | 実 Windows 環境での確認待ち |
+
+実行計画には、少なくとも次を含める。
+
+- 次に着手する Issue 番号と artifact ID。
+- 並列可能な Issue と、並列にしない理由。
+- 依存 Issue、review gate、人間判断 gate。
+- 推奨する `Owner Role` と `Status`。
+- guardrail risk、依存 risk、環境/manual risk、scope risk、残リスク。
+
+`Owner Role` は「今の次アクションを取る主体」を表す。過去に作業した主体ではない。
+
+## 完了時報告と Project 更新
+
+Claude Code / Codex / Human は、作業完了時に Project Manager Agent へ日本語で完了報告を渡す。Project Manager Agent は報告内容を確認してから GitHub Project を更新する。
+
+完了報告の最小テンプレート:
+
+```text
+対象Issue:
+担当:
+実施内容:
+成果物/変更:
+検証:
+OKF更新:
+残リスク:
+次の推奨Status:
+次のOwner Role:
+```
+
+Project Manager Agent は次を確認する。
+
+- Issue 番号、`Phase`、`Artifact`、`RQ`、`RD` が報告に含まれる。
+- 検証結果、レビュー結果、または未検証理由が明記されている。
+- 永続知識が変わった場合、OKF 更新と `tools/okf/Validate-Okf.ps1` の結果がある。
+- `Blocked` にする場合、blocker、unblocker owner、次の質問または作業が明記されている。
+- `Done` にする場合、Done 条件を満たし、人間 gate が残っていない。
+
+標準の Status 遷移:
+
+- 設計作業がレビュー可能になったら `Design Review`。
+- 設計レビュー指摘が閉じた、または下流 Issue として追跡されたら `Ready for Implementation`。
+- 実装・テスト作業が PR / 検証証跡つきでレビュー可能になったら `Code Review`。
+- PR、検証、OKF、残リスク、人間 gate が閉じたら `Done`。
+- unblocker が必要な場合だけ `Blocked`。この場合 `Owner Role` は unblocker の主体にする。
+
+Codex / Claude Code から GitHub Project を更新できる範囲は、原則として item 追加、field 作成、field 値更新、item 並び替えである。ビューの作成、表示列、フィルタ、grouping は GitHub の公開 CLI/API では制御できない場合があるため、その場合は手動 UI 手順として明記する。
 
 ## Done の条件
 

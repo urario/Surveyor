@@ -4,5 +4,6 @@
 # Local Claude Code project settings (not shared)
 .claude/settings.json
 
-# Codex agent definitions (kept local; .codex/skills/ remains tracked)
-.codex/agents/
+# Codex agent definitions (kept local unless explicitly shared; .codex/skills/ remains tracked)
+.codex/agents/*
+!.codex/agents/surveyor-project-manager.toml
