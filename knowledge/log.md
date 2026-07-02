@@ -2,6 +2,8 @@
 
 ## 2026-07-02
 
+* **Creation**: Added `tools/project/Sync-ProjectFields.ps1` to automate GitHub Project (`Surveyor Lifecycle Work` #1) field reflection. The script parses an Issue's "Project フィールド" block (and/or `-Set 'Field=Value'` overrides), auto-adds the item if needed, resolves single-select option ids from names, and writes `Status`/`Phase`/`Artifact`/`RQ`/`RD`/`Guardrail`/`Owner Role`/`Priority`/`Target` via `gh project item-edit` (requires the `project` token scope; `-DryRun` supported; ASCII-only source for PS 5.1). Documented the usage and the CI-full-automation caveat (a `project`-scoped PAT secret is needed because the default `GITHUB_TOKEN` cannot write user Projects v2) in `github-issue-project-workflow.md`. This retires the previous "manual Project reflection" limitation now that the token carries the `project` scope.
+
 * **Update**: Relaxed the Project Manager completion gate so `RQ` / `RD` are required only when present in the Issue or Project fields; `N/A` is allowed for Unit Test, Integration Test, and Review items without RD evidence to avoid invented trace IDs.
 
 * **Creation**: Added Surveyor project management agent/skill assets for Codex and Claude Code. The new workflow manages GitHub Project fields, dependency/parallel planning, Owner Role assignment, risk tracking, and worker completion handoffs before Project status updates.

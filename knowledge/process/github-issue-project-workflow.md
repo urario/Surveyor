@@ -173,6 +173,23 @@ Project Manager Agent は次を確認する。
 
 Codex / Claude Code から GitHub Project を更新できる範囲は、原則として item 追加、field 作成、field 値更新、item 並び替えである。ビューの作成、表示列、フィルタ、grouping は GitHub の公開 CLI/API では制御できない場合があるため、その場合は手動 UI 手順として明記する。
 
+## Project 反映の自動化 (Sync-ProjectFields.ps1)
+
+Project フィールドの反映は手動 UI ではなく [`tools/project/Sync-ProjectFields.ps1`](../../tools/project/Sync-ProjectFields.ps1) で行う。`gh` トークンに `project` スコープが必要（未付与なら `gh auth refresh -h github.com -s project`）。
+
+- 既定動作は、Issue 本文の「Project フィールド」ブロック（`Status`/`Phase`/`Artifact`/`RQ`/`RD`/`Guardrail`/`Owner Role`/`Priority`/`Target` の箇条書き）を解析し、対象 Issue の Project item（未登録なら自動追加）へ適用する。
+- 単一選択フィールド（`Status`/`Phase`/`Guardrail`/`Owner Role`/`Priority`/`Target`）は option 名から id を自動解決し、テキスト（`Artifact`/`RQ`/`RD`）はそのまま設定する。スキーマに無いフィールドは警告してスキップする。
+- 状態遷移は `-Set 'Field=Value',...` で上書きする（Issue 本文の初期値の上に適用）。まず `-DryRun` で差分を確認する。
+
+```powershell
+# 事前確認（書き込みなし）
+./tools/project/Sync-ProjectFields.ps1 -IssueNumber 20 -DryRun
+# 反映（例: 設計レビューへ遷移し、次アクション主体を Human に）
+./tools/project/Sync-ProjectFields.ps1 -IssueNumber 31 -Set 'Status=Design Review','Owner Role=Human'
+```
+
+完了報告を受けた Project Manager Agent はこのスクリプトで反映する。CI で issue 更新時に完全自動反映したい場合は、既定の `GITHUB_TOKEN` では user Project v2 を書けないため、`project` スコープ付き PAT を repo secret に置いた GitHub Actions ワークフローが別途必要になる（本スクリプトを `pwsh` から呼び出す構成）。ビュー定義・フィルタ・grouping は引き続き公開 API 外のため手動 UI で設定する。
+
 ## Done の条件
 
 Issue を `Done` にする前に、該当する範囲で確認する。
