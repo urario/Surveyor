@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CapturePrintWindowPoc/CapturePrintWindowPoc.csproj" />
+    <Project Path="src/CaptureWgcPoc/CaptureWgcPoc.csproj" />
+    <Project Path="src/SpikeCommon/SpikeCommon.csproj" />
+    <Project Path="src/UiaFlaUiPoc/UiaFlaUiPoc.csproj" />
+    <Project Path="src/UiaRawComPoc/UiaRawComPoc.csproj" />
+  </Folder>
+</Solution>
