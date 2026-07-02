@@ -11,7 +11,7 @@ timestamp: 2026-07-02T00:00:00+09:00
 
 This is detailed-design package 2 ([DES-0007](des-0007-detailed-design-execution-strategy.md) §4). It fixes the pure-core decisions that every later slice re-uses: the `ScreenModel`/`UiElement` value-object model, the stable-key (`ScreenKey`/`ElementKey`) derivation rule separated from `DisplayLabel`, the **fallback-key minimal contract** and its **finalization stage** (closing `RSK-DES-002`), the availability/confidence semantics (`Unavailable(reason)` is never a low score), the **stable-hash + `StringComparison.Ordinal` determinism rule** (`R-NET-01`, Critical), and the `M11` `IClock` abstraction. After this package, implementation of `Surveyor.Domain` (`UT-0001`, `IMP-0001`) can start without re-interpreting the domain model, key generation, or the confidentiality seam.
 
-Canonical requirements stay in [gui-testability-analyzer-requirements.md](../../docs/gui-testability-analyzer-requirements.md) (`RQ-xxx`) and derived requirements in [gui-testability-analyzer-requirements-definition.md](../requirements/requirements-definition.md) (`RD-xxx`).
+Canonical requirements stay in [gui-testability-analyzer-requirements.md](../../docs/gui-testability-analyzer-requirements.md) (`RQ-xxx`) and derived requirements in [requirements-definition.md](../requirements/requirements-definition.md) (`RD-xxx`).
 
 ## Trace Block
 
@@ -21,7 +21,7 @@ Canonical requirements stay in [gui-testability-analyzer-requirements.md](../../
 | Upstream | Guardrails `RQ-051` (determinism), `RQ-052` (confidential data), `RQ-053` (screen/element identity); derived `RD-004` (internal screen/element model), `RD-020` (deterministic scores/machine output), `RD-021` (version-comparison unit), `RD-022` (secure-by-default confidential handling), `RD-002` (screen/state evaluation unit, via the `M04` responsibility); [DES-0007](des-0007-detailed-design-execution-strategy.md) §4 package 2, §4.1 (`R-NET-01`, `R-IMP-01`), §5.3 (supersede convention), §8 (`RSK-DES-002`); [DES-0002](des-0002-module-responsibility-basic-design.md) `M04`/`M09`/`M11`; [DES-0003](des-0003-module-interface-basic-design.md) (`IUiTreeAcquisitionPort`, `IConfidentialityPolicy`, `IClock` contracts); [DES-0004](des-0004-analysis-flow-basic-design.md) Stages 2/3/5/6; [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md) (`UT-0001`/`UT-0008` obligations, `RSK-DES-002`); [DES-0008](des-0008-project-structure-and-test-harness.md) (project homes, banned-API guards); [DES-0001](../architecture/des-0001-initial-architecture.md) (layering) |
 | Downstream | `IMP-0001` (minimal `ScreenModel`/`ElementIdentity` implementation, issue #19); `UT-0001` (issue #18) and the key/path sensitive cases of `UT-0008`; review gate issue #17; `DES-0010` (scoring consumes keys/availability), `DES-0011` (`IClock` threading/wiring, DTO carriage), `DES-0012` (serialized key/order rules), `DES-0013` (fallback-key policy detail, masking/storage), `DES-0014` (confidence rubric assignment, identity-source population) |
 | Evidence | Value-object catalogue with invariants, identity-source ladder, canonical key-material encoding + SHA-256 rule, fallback-key minimal contract + finalization-stage decision (model construction), availability/confidence semantics, `IClock` abstraction contract, Mermaid class/sequence diagrams, edge-case table, fixture strategy with counter-examples, `UT-0001`/`UT-0008` intent tables, downstream handoff |
-| Verification | [Validate-Okf.ps1](../../tools/okf/Validate-Okf.ps1); `git diff --check`; `surveyor-design-review` + `surveyor-quality-review` pre-review evidence, then human owner final approval per [DES-0007](des-0007-detailed-design-execution-strategy.md) §5.2 (review gate is issue #17) |
+| Verification | [Validate-Okf.ps1](../../tools/okf/Validate-Okf.ps1); `git diff --check`; AI pre-review completed 2026-07-02 — `surveyor-design-review`: *Accept with changes* (2 Major / 5 Minor, all applied in this revision) and `surveyor-quality-review`: *Accept with risks* (acceptance conditions 1–3 applied, carried risks recorded below); human owner final approval pending per [DES-0007](des-0007-detailed-design-execution-strategy.md) §5.2 (review gate is issue #17) |
 | Residual Risk | Implementation file paths follow [DES-0008](des-0008-project-structure-and-test-harness.md), whose source scaffold is not yet created (review gate #31); fallback-key *policy* detail (masking technique, storage, retention, export) is delegated to `DES-0013` under the §5.3 supersede convention — only the minimal contract is fixed here; `IClock` threading/DI wiring is delegated to `DES-0011`/`DES-0018`; the concrete confidence *rubric* (how `M06` assigns values) is `DES-0014` |
 
 ## Purpose And Success Criterion
@@ -65,6 +65,8 @@ Out of scope (downstream owners):
 - Report schema, serialized timestamp format, serializer determinism contract → `DES-0012`.
 - MVP exclusions inherited from `RQ-035`–`RQ-039`/`RD-027`.
 
+Guardrail disposition ([DES-0007](des-0007-detailed-design-execution-strategy.md) §9): `RQ-051`/`RQ-052`/`RQ-053` are directly addressed here. `RQ-048` (read-only) is **explicitly not in scope** beyond the type-level fact that the domain exposes no pattern-invoking API (`SupportedPatterns` is read/report data only); enforcement is owned by `M06`/`DES-0014` (`UT-0005`). `RQ-054` (UI-independent core) is satisfied structurally — this package designs pure core types with no framework dependency, mechanically guarded by the [DES-0008](des-0008-project-structure-and-test-harness.md) dependency/banned-API checks.
+
 ## Upstream Decisions (binding)
 
 - **Keys are core-owned and deterministic; `DisplayLabel` is never key material** ([DES-0002](des-0002-module-responsibility-basic-design.md) `M04`; `RQ-051`/`RQ-053`).
@@ -83,11 +85,11 @@ All types below are immutable value objects (or immutable aggregates of value ob
 
 | Type | Fields | Invariants |
 | -- | -- | -- |
-| `ScreenModel` | `ScreenKey Key`, `ScreenIdentity Identity`, `ScreenStateDiscriminator? State`, `DisplayLabel Label`, `UiElement Root`, `IReadOnlyList<UiElement> ElementsInStableOrder`, `ScreenSelectionMetadata? SelectionMetadata` | `Key` is final at construction and derived only from `Identity` + `State`; `ElementsInStableOrder` is the fixed structural traversal order (see [Ordering](#ordering-and-tie-break-rules)); no I/O, no clock |
+| `ScreenModel` | `ScreenKey Key`, `ScreenIdentity Identity`, `ScreenStateDiscriminator? State`, `DisplayLabel Label`, `UiElement Root`, `IReadOnlyList<UiElement> ElementsInStableOrder`, `ScreenSelectionMetadata? SelectionMetadata` | `Key` is final at construction and derived only from `Identity` + `State`; `ElementsInStableOrder` is the fixed structural traversal order (see [Ordering](#ordering-and-tie-break-rules)); no I/O, no clock; `SelectionMetadata` is attached at result assembly (Stage 6) via a copy-with operation producing a new value (`RD-016`) — keys are unaffected |
 | `UiElement` | `ElementKey Key`, `ElementIdentity Identity`, `DisplayLabel Label`, `ControlKind Kind`, `BoundingRect? Bounds`, `Availability Availability`, `AcquisitionConfidence Confidence`, `IReadOnlyList<UiElement> Children`, `SupportedPatterns Patterns` | `Key` final at construction; `Bounds` is `null` only when `Availability` is `Unavailable`; children order = fixed traversal order |
 | `ScreenIdentity` | `string ProcessImageName` (file name only, no path), `string NormalizedWindowClass`, `ScreenRole Role` (`TopLevel`/`Dialog`/`MdiChild`/`Tab`/`Pane`), `IdentityMaterial Material` | `ProcessImageName` contains no directory separators; `NormalizedWindowClass` passed through the class-name normalization rule |
 | `ElementIdentity` | `IdentitySource Source`, `IdentityMaterial Material`, `int? SiblingOrdinal` | `Material` never contains raw sensitive text (enforced by `IdentityMaterial` construction, below) |
-| `IdentityMaterial` | *either* `StableIdentity(string value)` *or* `FallbackKeyToken(string hashHex, string algorithmVersion)` | `StableIdentity.value` must come from the non-sensitive sources of the ladder below; `FallbackKeyToken` is only constructible from an `M09`-produced hash (fixed length, lowercase hex) — there is no domain constructor that accepts raw `Name`/title text |
+| `IdentityMaterial` | *either* `StableIdentity(string value)` *or* `FallbackKeyToken(string hashHex, string algorithmVersion)` | `StableIdentity.value` must come from the non-sensitive sources of the ladder below; `FallbackKeyToken` requires hash-shaped input (exactly 32 lowercase hex chars; the sole in-repo producer is the `M09` service) — there is no domain constructor that accepts raw `Name`/title text |
 | `IdentitySource` (enum) | `AutomationId`, `FrameworkStableId` (e.g. Win32 control ID), `FallbackHash`, `StructuralOrdinal` | Recorded per element so comparability confidence (`RD-021`) is honest about how stable the key is |
 | `ScreenKey` / `ElementKey` | `string Digest` (32 lowercase hex chars = first 16 bytes of SHA-256), `bool IsFallback`, `string Version` (`"1"`) | Canonical string forms `scr:1:<digest>` / `elm:1:<digest>` (fallback: `scr:1f:` / `elm:1f:`); ordinal comparison; safe for paths/ids by construction (lowercase hex + ASCII prefix) |
 | `DisplayLabel` | `string Value`, `bool IsSensitive` (default `true` for target-derived text) | Never key material; never serialized as an id/path; emitted only post-`M09` policy (Stage 5) |
@@ -105,7 +107,7 @@ All types below are immutable value objects (or immutable aggregates of value ob
 
 ### Identity-source ladder (key material precedence)
 
-For each element (and for the screen-state discriminator), key material is chosen by the first applicable rung:
+For each element, for the screen identity (`ScreenIdentity.Material`), and for the screen-state discriminator, key material is chosen by the first applicable rung:
 
 | Rung | Source | `IdentitySource` | Notes |
 | -- | -- | -- | -- |
@@ -116,6 +118,8 @@ For each element (and for the screen-state discriminator), key material is chose
 
 "Runtime-generated" detection for rung 1 (e.g. WinForms auto-ids, decimal-only ids) and the exact per-framework rules are an acquisition concern (`DES-0014`); the domain contract is only that rung-1/2 values must be **non-sensitive and run-stable**, which the adapter asserts by choosing the rung.
 
+**Screen application.** `ScreenIdentity.Material` uses rungs 1–3 (window `AutomationId` → framework-stable window identifier → `M09` fallback token of the normalized title). Rung 4 does not apply to screens; the terminal rule when no stable identity exists **and** the normalized title is empty is the `n=0` no-identity marker in the material — the key then rests on `proc`/`class`/`role` alone, is *not* marked fallback (no sensitive input was used), records `IdentitySource.StructuralOrdinal`, and multiple such screens in one run are disambiguated by the collision rule below. Comparability across versions is weakest for this terminal case (`RD-021`).
+
 ### Canonical key-material encoding and hash rule
 
 Deterministic derivation (`R-NET-01`):
@@ -125,7 +129,10 @@ ScreenKey.material  = "scr" LF "v=1" LF
                       "proc=" esc(lower(ProcessImageName)) LF
                       "class=" esc(NormalizedWindowClass) LF
                       "role=" RoleTag LF
-                      "id=" MaterialTag                     ; stable id or fallback token hex
+                      "id=" ( "a=" esc(AutomationId)        ; source-tagged like element steps
+                            | "w=" esc(FrameworkStableId)
+                            | "f=" FallbackTokenHex
+                            | "n=0" )                       ; no-identity terminal rule (screens only)
                       [ LF "state=" StateMaterialTag ]      ; present only for state-differentiated screens
 
 ElementKey.material = "elm" LF "v=1" LF
@@ -138,23 +145,31 @@ step_i = ControlKindTag ":" ( "a=" esc(AutomationId)
                             | "o=" SiblingOrdinal )
 ```
 
-- `esc()` backslash-escapes `\`, LF, `/`, `:`, and `=` so material cannot be forged by crafted values; `lower()` is `ToLowerInvariant` (culture-independent); no other case folding, no trimming beyond leading/trailing whitespace, no Unicode normalization is applied to stable ids (they are compared as authored, ordinally).
+- `esc()` backslash-escapes `\`, LF, `/`, `:`, `=`, and `#` so material (including the collision suffix below) cannot be forged by crafted values; `lower()` is `ToLowerInvariant` (culture-independent); no other case folding, no trimming beyond leading/trailing whitespace (whitespace = `char.IsWhiteSpace`), no Unicode normalization is applied to stable ids (they are compared as authored, ordinally).
 - Digest = SHA-256 over the UTF-8 bytes of the material; the key stores the **first 16 bytes as 32 lowercase hex chars**. 128 bits keeps accidental collision probability negligible at Surveyor's scale while keeping keys path/report friendly.
 - `v=1` is the key-algorithm version. Any change to the material grammar, normalization, or hash is a new version and follows the [DES-0007](des-0007-detailed-design-execution-strategy.md) §5.3 supersede convention; the report records the version (`DES-0012` carries it in the schema).
 - **Prohibited as key/ordering sources**: `Object.GetHashCode()`, `string.GetHashCode()`, `Dictionary`/`HashSet` iteration order, `HWND`/`RuntimeId` values, arrival/timing order, ambient culture. The [DES-0008](des-0008-project-structure-and-test-harness.md) banned-API analyzers guard the ambient-time/culture part at build time; `UT-0001`'s fresh-process assertion guards the rest behaviorally.
 
-**Window-class normalization rule** (part of the domain's key contract because MFC/WinForms class names embed per-process noise): strip instance-specific segments matching `Afx:[0-9a-fA-F:]+` → `Afx`, `WindowsForms10\.\S+\.app\.[0-9a-fA-F.]+` → `WindowsForms10.<class-core>`, and trailing hex-token segments of the form `:[0-9a-fA-F]{4,}`. The rule is a fixed, versioned table owned here (extended, if needed, via a `v=2` material bump, not ad hoc).
+**Window-class normalization rule** (part of the domain's key contract because MFC/WinForms class names embed per-process noise). The v=1 table, applied in order, first match wins, replacement strings are literal except the named capture:
 
-**Collision rule**: if two sibling elements produce identical `step_i` material (e.g. duplicated `AutomationId`), the later ones (in fixed traversal order) get `"#2"`, `"#3"`, … appended to the step before hashing, and the element records `SiblingOrdinal`. Duplicate stable ids are also a testability finding (owned by `DES-0010`), but the key must remain unique and deterministic regardless.
+| Order | Match (regex, ordinal) | Replace with |
+| -- | -- | -- |
+| 1 | `^Afx:[0-9a-fA-F:]+$` | `Afx` |
+| 2 | `^WindowsForms10\.(?<core>[^.]+)\.app\..*$` | `WindowsForms10.` + `${core}` |
+| 3 | `^(?<base>.+?):[0-9a-fA-F]{4,}$` | `${base}` (strips one trailing hex-token segment) |
+
+The table is fixed and versioned here (extended, if needed, via a `v=2` material bump, not ad hoc).
+
+**Collision rule**: if two sibling elements produce identical `step_i` material (e.g. duplicated `AutomationId`), the later ones (in fixed traversal order) get `"#2"`, `"#3"`, … appended to the step before hashing, and the element records `SiblingOrdinal`. Because `#` is escaped in authored values, a crafted `AutomationId` (e.g. `"X#2"`) cannot forge a suffixed step; the rule is **re-applied to the post-suffix material until all sibling steps are unique**, so the result is deterministic regardless of how authored ids and suffixes interleave. The same rule disambiguates multiple no-identity (`n=0`) screens within one run, in within-run encounter order. Duplicate stable ids are also a testability finding (owned by `DES-0010`), but the key must remain unique and deterministic regardless.
 
 ### Fallback-key minimal contract (`R-IMP-01`) and finalization stage (`RSK-DES-002` closure)
 
-**Contract.** The `M09`-owned fallback derivation service (a narrow seam of `IConfidentialityPolicy`; interface name candidate `IFallbackKeyDerivation`) must satisfy, for input = target-derived sensitive text (window title, element `Name`) plus a domain-separation tag (`"scr"`/`"elm"`/`"state"`):
+**Contract.** The `M09`-owned fallback derivation service (a narrow seam of `IConfidentialityPolicy`: interface `IFallbackKeyDerivation`, application-owned in `Surveyor.Application.Ports` alongside the other ports per [DES-0008](des-0008-project-structure-and-test-harness.md), implemented by `M09` in `Surveyor.Policy`) must satisfy, for input = target-derived sensitive text (window title, element `Name`) plus a domain-separation tag (`"scr"`/`"elm"`/`"state"`):
 
-1. **Deterministic**: same normalized input → same token, across processes, machines, and runs. Normalization is fixed: trim leading/trailing whitespace, collapse internal whitespace runs to a single space, Unicode NFC, **no case folding** (titles are compared as displayed); then UTF-8 → SHA-256 with the tag prefixed as `tag LF "v=1" LF text`.
-2. **Non-reversible**: the token is the truncated hash only (first 16 bytes, lowercase hex); the raw text is not retained by the service, is never stored in any domain object except `DisplayLabel`, and never appears in keys, paths, ids, logs, diagnostics, or exception messages. No per-process or per-install salt (that would break cross-process determinism); the fixed domain-separation tag prevents cross-kind token reuse.
+1. **Deterministic**: same normalized input → same token, across processes, machines, and runs. Normalization is fixed for v=1: trim leading/trailing whitespace and collapse internal whitespace runs to a single U+0020 (whitespace = `char.IsWhiteSpace`, a culture-independent Unicode property check); **no case folding and no Unicode normalization (NFC/NFD)** — `String.Normalize` throws for non-ASCII input under the `InvariantGlobalization=true` setting pinned by [DES-0008](des-0008-project-structure-and-test-harness.md), and normalization tables vary by Unicode data version, which would undermine cross-machine determinism. Visually equivalent but differently composed titles therefore produce different tokens (accepted v=1 limitation, revisable only via an algorithm-version bump). Then UTF-8 → SHA-256 with the tag prefixed as `tag LF "v=1" LF text`.
+2. **Non-reversible**: the token is the truncated hash only (first 16 bytes, lowercase hex); the raw text is not retained by the service, is never stored in any domain object except `DisplayLabel`, and never appears in keys, paths, ids, logs, diagnostics, or exception messages. No per-process or per-install salt (that would break cross-process determinism); the fixed domain-separation tag prevents cross-kind token reuse. *Honest limit*: saltless hashing of low-entropy text resists preimage recovery but **not guess-and-verify matching** against candidate texts — whether fallback tokens may appear in exported artifacts is an explicit `DES-0013` decision (recorded in Residual Risks).
 3. **Cross-process equal-value stability**: guaranteed by (1) + the pinned algorithm version; `UT-0001` asserts it with a recorded expected token recomputed in a fresh process.
-4. **The domain never handles raw sensitive text as key material**: `IdentityMaterial.FallbackKeyToken` is only constructible from the service's output; there is no `M04` API that hashes, truncates, or otherwise transforms `Name`/title into a key.
+4. **The domain never handles raw sensitive text as key material**: `IdentityMaterial.FallbackKeyToken`'s constructor validates hash shape (exactly 32 lowercase hex chars), and the sole in-repo producer of such tokens is the `M09` service — provenance is enforced by construction-time shape validation plus architecture review/test, not cryptographically. There is no `M04` API that hashes, truncates, or otherwise transforms `Name`/title into a key.
 5. **Marked**: keys built on a fallback token carry `IsFallback = true` (canonical form `scr:1f:`/`elm:1f:`), so comparability (`RD-021`) and reports can distinguish design-grade identity from hash-of-label identity.
 
 `DES-0013` may extend policy around the token (masking of `DisplayLabel`, storage, retention, export) but must not alter items 1–5 without a version bump under the §5.3 supersede convention.
@@ -162,6 +177,8 @@ step_i = ControlKindTag ":" ( "a=" esc(AutomationId)
 **Finalization stage — decided: model construction (Stage 2).** The three candidate stages from `RSK-DES-002` were model construction, policy application (Stage 5), and result assembly (Stage 6). This package fixes **model construction**: `AnalyzeScreenUseCase` (`M03`) supplies the `M09` fallback-derivation service to the acquisition mapping step, so every `ScreenModel`/`UiElement` carries its final, immutable key at construction time; Stages 3–8 never recompute or rewrite keys.
 
 Why: Stage 3 scoring de-duplicates and orders by key, Stage 5 policy gates *emission* (images/labels), and Stage 6 assembles output — if keys were finalized at Stage 5 or 6, scoring would run on provisional identities, and "core-owned keys" (`RQ-053`) would silently depend on policy sequencing. Fixing keys at construction keeps determinism (`RQ-051`) and identity management (`RQ-053`) independent of the emission-policy pipeline, while confidentiality (`RQ-052`) is preserved because the only sensitive-text transformation happens inside `M09` *before* the domain object exists. The adapter (`M06`) may hold raw text transiently during mapping — it read it from the target — but hands the domain either non-sensitive stable identity or the finished token.
+
+**Reconciliation with the basic design.** This decision *refines* two basic-design statements rather than contradicting them. [DES-0003](des-0003-module-interface-basic-design.md)'s `IConfidentialityPolicy` input ("key material candidate" → "sanitized key/path material") and [DES-0004](des-0004-analysis-flow-basic-design.md)'s Stage 5 contract assumed key material could flow through the Stage-5 gate; with keys final at Stage 2, key material **does not reach Stage 5**, which remains the mandatory emission gate (images, labels, path/output sanitization). The caller topology is likewise refined: [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md) described the fallback hash as "invoked by `M03`"; concretely, `M03` *supplies* the `M09`-backed `IFallbackKeyDerivation` service and the `M06` mapping *invokes* it during model construction. Version notes recording this refinement are added to `DES-0003`/`DES-0004` per the [DES-0007](des-0007-detailed-design-execution-strategy.md) §5.3 convention, and the refined wording is a named review item for `DES-0011`/`DES-0013` so the contracts do not fork.
 
 ```mermaid
 sequenceDiagram
@@ -270,7 +287,7 @@ classDiagram
 | No `AutomationId`, no framework id, `Name` present | Rung 3: `M09` fallback token; key marked `IsFallback`; `DisplayLabel` keeps the name for display only |
 | No identity at all (unnamed custom pane) | Rung 4: structural ordinal path; `IdentitySource.StructuralOrdinal`; comparability best-effort (`RD-021`) |
 | Duplicate `AutomationId` among siblings | Collision rule `#n` suffix in traversal order; deterministic; duplicate-id finding is `DES-0010`'s concern |
-| Volatile title text (document name, counters) in `DisplayLabel` | Label changes never change any key (`UT-0001` core assertion) |
+| Volatile title text (document name, counters) in `DisplayLabel` | For stable-identity screens/elements (rungs 1/2/4), label changes never change any key (`UT-0001` core assertion). For rung-3 fallback identity the label *is* the identity source, so a `Name`/title change changes the key **by design**; the `IsFallback` marker makes this comparability limit explicit (`RD-021`) |
 | MFC `Afx:0x...`/WinForms auto class names | Class-name normalization table strips instance noise before material encoding |
 | Same window, different tab/mode state | Distinct `ScreenModel` + distinct `ScreenKey` via `state=` material (`RD-002`) |
 | Whitespace/Unicode variants of the same `Name` | Fallback normalization (trim, collapse whitespace, NFC) → same token; case differences → different token (intentional: ordinal, no case folding) |
@@ -278,7 +295,7 @@ classDiagram
 | Permission-denied / timeout subtree | `Unavailable(PermissionDenied/Timeout)` placeholder with valid key; no fabricated children |
 | Virtualized/lazy subtree | `Unavailable(NotRealized)`, distinct from absence (`R-GTA-02`) |
 | Culture change (e.g. tr-TR) or fresh process | Keys and ordering byte-identical: materials are culture-free, hash is SHA-256, comparisons ordinal (`UT-0001` fresh-process case; serializer-level culture case is `UT-0006`/`DES-0012`) |
-| Empty screen (no readable elements) | Valid `ScreenModel` with empty element list and run-level availability status carried by the acquisition result (`DES-0011`) |
+| Empty screen (no readable elements) | The window itself is always modeled: `Root` is the window's own `UiElement` (possibly `Unavailable`) with empty `Children`; run-level availability status carried by the acquisition result (`DES-0011`) |
 
 ## Diagnostics And Logging
 
@@ -299,22 +316,22 @@ Per [DES-0007](des-0007-detailed-design-execution-strategy.md) §7, tests protec
 
 | Behavior | Risk guarded | Fixture | Oracle | Anti-pattern avoided / counter-example |
 | -- | -- | -- | -- | -- |
-| Display-label change does not change any key (**first failing test**) | Volatile text leaking into identity breaks version comparison (`RQ-053`, `RD-021`) | `volatile-label-before/after.tree` | All `ScreenKey`/`ElementKey` values byte-equal across the two trees | Asserting a helper's exact string only; counter-example: label-in-material key function must go red |
+| Display-label change does not change any **stable-identity** key (rungs 1/2/4) (**first failing test**) | Volatile text leaking into identity breaks version comparison (`RQ-053`, `RD-021`) | `volatile-label-before/after.tree` (stable identities only) | All rung-1/2/4 `ScreenKey`/`ElementKey` values byte-equal across the two trees; rung-3 fallback keys are excluded — they change with the label by design and stay `IsFallback`-marked | Asserting a helper's exact string only; counter-example: label-in-material key function must go red |
 | Same stable input → same key recomputed in a **fresh process** | `String.GetHashCode` per-process randomization (`R-NET-01`, Critical) | `stable-ids.tree` + recorded expected digests | Child-process recomputation equals recorded digests | Same-process-only equality; counter-example: `GetHashCode`-based digest must go red |
-| Fallback key deterministic, non-reversible, cross-process stable, marked | `R-IMP-01` contract regression | `fallback-names.tree` | Token equals recorded SHA-256-derived value in fresh process; key string carries `1f` marker; token ≠ any substring of the input | Reversible/truncated-plaintext "hash"; per-process salt counter-example must go red |
-| Different screen state → different `ScreenKey`; same state → same key | Screen/state evaluation unit collapses (`RD-002`) | `state-switch-a/b.tree` | Keys differ across states, equal within a state | Testing only one state |
-| `Unavailable(reason)` preserved distinctly; unavailable element keeps a valid key | `Unavailable` conflated with low score / dropped (`RD-020`) | tree with `PermissionDenied`/`NotRealized` nodes | Model exposes `Unavailable(reason)` values unchanged; keys present | Fabricating defaults for unread fields |
+| Fallback key deterministic, non-reversible, cross-process stable, marked | `R-IMP-01` contract regression | `fallback-names.tree` | Token equals recorded SHA-256-derived value in fresh process; key string carries `1f` marker; no input-derived sentinel substring appears in the token or key string | Reversible/truncated-plaintext "hash"; per-process salt counter-example must go red |
+| Different screen state → different `ScreenKey`; same state → same key | Screen/state evaluation unit collapses (`RD-002`) | `state-switch-a/b.tree` | Keys differ across states, equal within a state | Testing only one state; counter-example: a key function that ignores the `state=` material must go red |
+| `Unavailable(reason)` preserved distinctly; unavailable element keeps a valid key | `Unavailable` conflated with low score / dropped (`RD-020`) | tree with `PermissionDenied`/`NotRealized` nodes | Model exposes `Unavailable(reason)` values unchanged; keys present | Fabricating defaults for unread fields; counter-example: a builder that fills defaults for unread fields must go red |
 | Element order is fixed traversal order; ties broken ordinally | Iteration-order nondeterminism | `duplicate-ids.tree` | Order identical across repeated constructions and fresh process | Order asserted against insertion order only |
 
 ### `UT-0008` — key/path confidentiality cases (this package's share)
 
-`UT-0008`'s policy-branch coverage belongs to `DES-0013`; the key/path cases fixed here:
+`UT-0008`'s policy-branch coverage belongs to `DES-0013`; the key/path cases fixed here. Homes per [DES-0008](des-0008-project-structure-and-test-harness.md): domain construction-refusal cases in `Surveyor.Domain.Tests`, fallback-token derivation contract cases in `Surveyor.Policy.Tests`.
 
 | Behavior | Risk guarded | Fixture | Oracle | Anti-pattern avoided / counter-example |
 | -- | -- | -- | -- | -- |
 | No raw sensitive text in any key, canonical key string, or key-derived path segment | `RQ-052` egress via ids/paths | `fallback-names.tree` with sentinel names (e.g. `"SENTINEL-SSN-1234"`) | Scan of all key strings/derived paths finds no sentinel substring | Testing only the happy allow-all branch; counter-example: raw-`Name`-in-material variant must go red |
-| Domain refuses raw-text key construction | Accidental bypass of the `M09` seam | direct API misuse test | No public `M04` API accepts `Name`/title for key material; `FallbackKeyToken` requires hash-shaped input (length/charset validated) | Relying on convention instead of construction-time enforcement |
-| Exception/diagnostic text from domain construction contains keys only, never labels | `R-SEC-01` seam | forced contract-violation cases | Exception messages match `scr:`/`elm:` pattern allowlist; no sentinel text | Asserting only that an exception is thrown |
+| Domain refuses raw-text key construction | Accidental bypass of the `M09` seam | direct API misuse test | No public `M04` API accepts `Name`/title for key material; `FallbackKeyToken` requires hash-shaped input (length/charset validated) | Relying on convention instead of construction-time enforcement; counter-example: a `FallbackKeyToken` constructor without length/charset validation must go red |
+| Exception/diagnostic text from domain construction contains keys only, never labels | `R-SEC-01` seam | forced contract-violation cases | Exception messages match `scr:`/`elm:` pattern allowlist; no sentinel text | Asserting only that an exception is thrown; counter-example: an implementation embedding the label in the message must go red |
 
 Second-pass smell check (`R-AI-02`) applies to the implemented tests before they count as evidence.
 
@@ -327,13 +344,17 @@ None — this package is pure core. No Windows version, DPI, monitor, integrity,
 - **Candidate project area**: `Surveyor.Domain` (`Surveyor.Domain.Model`, `Surveyor.Domain.Keys`), `Surveyor.Application.Ports` (`IClock`), `Surveyor.Domain.Tests`, fixtures under `tests/fixtures/uia-trees/` — all per [DES-0008](des-0008-project-structure-and-test-harness.md) (scaffold pending, review gate #31).
 - **First failing test** (issue #18, `UT-0001`): "display label change does not change key" against `volatile-label-before/after.tree` — written red first, then made green by `IMP-0001`.
 - **Implementation slice** (issue #19, `IMP-0001`): minimal `ScreenModel`/`UiElement`/`ElementIdentity`/keys sufficient to turn the first `UT-0001` behaviors green, including the `IdentityMaterial` construction rules and canonical material encoding.
-- **Verification command**: `dotnet test tests/Surveyor.Domain.Tests` (unit lane, warnings-as-errors); `tools/okf/Validate-Okf.ps1` for this artifact.
+- **Verification command**: `dotnet test tests/Surveyor.Domain.Tests` plus `dotnet test tests/Surveyor.Policy.Tests` (fallback-derivation contract cases) on the unit lane, warnings-as-errors; `tools/okf/Validate-Okf.ps1` for this artifact.
 - **Minimal context bundle** for the implementing agent: this package's [Data And Contract Design](#data-and-contract-design) (value-object catalogue, ladder, encoding, fallback contract) and [Unit-Test Intent](#unit-test-intent); `RQ-051`–`RQ-053` from the requirement source; [DES-0008](des-0008-project-structure-and-test-harness.md) project map; the `IUiTreeAcquisitionPort`/`IConfidentialityPolicy` rows of [DES-0003](des-0003-module-interface-basic-design.md). Reading `DES-0001`/`DES-0004` in full is not required for the slice.
 - **Unblocks**: `DES-0010` (consumes keys/availability), `DES-0013` (extends the fallback contract), `DES-0011` (carries the model through DTOs; wires `IClock`).
 
 ## Residual Risks And `RSK-DES-002` Closure
 
 - **`RSK-DES-002` — closed.** The fallback-`ScreenKey` finalization stage is fixed at **model construction (Stage 2)** with the minimal contract above; `DES-0013` extends policy around the token under the §5.3 supersede convention and cannot move the stage or weaken items 1–5 without a versioned supersede.
+- **Fallback tokens are guess-and-verify matchable** (saltless by design for cross-process determinism): an attacker with candidate texts can confirm which one a token encodes. Whether tokens may appear in *exported* artifacts (vs internal keys/paths only) is an explicit `DES-0013` decision.
+- **Rung-3 fallback keys change when the source `Name`/title changes** — version-to-version comparability (`RD-021`) degrades for fallback-identified screens/elements; mitigated by the `IsFallback` marker so comparison tooling can treat them as best-effort.
+- **Basic-design wording refined**: `DES-0003` (`IConfidentialityPolicy` key-material I/O) and `DES-0004` (Stage 5) carry §5.3 version notes from this package; `DES-0011`/`DES-0013` must design against the refined wording (named review item).
+- v=1 fallback normalization performs **no Unicode normalization** (see contract item 1); visually equivalent, differently composed titles yield different tokens. Accepted for v=1; revisit only with an algorithm-version bump.
 - Implementation file paths are candidates until the `DES-0008` scaffold lands (review gate #31); the design does not depend on the paths, only the homes.
 - The identity-source ladder's rung-1 "runtime-generated id" detection rules are owned by `DES-0014`; a too-permissive rung-1 rule would degrade key stability — carried as a named review item for `DES-0014`.
 - Fallback-key *policy* breadth (masking, storage, retention, export, log sanitization detail) is delegated to `DES-0013`; until it lands, only the minimal contract governs — acceptable because no emission path exists before `DES-0012`/`DES-0013` designs are implemented.
