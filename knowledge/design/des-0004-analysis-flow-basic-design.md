@@ -132,6 +132,8 @@ sequenceDiagram
 - **Guardrail checkpoint**: `RQ-052`/`RD-022` (**mandatory gate** — nothing reaches report/store before this stage; secure-by-default; no raw sensitive text into keys/paths/ids).
 - **RQ/RD**: `RQ-030`, `RQ-052`; `RD-022`.
 
+> **Version note (2026-07-02, refined by [DES-0009](des-0009-domain-model-stable-keys-and-availability.md), per DES-0007 §5.3):** fallback key material is finalized at **Stage 2 (model construction)** through the `IFallbackKeyDerivation` seam of `IConfidentialityPolicy` (supplied by `M03`, invoked by the `M06` mapping), closing `RSK-DES-002`. "Key material candidates" therefore no longer flow through this stage; Stage 5 remains the mandatory emission gate for images, extracted text, and path/output sanitization.
+
 ### Stage 6 — Result Assembly (`AnalyzeScreenUseCase`)
 
 - **In**: model (incl. screen/state-unit identity `RD-002` and any user-supplied `ScreenSelectionMetadata` `RD-016`), findings/scores/class, improvement candidates (`RD-015`), snapshot refs, diagnostics (all post-policy). **Out**: `AnalysisResult`.
