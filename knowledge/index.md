@@ -32,6 +32,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 * [DES-0006 Screen (Operating UI) Basic Design](design/des-0006-screen-basic-design.md) - Operating-UI screen inventory, navigation, per-screen bindings, review-surface decision, snapshot correspondence, and usability principles.
 * [DES-0007 Detailed Design Phase Execution Strategy](design/des-0007-detailed-design-execution-strategy.md) - Detailed-design execution order, OKF storage decision, trace template, unit-test intent strategy, and residual-risk closure map.
 * [DES-0008 Project Structure and Test Harness Detailed Design](design/des-0008-project-structure-and-test-harness.md) - Solution/project layout, assembly boundaries, namespaces, inward dependency rule with mechanical verification, determinism/quality build settings, unit fixture-tree placement, and the mixed integration fixture-app harness.
+* [DES-0009 Domain Model, Stable Keys, and Availability Detailed Design](design/des-0009-domain-model-stable-keys-and-availability.md) - ScreenModel/UiElement value objects, stable ScreenKey/ElementKey derivation separated from DisplayLabel, the fallback-key minimal contract finalized at model construction, availability/confidence semantics, the stable-hash/ordinal determinism rule, and the IClock abstraction.
 
 # Decisions
 
