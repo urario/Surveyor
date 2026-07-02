@@ -16,11 +16,15 @@ param(
     [string]$TargetTitle,
     [long]$TargetHwnd,
     [string]$Configuration = "Debug",
-    [string]$ResultsRoot = (Join-Path $PSScriptRoot "results")
+    # Default is resolved in the body: Windows PowerShell 5.1 does not
+    # populate $PSScriptRoot while evaluating param() defaults.
+    [string]$ResultsRoot
 )
 
 $ErrorActionPreference = "Stop"
-$spikeRoot = Split-Path $PSScriptRoot -Parent
+$scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+if (-not $ResultsRoot) { $ResultsRoot = Join-Path $scriptRoot "results" }
+$spikeRoot = Split-Path $scriptRoot -Parent
 $tfm = "net10.0-windows10.0.19041.0"
 
 if (-not $TargetTitle -and -not $TargetHwnd) {
