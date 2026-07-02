@@ -34,6 +34,8 @@ Require a Japanese completion report before moving a Project item forward:
 担当:
 実施内容:
 成果物/変更:
+関連RQ: Issue / Project にある場合。なければ N/A。
+関連RD: Issue / Project にある場合。なければ N/A。
 検証:
 OKF更新:
 残リスク:
@@ -41,7 +43,7 @@ OKF更新:
 次のOwner Role:
 ```
 
-Verify that the report names the Issue, lifecycle phase, artifact ID, related `RQ` / `RD`, verification evidence, OKF updates when needed, and residual risk.
+Verify that the report names the Issue, lifecycle phase, artifact ID, verification evidence, OKF updates when needed, and residual risk. Require related `RQ` / `RD` only when the Issue / Project fields provide them; `N/A` is acceptable for absent optional fields. Do not invent `RD-xxx` for Unit Test, Integration Test, or review items that do not carry an RD value.
 
 ## Status Rules
 

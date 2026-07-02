@@ -27,7 +27,7 @@ Use this skill for project management, not for doing the design or implementatio
 
 ## Planning Workflow
 
-1. List candidate Issues with their `Phase`, `Status`, `Artifact`, `RQ`, `RD`, `Owner Role`, `Priority`, and `Target`.
+1. List candidate Issues with their `Phase`, `Status`, `Artifact`, available `RQ` / `RD`, `Owner Role`, `Priority`, and `Target`; use `N/A` rather than inventing missing trace IDs.
 2. Group tasks by dependency:
    - `Prerequisite`: must finish before another Issue can start.
    - `Parallel`: can run now without shared-file or decision conflicts.
@@ -45,6 +45,8 @@ Require a Japanese completion report before moving a Project item forward:
 担当:
 実施内容:
 成果物/変更:
+関連RQ: Issue / Project にある場合。なければ N/A。
+関連RD: Issue / Project にある場合。なければ N/A。
 検証:
 OKF更新:
 残リスク:
@@ -54,7 +56,7 @@ OKF更新:
 
 Then verify:
 
-- The report names the Issue, lifecycle phase, artifact ID, and related `RQ` / `RD`.
+- The report names the Issue, lifecycle phase, artifact ID, and related `RQ` / `RD` only when the Issue / Project fields provide them; `N/A` is acceptable for absent optional fields. Do not invent `RD-xxx` for Unit Test, Integration Test, or review items that do not carry an RD value.
 - Verification evidence is present or the missing verification is recorded as residual risk.
 - Required OKF updates are present when durable knowledge changed.
 - Human approval is not bypassed for final gate close.

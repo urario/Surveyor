@@ -146,6 +146,8 @@ Claude Code / Codex / Human は、作業完了時に Project Manager Agent へ�
 担当:
 実施内容:
 成果物/変更:
+関連RQ: Issue / Project にある場合。なければ N/A。
+関連RD: Issue / Project にある場合。なければ N/A。
 検証:
 OKF更新:
 残リスク:
@@ -155,7 +157,7 @@ OKF更新:
 
 Project Manager Agent は次を確認する。
 
-- Issue 番号、`Phase`、`Artifact`、`RQ`、`RD` が報告に含まれる。
+- Issue 番号、`Phase`、`Artifact` が報告に含まれる。`RQ` / `RD` は Issue / Project フィールドに存在する場合だけ必須とし、存在しない場合は `N/A` を明記してよい。Unit Test / Integration Test / Review の Issue で `RD` が無い場合、`RD-xxx` を推測して作らない。
 - 検証結果、レビュー結果、または未検証理由が明記されている。
 - 永続知識が変わった場合、OKF 更新と `tools/okf/Validate-Okf.ps1` の結果がある。
 - `Blocked` にする場合、blocker、unblocker owner、次の質問または作業が明記されている。
@@ -175,7 +177,7 @@ Codex / Claude Code から GitHub Project を更新できる範囲は、原則�
 
 Issue を `Done` にする前に、該当する範囲で確認する。
 
-- Project フィールドの `Phase`, `Artifact`, `RQ`, `RD`, `Status` が最新である。
+- Project フィールドの `Phase`, `Artifact`, `Status` が最新である。`RQ` / `RD` は Issue / Project フィールドに存在する場合だけ最新化し、存在しない場合は `N/A` または空欄を許容する。
 - PR がある場合、PR に Issue へのリンクと検証結果がある。
 - 永続知識が必要な場合、OKF 文書が更新されている。
 - OKF を更新した場合、`tools/okf/Validate-Okf.ps1` が通っている。
