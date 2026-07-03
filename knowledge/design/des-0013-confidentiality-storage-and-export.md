@@ -88,6 +88,257 @@ Default mode for a normal analysis run is `ProtectedLocal`. Default mode for exp
 | `FallbackKeyToken` | hash-derived fallback identity from sensitive material | Protected locally; pseudonymized in shareable export. |
 | `ExceptionMessage` | external exception message | Drop; map to exception kind/status/HResult only. |
 
+## Class Design (UML)
+
+`M09` exposes pure confidentiality-policy services. `M12` exposes asynchronous local-store/export services plus small infrastructure seams for DPAPI and ACLs. Unit tests replace all infrastructure seams with fakes and exercise policy functions without touching the file system.
+
+```mermaid
+classDiagram
+  direction LR
+
+  class IConfidentialityPolicy {
+    <<interface>>
+    +ConfidentialityDecision Decide(ConfidentialityRequest request)
+    +PolicyApplicationResult Apply(PolicyApplicationRequest request)
+    +ExportSanitizationResult CreateShareableExportModel(ExportSanitizationRequest request)
+  }
+
+  class ISensitiveValueSanitizer {
+    <<interface>>
+    +SanitizedText MaskText(SensitiveText value, MaskingContext context)
+    +RunDiagnostic SanitizeDiagnostic(RunDiagnostic diagnostic, SanitizationContext context)
+    +SanitizedExceptionInfo SanitizeException(Exception exception, SanitizationContext context)
+  }
+
+  class IFallbackKeyExportMapper {
+    <<interface>>
+    +ExportElementKey Map(ElementKey elementKey, FallbackKeyToken? token, ExportMappingContext context)
+  }
+
+  class ILocalRunStore {
+    <<interface>>
+    +Task~StoreResult~ SaveAsync(StoreRunRequest request, CancellationToken cancellationToken)
+    +Task~StoredRunResult~ LoadAsync(RunId runId, CancellationToken cancellationToken)
+    +Task~RetentionResult~ PruneAsync(RetentionRequest request, CancellationToken cancellationToken)
+  }
+
+  class IExportBundleWriter {
+    <<interface>>
+    +Task~ExportResult~ WriteMaskedExportAsync(ExportRequest request, CancellationToken cancellationToken)
+  }
+
+  class IDataProtector {
+    <<interface>>
+    +byte[] Protect(ReadOnlyMemory~byte~ plaintext, string purpose)
+    +byte[] Unprotect(ReadOnlyMemory~byte~ protectedBytes, string purpose)
+  }
+
+  class IAccessControlService {
+    <<interface>>
+    +void ApplyUserOnlyAcl(DirectoryInfo directory)
+  }
+
+  class ConfidentialityDecision
+  class PolicyApplicationResult
+  class ExportSanitizationResult
+  class StoreResult
+  class ExportResult
+
+  IConfidentialityPolicy --> ISensitiveValueSanitizer
+  IConfidentialityPolicy --> IFallbackKeyExportMapper
+  IConfidentialityPolicy --> ConfidentialityDecision
+  IConfidentialityPolicy --> PolicyApplicationResult
+  IConfidentialityPolicy --> ExportSanitizationResult
+  ILocalRunStore --> IDataProtector
+  ILocalRunStore --> IAccessControlService
+  ILocalRunStore --> StoreResult
+  IExportBundleWriter --> IConfidentialityPolicy
+  IExportBundleWriter --> ExportResult
+```
+
+## Public API Definitions
+
+These signatures are the implementation contract for `IMP-0003` and `IMP-0010`, and the direct fake seam for `UT-0008` and `UT-0009`.
+
+Policy interfaces:
+
+```csharp
+namespace Surveyor.Policy.Confidentiality;
+
+public interface IConfidentialityPolicy
+{
+    ConfidentialityDecision Decide(ConfidentialityRequest request);
+
+    PolicyApplicationResult Apply(
+        PolicyApplicationRequest request);
+
+    ExportSanitizationResult CreateShareableExportModel(
+        ExportSanitizationRequest request);
+}
+
+public interface ISensitiveValueSanitizer
+{
+    SanitizedText MaskText(
+        SensitiveText value,
+        MaskingContext context);
+
+    RunDiagnostic SanitizeDiagnostic(
+        RunDiagnostic diagnostic,
+        SanitizationContext context);
+
+    SanitizedExceptionInfo SanitizeException(
+        Exception exception,
+        SanitizationContext context);
+}
+
+public interface IFallbackKeyExportMapper
+{
+    ExportElementKey Map(
+        ElementKey elementKey,
+        FallbackKeyToken? fallbackToken,
+        ExportMappingContext context);
+}
+```
+
+Policy DTO records:
+
+```csharp
+public sealed record ConfidentialityRequest(
+    RunId RunId,
+    DateTimeOffset RequestedAtUtc,
+    ConfidentialityMode RequestedMode,
+    ScreenModel? ScreenModel,
+    IReadOnlyList<RunDiagnostic> Diagnostics,
+    OptOutRequest? OptOut);
+
+public sealed record PolicyApplicationRequest(
+    AnalysisRunResult RunResult,
+    ConfidentialityDecision Decision);
+
+public sealed record ExportSanitizationRequest(
+    AnalysisRunResult RunResult,
+    ConfidentialityDecision Decision,
+    ExportProfile ExportProfile);
+
+public sealed record PolicyApplicationResult(
+    ConfidentialityDecision Decision,
+    ProtectedRunModel ProtectedLocalModel,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+
+public sealed record ExportSanitizationResult(
+    ConfidentialityDecision Decision,
+    MaskedExportModel MaskedModel,
+    IReadOnlyList<ExportElementKey> ExportKeys,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+```
+
+Store/export interfaces:
+
+```csharp
+namespace Surveyor.Adapters.Store;
+
+public interface ILocalRunStore
+{
+    Task<StoreResult> SaveAsync(
+        StoreRunRequest request,
+        CancellationToken cancellationToken);
+
+    Task<StoredRunResult> LoadAsync(
+        RunId runId,
+        CancellationToken cancellationToken);
+
+    Task<RetentionResult> PruneAsync(
+        RetentionRequest request,
+        CancellationToken cancellationToken);
+}
+
+public interface IExportBundleWriter
+{
+    Task<ExportResult> WriteMaskedExportAsync(
+        ExportRequest request,
+        CancellationToken cancellationToken);
+}
+```
+
+Infrastructure seams:
+
+```csharp
+public interface IDataProtector
+{
+    byte[] Protect(
+        ReadOnlyMemory<byte> plaintext,
+        string purpose);
+
+    byte[] Unprotect(
+        ReadOnlyMemory<byte> protectedBytes,
+        string purpose);
+}
+
+public interface IAccessControlService
+{
+    void ApplyUserOnlyAcl(DirectoryInfo directory);
+}
+```
+
+Store/export DTO records:
+
+```csharp
+public sealed record StoreRunRequest(
+    RunId RunId,
+    ProtectedRunModel ProtectedModel,
+    LocalStoreOptions Options);
+
+public sealed record StoreResult(
+    OperationStatus Status,
+    RunId RunId,
+    SafeArtifactReference? Manifest,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+
+public sealed record ExportRequest(
+    RunId RunId,
+    MaskedExportModel MaskedModel,
+    ExportDestination Destination,
+    ExportOptions Options);
+
+public sealed record ExportResult(
+    OperationStatus Status,
+    SafeArtifactReference? Bundle,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+```
+
+Enums fixed by this package:
+
+```csharp
+public enum ConfidentialityMode
+{
+    ProtectedLocal,
+    MaskedShareableExport,
+    ExplicitLocalOptOut
+}
+
+public enum SensitiveKind
+{
+    DisplayText,
+    WindowTitle,
+    ScreenshotPixels,
+    FilePath,
+    FallbackKeyToken,
+    ExceptionMessage
+}
+```
+
+Function rules:
+
+| API | Throws / status | Test rule |
+| -- | -- | -- |
+| `IConfidentialityPolicy.Decide` | `ArgumentException` for invalid opt-out; otherwise no expected throw | `UT-0008` verifies default `ProtectedLocal`, explicit opt-out recording, policy version, and UTC timestamp. |
+| `IConfidentialityPolicy.Apply` | Programmer-invalid model is `ArgumentException` | No raw labels, titles, paths, exception messages, or export-unsafe fallback tokens in returned diagnostics/model. |
+| `CreateShareableExportModel` | Programmer-invalid profile is `ArgumentException` | Fallback keys become export-local pseudonyms and `StableAcrossExports=false`. |
+| `ISensitiveValueSanitizer.*` | No expected throw for malformed external text/exception | Sanitizer is allowlist-based and deterministic for fixed context. |
+| `ILocalRunStore.SaveAsync` | Expected I/O/DPAPI/ACL failures return `StoreResult` with `IoError`; caller cancellation propagates | Fake `IDataProtector` and `IAccessControlService` prove DPAPI CurrentUser and ACL seams are invoked before final result. |
+| `ILocalRunStore.PruneAsync` | Expected deletion failures become diagnostics | Tests verify no reparse-point traversal and no non-Surveyor deletion. |
+| `IExportBundleWriter.WriteMaskedExportAsync` | Expected I/O failures return `ExportResult` with `IoError`; caller cancellation propagates | Fixed inputs produce deterministic ZIP entry order and normalized timestamps. |
+
 ## Masking And Redaction
 
 Text masking uses per-run deterministic pseudonyms, not hashes of raw text. Hashes can be guessed for small UI strings.

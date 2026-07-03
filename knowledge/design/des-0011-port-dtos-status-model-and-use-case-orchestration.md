@@ -195,6 +195,254 @@ ROI order is deterministic by `SourceFindingId`, `ElementKey`, then `Id`. Missin
 
 `StartedAtUtc` and `CompletedAtUtc` are read from injected `IClock.UtcNow` only. Domain scoring never reads time.
 
+## Class Design (UML)
+
+`M03` exposes an application use case plus port interfaces. Ports are public because adapters implement them and unit tests replace them with fakes. DTO records are immutable and contain only domain/application types.
+
+```mermaid
+classDiagram
+  direction LR
+
+  class AnalyzeTargetUseCase {
+    +Task~AnalysisRunResult~ ExecuteAsync(AnalysisRunRequest request, CancellationToken cancellationToken)
+  }
+
+  class ITargetDiscoveryPort {
+    <<interface>>
+    +Task~TargetDiscoveryResult~ ListTargetsAsync(DiscoveryQuery query, CancellationToken cancellationToken)
+    +Task~TargetResolveResult~ ResolveAsync(TargetReference target, CancellationToken cancellationToken)
+  }
+
+  class IUiTreeAcquisitionPort {
+    <<interface>>
+    +Task~AcquisitionResult~ AcquireAsync(TargetReference target, AcquisitionOptions options, CancellationToken cancellationToken)
+  }
+
+  class IScreenCapturePort {
+    <<interface>>
+    +Task~CaptureResult~ CaptureAsync(CaptureRequest request, CancellationToken cancellationToken)
+  }
+
+  class IConfidentialityPolicy {
+    <<interface>>
+    +PolicyApplicationResult Apply(PolicyApplicationRequest request)
+  }
+
+  class IReportGenerationPort {
+    <<interface>>
+    +Task~ReportResult~ GenerateAsync(ReportRequest request, CancellationToken cancellationToken)
+  }
+
+  class IResultStorePort {
+    <<interface>>
+    +Task~StoreResult~ SaveRunAsync(StoreRunRequest request, CancellationToken cancellationToken)
+    +Task~ExportResult~ ExportAsync(ExportRequest request, CancellationToken cancellationToken)
+  }
+
+  class IClock {
+    <<interface>>
+    +DateTimeOffset UtcNow
+  }
+
+  class AnalysisRunRequest
+  class AnalysisRunResult
+  class StageResult
+  class RunDiagnostic
+  class RegionOfInterest
+  class ScoreResult
+  class ScreenModel
+
+  AnalyzeTargetUseCase --> ITargetDiscoveryPort
+  AnalyzeTargetUseCase --> IUiTreeAcquisitionPort
+  AnalyzeTargetUseCase --> IScreenCapturePort
+  AnalyzeTargetUseCase --> IConfidentialityPolicy
+  AnalyzeTargetUseCase --> IReportGenerationPort
+  AnalyzeTargetUseCase --> IResultStorePort
+  AnalyzeTargetUseCase --> IClock
+  AnalyzeTargetUseCase --> AnalysisRunRequest
+  AnalyzeTargetUseCase --> AnalysisRunResult
+  AnalysisRunResult "1" o-- "*" StageResult
+  AnalysisRunResult "1" o-- "*" RunDiagnostic
+  AnalysisRunResult "1" o-- "*" RegionOfInterest
+  AnalysisRunResult --> ScreenModel
+  AnalysisRunResult --> ScoreResult
+```
+
+## Public API Definitions
+
+These signatures are the implementation contract for `IMP-0004`, `IMP-0005`, `IMP-0006`, and `IMP-0011`, and the direct fake seam for `UT-0012`.
+
+```csharp
+namespace Surveyor.Application.UseCases;
+
+public sealed class AnalyzeTargetUseCase
+{
+    public AnalyzeTargetUseCase(
+        ITargetDiscoveryPort discoveryPort,
+        IUiTreeAcquisitionPort acquisitionPort,
+        IScreenCapturePort capturePort,
+        IConfidentialityPolicy confidentialityPolicy,
+        IReportGenerationPort reportPort,
+        IResultStorePort storePort,
+        TestabilityScorer scorer,
+        ScoringConfig scoringConfig,
+        IClock clock);
+
+    public Task<AnalysisRunResult> ExecuteAsync(
+        AnalysisRunRequest request,
+        CancellationToken cancellationToken);
+}
+```
+
+Application ports:
+
+```csharp
+namespace Surveyor.Application.Ports;
+
+public interface ITargetDiscoveryPort
+{
+    Task<TargetDiscoveryResult> ListTargetsAsync(
+        DiscoveryQuery query,
+        CancellationToken cancellationToken);
+
+    Task<TargetResolveResult> ResolveAsync(
+        TargetReference target,
+        CancellationToken cancellationToken);
+}
+
+public interface IUiTreeAcquisitionPort
+{
+    Task<AcquisitionResult> AcquireAsync(
+        TargetReference target,
+        AcquisitionOptions options,
+        CancellationToken cancellationToken);
+}
+
+public interface IScreenCapturePort
+{
+    Task<CaptureResult> CaptureAsync(
+        CaptureRequest request,
+        CancellationToken cancellationToken);
+}
+
+public interface IReportGenerationPort
+{
+    Task<ReportResult> GenerateAsync(
+        ReportRequest request,
+        CancellationToken cancellationToken);
+}
+
+public interface IResultStorePort
+{
+    Task<StoreResult> SaveRunAsync(
+        StoreRunRequest request,
+        CancellationToken cancellationToken);
+
+    Task<ExportResult> ExportAsync(
+        ExportRequest request,
+        CancellationToken cancellationToken);
+}
+```
+
+Policy and clock interfaces:
+
+```csharp
+namespace Surveyor.Application.Ports;
+
+public interface IConfidentialityPolicy
+{
+    PolicyApplicationResult Apply(PolicyApplicationRequest request);
+}
+
+namespace Surveyor.Application.Time;
+
+public interface IClock
+{
+    DateTimeOffset UtcNow { get; }
+}
+```
+
+Core immutable DTO records:
+
+```csharp
+namespace Surveyor.Application.Dto;
+
+public sealed record AnalysisRunRequest(
+    TargetReference Target,
+    ScreenSelectionMetadata? ScreenSelectionMetadata,
+    AnalysisRunOptions Options,
+    ScoringConfigReference ScoringConfig,
+    OutputRequest Outputs);
+
+public sealed record AnalysisRunResult(
+    RunId RunId,
+    DateTimeOffset StartedAtUtc,
+    DateTimeOffset CompletedAtUtc,
+    RunOutcome Outcome,
+    TargetReference Target,
+    ScreenSelectionMetadata? ScreenSelectionMetadata,
+    ScreenModel? ScreenModel,
+    ScoreResult? ScoreResult,
+    IReadOnlyList<RegionOfInterest> RegionsOfInterest,
+    CaptureResult? Capture,
+    ReportResult? Report,
+    StoreResult? Store,
+    IReadOnlyList<StageResult> Stages,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+
+public sealed record StageResult(
+    RunStage Stage,
+    OperationStatus Status,
+    TimeSpan? TimeoutBudget,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+```
+
+Port result DTO records:
+
+```csharp
+public sealed record TargetDiscoveryResult(
+    OperationStatus Status,
+    IReadOnlyList<TargetCandidate> Candidates,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+
+public sealed record TargetResolveResult(
+    OperationStatus Status,
+    TargetReference? Target,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+
+public sealed record AcquisitionResult(
+    OperationStatus Status,
+    ScreenModel? ScreenModel,
+    int ElementCount,
+    bool HitElementCap,
+    IReadOnlyList<Availability> Availability,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+
+public sealed record CaptureRequest(
+    TargetReference Target,
+    IReadOnlyList<RegionOfInterest> Regions,
+    TimeSpan FirstFrameTimeout,
+    bool RequireCapture);
+
+public sealed record CaptureResult(
+    OperationStatus Status,
+    IReadOnlyList<CapturedRegion> Regions,
+    CaptureCoordinateSpace CoordinateSpace,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+```
+
+Function rules:
+
+| API | Throws / cancellation | Test rule |
+| -- | -- | -- |
+| `AnalyzeTargetUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation and returns `RunOutcome.Cancelled` at the boundary | Fake ports can assert stage order, no later ports after cancellation, timestamps from fake clock, and metadata copied unchanged. |
+| `ITargetDiscoveryPort.*Async` | Expected failures are statuses; caller cancellation propagates | Fakes return stable candidate ordering. |
+| `IUiTreeAcquisitionPort.AcquireAsync` | Expected Windows/access failures are statuses; caller cancellation propagates | Fakes can return `PartialResult`, `Timeout`, `PermissionDenied`, and a fixture `ScreenModel`. |
+| `IScreenCapturePort.CaptureAsync` | Capture failure returns status when recoverable | Fakes can omit ROI images without blocking scoring. |
+| `IReportGenerationPort.GenerateAsync` / `IResultStorePort.SaveRunAsync` | Expected output failures return `ReportResult`/`StoreResult` statuses | Unit tests verify partial-result aggregation and sanitized diagnostics. |
+| `IConfidentialityPolicy.Apply` | Pure policy application; invalid policy input is `ArgumentException` | Unit tests assert no raw label/text leaks into policy result. |
+| `IClock.UtcNow` | No throw expected | Fake clock controls run timestamps. |
+
 ## Diagnostics Model
 
 `RunDiagnostic` is safe by construction:

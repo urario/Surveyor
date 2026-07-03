@@ -166,6 +166,213 @@ Findings must not contain `DisplayLabel`, window title, raw text, image paths, o
 
 Candidate ordering is deterministic and non-priority: `Code` ordinal, `Scope`, `TargetElementKey` ordinal with null last, then `Id`.
 
+## Class Design (UML)
+
+`M08` exposes one public scoring service plus immutable public result/config records. Axis calculators, de-duplication helpers, and candidate-rule tables are implementation-private so unit tests assert observable behavior through `TestabilityScorer` and `ScoreResult`, not private decomposition.
+
+```mermaid
+classDiagram
+  direction LR
+
+  class TestabilityScorer {
+    +ScoreResult Score(ScreenModel model, ScoringConfig config, PriorityBasis? priorityBasis = null)
+  }
+
+  class ScoringConfig {
+    +string Version
+    +IReadOnlyDictionary~ScoreAxis,int~ AxisWeights
+    +ClassThresholds ClassThresholds
+    +SignalThresholds SignalThresholds
+    +ScoringRounding Rounding
+    +string CandidateRulesVersion
+    +ScoringConfig DefaultV1()
+    +void Validate()
+  }
+
+  class ScoreResult {
+    +ScreenKey ScreenKey
+    +string ConfigVersion
+    +string CandidateRulesVersion
+    +IReadOnlyList~AxisScore~ AxisScores
+    +int AggregateScoreBp
+    +decimal AggregateScorePercent
+    +TestabilityClass TestabilityClass
+    +ScoreConfidence Confidence
+    +IReadOnlyList~Finding~ Findings
+    +IReadOnlyList~ImprovementCandidate~ ImprovementCandidates
+    +PriorityBasis? PriorityBasis
+  }
+
+  class AxisScore {
+    +ScoreAxis Axis
+    +AxisApplicability Applicability
+    +int? ScoreBp
+    +ScoreConfidence Confidence
+    +IReadOnlyList~string~ FindingIds
+    +IReadOnlyList~string~ EvidenceCodes
+  }
+
+  class Finding {
+    +string Id
+    +FindingCode Code
+    +ScoreAxis Axis
+    +RootCauseCode RootCause
+    +FindingSeverity Severity
+    +ElementKey? ElementKey
+    +Availability? Availability
+    +AcquisitionConfidence? AcquisitionConfidence
+    +IReadOnlyList~string~ RelatedFindingIds
+    +string RecommendationCode
+  }
+
+  class ImprovementCandidate {
+    +string Id
+    +CandidateCode Code
+    +RootCauseCode RootCause
+    +ScoreAxis PrimaryAxis
+    +ElementKey? TargetElementKey
+    +int AffectedElementCount
+    +ExpectedEffect ExpectedEffect
+    +IReadOnlyList~string~ SourceFindingIds
+    +CandidateScope Scope
+    +PriorityBasis? UserSuppliedPriorityBasis
+  }
+
+  class ScreenModel
+  class UiElement
+  class PriorityBasis
+
+  TestabilityScorer --> ScreenModel : reads
+  TestabilityScorer --> ScoringConfig : validates
+  TestabilityScorer --> ScoreResult : returns
+  ScoreResult "1" o-- "*" AxisScore
+  ScoreResult "1" o-- "*" Finding
+  ScoreResult "1" o-- "*" ImprovementCandidate
+  ScoreResult --> PriorityBasis : copies
+  Finding --> UiElement : via ElementKey
+  ImprovementCandidate --> Finding : SourceFindingIds
+```
+
+## Public API Definitions
+
+The following APIs are the implementation contract for `IMP-0002` and the direct unit-test seam for `UT-0002`.
+
+```csharp
+namespace Surveyor.Domain.Scoring;
+
+public sealed class TestabilityScorer
+{
+    public ScoreResult Score(
+        ScreenModel model,
+        ScoringConfig config,
+        PriorityBasis? priorityBasis = null);
+}
+
+public sealed record ScoringConfig(
+    string Version,
+    IReadOnlyDictionary<ScoreAxis, int> AxisWeights,
+    ClassThresholds ClassThresholds,
+    SignalThresholds SignalThresholds,
+    ScoringRounding Rounding,
+    string CandidateRulesVersion)
+{
+    public static ScoringConfig DefaultV1();
+    public void Validate();
+}
+
+public sealed record ClassThresholds(
+    int ImmediatelyAutomatableBp,
+    int SmallImprovementBp,
+    int LimitedAutomationBp,
+    int ImproveFirstBelowBp,
+    int MaxUnknownWeightForImmediateBp,
+    int MaxUnknownWeightForSmallImprovementBp,
+    int MaxUnknownWeightBeforeNotEnoughEvidenceBp);
+
+public sealed record SignalThresholds(
+    IReadOnlyDictionary<ScoreAxis, IReadOnlyDictionary<string, int>> BasisPointThresholds);
+
+public sealed record ScoreResult(
+    ScreenKey ScreenKey,
+    string ConfigVersion,
+    string CandidateRulesVersion,
+    IReadOnlyList<AxisScore> AxisScores,
+    int AggregateScoreBp,
+    decimal AggregateScorePercent,
+    TestabilityClass TestabilityClass,
+    ScoreConfidence Confidence,
+    IReadOnlyList<Finding> Findings,
+    IReadOnlyList<ImprovementCandidate> ImprovementCandidates,
+    PriorityBasis? PriorityBasis);
+```
+
+Public records used by `ScoreResult`:
+
+```csharp
+public sealed record AxisScore(
+    ScoreAxis Axis,
+    AxisApplicability Applicability,
+    int? ScoreBp,
+    ScoreConfidence Confidence,
+    IReadOnlyList<string> FindingIds,
+    IReadOnlyList<string> EvidenceCodes);
+
+public sealed record Finding(
+    string Id,
+    FindingCode Code,
+    ScoreAxis Axis,
+    RootCauseCode RootCause,
+    FindingSeverity Severity,
+    ElementKey? ElementKey,
+    Availability? Availability,
+    AcquisitionConfidence? AcquisitionConfidence,
+    IReadOnlyList<string> RelatedFindingIds,
+    string RecommendationCode);
+
+public sealed record ImprovementCandidate(
+    string Id,
+    CandidateCode Code,
+    RootCauseCode RootCause,
+    ScoreAxis PrimaryAxis,
+    ElementKey? TargetElementKey,
+    int AffectedElementCount,
+    ExpectedEffect ExpectedEffect,
+    IReadOnlyList<string> SourceFindingIds,
+    CandidateScope Scope,
+    PriorityBasis? UserSuppliedPriorityBasis);
+```
+
+Enums fixed by this package:
+
+```csharp
+public enum ScoreAxis
+{
+    Identifiability,
+    Operability,
+    ResultDeterminability,
+    PreconditionControllability,
+    ScreenStability,
+    CustomUiRisk,
+    CoordinateImageDependence
+}
+
+public enum AxisApplicability { Applicable, NotApplicable, UnknownDueToUnavailable }
+public enum ScoreConfidence { High, Medium, Low, Unknown }
+public enum TestabilityClass { ImmediatelyAutomatable, SmallImprovement, LimitedAutomation, ImproveFirst, NotEnoughEvidence }
+public enum FindingSeverity { Info, Warning, Blocking }
+public enum ScoringRounding { BasisPointHalfAwayFromZero }
+public enum CandidateScope { Element, Screen, Application }
+public enum ExpectedEffect { UnlockAutomation, ImproveReliability, ImproveObservability, ReduceMaintenanceCost, ReduceManualReview }
+```
+
+Function rules:
+
+| API | Throws | Determinism / test rule |
+| -- | -- | -- |
+| `TestabilityScorer.Score` | `ArgumentNullException` for null model/config; `ArgumentException` for invalid config | Pure function. Same model/config/priority basis yields equal `ScoreResult`. No clock, file, culture, adapter, or randomness. |
+| `ScoringConfig.DefaultV1` | None | Returns immutable v1 config exactly matching this document. |
+| `ScoringConfig.Validate` | `ArgumentException` | Rejects empty version, duplicate/missing axes, weights not summing to `10000`, invalid thresholds, unsupported rounding, or empty candidate-rules version. |
+
 ## Axis Signal Mapping
 
 The adapter packages populate neutral observations on `UiElement`; `M08` consumes only those neutral observations. When a property was not obtainable, the adapter supplies `Unavailable(reason)` rather than omitting the field silently.
