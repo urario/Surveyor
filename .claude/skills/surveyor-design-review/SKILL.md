@@ -17,6 +17,7 @@ Read these before reviewing:
 - `knowledge/process/lifecycle-traceability.md` and `knowledge/process/quality-review-policy.md`.
 - `knowledge/process/design-review-patterns.md` — the `DRP-xxx` defect-pattern catalog (mandatory sweep for detailed design).
 - `knowledge/process/ai-design-review-strategy.md` — review-round targets and the fix-loop protocol.
+- `knowledge/process/coding-standards.md` — SOLID mapping, Japanese XML doc-comment contract rules, internal-default accessibility, and the GoF pattern vocabulary (`CS-01`–`CS-04`).
 
 Carry both `RQ-xxx` and `RD-xxx` through the review. Summarize and link; do not duplicate long requirement text.
 
@@ -44,7 +45,9 @@ These are blocking — a design that violates any is not ready:
 - **Output/store robustness**: filesystem/output boundaries are async cancellable with atomic-write or defined partial-result semantics, with cancellation/failure-path tests.
 - **Testability**: every port has a fixture/fake path enabling unit tests before real Windows GUI targets.
 - **Extensibility/maintainability**: acquisition/capture/scoring/report/privacy providers extend without reshaping the core; future CLI reuse is preserved.
-- **Purpose-first patterns**: each design pattern serves a stated purpose with a short tradeoff note; flag pattern-for-pattern's-sake.
+- **SOLID**: responsibilities are single and nameable (SRP; flag `Manager`/`Service`/`Helper` catch-alls), known variation points are open behind ports/strategies without speculative abstraction (OCP), port implementations honor the documented contract without strengthening preconditions or weakening postconditions (LSP), interfaces are use-case-shaped (ISP), and dependencies stay inward with concretes known only to the composition root (DIP). Judge against the mapping in `knowledge/process/coding-standards.md` (`CS-03`).
+- **Purpose-first patterns**: each design pattern serves a stated purpose with a short tradeoff note; flag pattern-for-pattern's-sake. When a situation matches the coding-standards GoF vocabulary catalog (`CS-04`), expect its recommended pattern or a stated reason for deviating.
+- **Public surface and doc contracts**: designed types default to `internal`/`sealed`; only assembly-boundary contracts are `public` (`CS-02`). Port and DTO definitions must be writable as Japanese XML doc-comment contracts (`CS-01`) — a port whose error model, cancellation, determinism, read-only, or confidentiality constraints cannot be stated in `<remarks>` is underspecified.
 - **Diagrams**: architecture artifacts include at least one Mermaid diagram (GitHub-friendly, ASCII node ids, short labels, no PlantUML/external images); check dependency direction and boundary accuracy.
 - **Traceability**: upstream requirements and downstream implementation/test obligations are named.
 

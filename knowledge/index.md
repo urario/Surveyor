@@ -52,6 +52,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 
 * [AI Collaboration](process/ai-collaboration.md) - Claude/Codex collaboration model.
 * [AI Design Review Strategy](process/ai-design-review-strategy.md) - Defense-in-depth strategy (template / author self-review / one-shot multi-perspective review / fix-loop protocol) that converges AI detailed-design PRs in at most one re-review round.
+* [Coding Standards](process/coding-standards.md) - SOLID application rules, Japanese XML documentation comment rules, internal-default accessibility policy, and GoF pattern vocabulary for C# implementation.
 * [Design Review Pattern Catalog](process/design-review-patterns.md) - Living `DRP-xxx` catalog of recurring design-defect patterns used as author self-check and reviewer checklist.
 * [Git Policy](process/git-policy.md) - Branch, commit, pull request, and protection rules.
 * [GitHub Issue and Project Workflow](process/github-issue-project-workflow.md) - Japanese Issue writing rules, Project fields, views, and role-based task flow.

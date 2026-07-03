@@ -12,6 +12,7 @@ Use this skill when creating or revising a `DES-xxxx` detailed-design package un
 - `knowledge/design/des-0007-detailed-design-execution-strategy.md` — package definitions (§4), execution rules (§5), artifact template (§6), review checklist (§9).
 - `knowledge/process/design-review-patterns.md` — the `DRP-xxx` defect-pattern catalog.
 - `knowledge/process/ai-design-review-strategy.md` — why the self-review gate exists and the round target.
+- `knowledge/process/coding-standards.md` — public APIs a package fixes must respect the internal-default accessibility policy (`CS-02`), be specifiable as Japanese doc-comment contracts (`CS-01`), and use the GoF pattern vocabulary purpose-first (`CS-04`).
 - The package's upstream `RQ`/`RD`/`DES`/`ADR` sources named in DES-0007 §4.
 
 ## Authoring Workflow

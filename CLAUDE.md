@@ -29,6 +29,7 @@ Use this repository as a traced engineering workspace for the Surveyor GUI testa
 - AI workflow: `docs/ai-development-workflow.md`
 - OKF bundle root: `knowledge/index.md`
 - Lifecycle traceability: `knowledge/process/lifecycle-traceability.md`
+- Coding standards: `knowledge/process/coding-standards.md`
 - Design artifacts: `knowledge/design/`
 - Trace evidence: `knowledge/traces/`
 - Git policy: `knowledge/process/git-policy.md`

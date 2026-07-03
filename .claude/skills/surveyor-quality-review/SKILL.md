@@ -13,7 +13,8 @@ Use this skill as an independent quality reviewer. Do not implement fixes while 
 2. Read `knowledge/process/quality-review-policy.md` before judging quality characteristics or phase gates.
 3. Read `knowledge/process/lifecycle-traceability.md` when reviewing durable phase evidence.
 4. Read the relevant requirement sections in `docs/gui-testability-analyzer-requirements.md`; preserve `RQ-xxx` IDs in findings.
-5. Prefer existing OKF concepts over private chat memory.
+5. Read `knowledge/process/coding-standards.md` when reviewing implementation code or a design that fixes public APIs (`CS-01`–`CS-04` are maintainability requirements, not style preferences).
+6. Prefer existing OKF concepts over private chat memory.
 
 ## Review Method
 

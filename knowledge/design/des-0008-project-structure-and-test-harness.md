@@ -197,6 +197,8 @@ The architecture-test suite is the failing-first, mechanical evidence for the `R
 
 ## Determinism And Quality Settings (R-NET-02)
 
+> **Version note (2026-07-03, extended by [Coding Standards](../process/coding-standards.md), per DES-0007 §5.3):** rows were added to this table for `GenerateDocumentationFile` (mandatory Japanese XML doc comments on public APIs, `CS-01`), central `InternalsVisibleTo` (internal-default accessibility, `CS-02`), code-metrics thresholds via `CodeMetricsConfig.txt` (`CS-06`), `PublicApiAnalyzers` public-surface tracking (`CS-08`), and the coverlet core-layer coverage gate (`CS-07`); and `AnalysisLevel` was raised from `latest-Recommended` to `latest-All` with a justified suppression list (`CS-05`). The unit lane additionally runs `dotnet format --verify-no-changes` (`CS-09`). The coding-standards process document owns the rules and thresholds; this table owns their `Directory.Build.props`/config-file realization. No other previously decided setting changed.
+
 Set once in `Directory.Build.props` and inherited by every project, so no project can drift:
 
 | Setting | Value | Reason |
@@ -209,9 +211,14 @@ Set once in `Directory.Build.props` and inherited by every project, so no projec
 | `ContinuousIntegrationBuild` | `true` in CI | Normalizes embedded paths (`/pathmap`) for reproducibility |
 | `LangVersion` | `latest` | Consistent language version across projects |
 | `ImplicitUsings` | `enable` | Consistency; reduces per-file drift |
-| `EnableNETAnalyzers` + `AnalysisLevel` | `true`, `latest-Recommended` | .NET analyzers on by default |
+| `EnableNETAnalyzers` + `AnalysisLevel` | `true`, `latest-All` | All Microsoft CA rules with a default severity are enabled (`CS-05` in [Coding Standards](../process/coding-standards.md)); unsuitable rules are suppressed in `.editorconfig` with a per-rule justification comment. Rules disabled by default even under `All` need explicit `.editorconfig` decisions, in two groups: (a) code-metrics rules `CA1501`/`CA1502`/`CA1505`/`CA1506`/`CA1509` — handled by `CS-06`; (b) existing non-metric opt-in rules `CA1005`/`CA1014`/`CA1017`/`CA1021`/`CA1045`/`CA1060` — enabled or intentionally excluded per the `CS-05` decision table, so nothing advertised as "all CA rules" silently fails to run |
 | `EnforceCodeStyleInBuild` | `true` | `.editorconfig` style rules enforced at build |
 | `TreatWarningsAsErrors` | `true` | Zero-warning per-slice DoD ([DES-0007](des-0007-detailed-design-execution-strategy.md) §5.1) |
+| `GenerateDocumentationFile` | `true` for `src/**`; `false` (or `NoWarn: CS1591`) for `tests/**` and `Surveyor.TestSupport` | Japanese XML documentation comments on every public API are mandatory (`CS-01` in [Coding Standards](../process/coding-standards.md)); with `TreatWarningsAsErrors`, a missing doc comment (`CS1591`) is a build error. `CS1591` is a **compiler** warning, not an analyzer diagnostic, so generated code is *not* excluded by `.editorconfig` `generated_code`; the WinUI-facing projects (`Surveyor.App`/`Surveyor.Presentation`) instead scope `NoWarn: CS1591` to generated `Compile` items (`**/*.g.cs`, `**/*.g.i.cs`, `**/*.xaml.g.*.cs`), never to hand-written code |
+| `InternalsVisibleTo` | each `src` project → `$(AssemblyName).Tests` + `Surveyor.TestSupport`, granted centrally | Internal-default accessibility policy (`CS-02` in [Coding Standards](../process/coding-standards.md)): only assembly-boundary contracts are `public`, tests reach `internal` members without visibility promotion |
+| `CodeMetricsConfig.txt` (`AdditionalFiles`) + `CA1501`/`CA1502`/`CA1505`/`CA1506` as errors | cyclomatic complexity ≤ 10, inheritance depth ≤ 5, maintainability index ≥ 20, class coupling ≤ 30 | Code-metrics thresholds enforced at build (`CS-06`); same metrics as the VS "Calculate Code Metrics" window; these rules are off by default and are enabled in `.editorconfig` |
+| `Microsoft.CodeAnalysis.PublicApiAnalyzers` + `PublicAPI.Shipped.txt`/`PublicAPI.Unshipped.txt` per `src` project | undeclared public API additions/changes are build errors | Public-surface tracking (`CS-08`) — mechanizes the internal-default policy: every `public` decision appears as a reviewable diff |
+| coverlet threshold gate (core test projects: Domain/Application/Policy/Reports) | line coverage ≥ 80% or the test run fails | Quantitative unit-test gate (`CS-07`); adapters/Presentation/App are report-only (thin real-API wrappers belong to the IT lane) |
 
 Supporting control files:
 
@@ -236,7 +243,7 @@ flowchart LR
   end
 ```
 
-- **Unit lane (unattended):** builds `src/**` and the `*.Tests` + `Surveyor.Architecture.Tests` projects only. It **excludes** `tests/it-fixtures/**` (especially the C++ MFC project, which needs the C++ workload) and `tests/integration/**`. All `UT` and architecture/banned-API checks are deterministic and headless. This keeps the pure-core lane green on a machine without the C++ workload or a live desktop.
+- **Unit lane (unattended):** builds `src/**` and the `*.Tests` + `Surveyor.Architecture.Tests` projects only. It **excludes** `tests/it-fixtures/**` (especially the C++ MFC project, which needs the C++ workload) and `tests/integration/**`. All `UT` and architecture/banned-API checks are deterministic and headless. The lane also runs `dotnet format --verify-no-changes` (`CS-09`) and the coverlet core-layer coverage gate (`CS-07`). This keeps the pure-core lane green on a machine without the C++ workload or a live desktop.
 - **Integration lane (manual gate now):** builds the mixed fixture apps and `Surveyor.IntegrationTests`, run manually on the developer's local Windows 11 machine with the DPI/monitor/integrity assumptions each `IT` states. Self-hosted interactive-runner automation of the automatable subset (e.g. read-only invariants `IT-0001`, capture `IT-0003`) is revisited once the fixture app and adapters exist.
 
 Solution-folder grouping keeps `it-fixtures` and `integration` visible in `Surveyor.sln` but a `Directory.Build.props`/solution-filter (`.slnf`) split lets the unattended lane build the unit subset without the native/interactive projects.
