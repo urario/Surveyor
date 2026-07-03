@@ -271,7 +271,7 @@ public interface IExportBundleWriter
 }
 ```
 
-Relationship to `DES-0011`: `IResultStorePort` is the only application-owned store/export port. The `Surveyor.Adapters.Store` implementation of `IResultStorePort.SaveRunAsync` delegates to `ILocalRunStore.SaveAsync`; its `ExportAsync` delegates to `IExportBundleWriter.WriteMaskedExportAsync`. `IExportBundleWriter` receives an already masked `ExportRequest` from `ExportResultUseCase` and must not call `IConfidentialityPolicy` directly.
+Relationship to `DES-0011`: `IResultStorePort` is the only application-owned store/export port. The `Surveyor.Adapters.Store` implementation of `IResultStorePort.SaveRunAsync` delegates to `ILocalRunStore.SaveAsync`; `LoadRunAsync` delegates to `ILocalRunStore.LoadAsync` and returns the reconstructed `AnalysisRunResult` needed by `ExportResultUseCase`; `ExportAsync` delegates to `IExportBundleWriter.WriteMaskedExportAsync`. `IExportBundleWriter` receives an already masked `ExportRequest` from `ExportResultUseCase` and must not call `IConfidentialityPolicy` directly.
 
 Infrastructure seams:
 
@@ -362,7 +362,8 @@ public sealed record SafeArtifactReference(
 public sealed record StoredRunResult(
     OperationStatus Status,
     RunId RunId,
-    ProtectedRunModel? ProtectedModel,
+    AnalysisRunResult? RunResult,
+    SafeArtifactReference? Manifest,
     IReadOnlyList<RunDiagnostic> Diagnostics);
 
 public sealed record LocalStoreOptions(
@@ -472,6 +473,7 @@ Function rules:
 | `CreateShareableExportModel` | Programmer-invalid profile is `ArgumentException` | Fallback keys become export-local pseudonyms and `StableAcrossExports=false`. |
 | `ISensitiveValueSanitizer.*` | No expected throw for malformed external text/exception | Sanitizer is allowlist-based and deterministic for fixed context. |
 | `ILocalRunStore.SaveAsync` | Expected I/O/DPAPI/ACL failures return `StoreResult` with `IoError`; caller cancellation propagates | Fake `IDataProtector` and `IAccessControlService` prove DPAPI CurrentUser and ACL seams are invoked before final result. |
+| `ILocalRunStore.LoadAsync` | Expected missing run, DPAPI, manifest, or I/O failures return `StoredRunResult` with `NotFound` or `IoError`; caller cancellation propagates | Fake `IDataProtector` proves matching purpose strings are used and no raw paths/text enter diagnostics. |
 | `ILocalRunStore.PruneAsync` | Expected deletion failures become diagnostics | Tests verify no reparse-point traversal and no non-Surveyor deletion. |
 | `IExportBundleWriter.WriteMaskedExportAsync` | Expected I/O failures return `ExportResult` with `IoError`; caller cancellation propagates | Fixed inputs produce deterministic ZIP entry order and normalized timestamps. |
 

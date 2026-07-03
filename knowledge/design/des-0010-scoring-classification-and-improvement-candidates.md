@@ -542,17 +542,17 @@ Definitions:
 - `unknownWeightBp`: sum of configured axis weights for applicable axes whose score is `UnknownDueToUnavailable`.
 - `hasBlockingFinding`: any de-duplicated finding with `FindingSeverity.Blocking`.
 - `hasFixableBlockingRootCause`: any blocking finding whose root cause maps to a candidate code in Step 7. V1 treats all Step 7 root causes except `AcquisitionUnavailable` as fixable by target/application changes; `AcquisitionUnavailable` is fixable only when the finding status is `PartialResult`, not when it is `PermissionDenied` or `IntegrityMismatch`.
+- `hasNonFixableBlockingFinding`: any blocking finding that is not covered by `hasFixableBlockingRootCause`. V1 treats this as insufficient evidence rather than a positive automation class because the analyzer cannot offer a target-side improvement candidate.
 
 | Priority | Class | Required condition |
 | --: | -- | -- |
-| 1 | `NotEnoughEvidence` | `usedWeight == 0` or `unknownWeightBp > 5000` |
+| 1 | `NotEnoughEvidence` | `usedWeight == 0` or `unknownWeightBp > 5000` or `hasNonFixableBlockingFinding` |
 | 2 | `ImproveFirst` | `hasFixableBlockingRootCause` or `unknownWeightBp > 3000` or aggregate < `5000` |
 | 3 | `ImmediatelyAutomatable` | aggregate >= `8500`, `hasBlockingFinding == false`, `unknownWeightBp <= 500`, confidence not lower than `Medium` |
 | 4 | `SmallImprovement` | aggregate >= `7000`, `hasBlockingFinding == false`, `unknownWeightBp <= 1500` |
-| 5 | `LimitedAutomation` | aggregate >= `5000` |
-| 6 | `ImproveFirst` | fallback when no earlier row matched |
+| 5 | `LimitedAutomation` | aggregate >= `5000`, `hasBlockingFinding == false` |
 
-This ordering intentionally lets evidence insufficiency and fixable blockers override a high aggregate score. Class names are stable enum values. User-facing localized labels belong to `DES-0012` / `DES-0016`.
+Rows 1 through 5 are exhaustive for v1: every blocking finding is either non-fixable (`NotEnoughEvidence`) or fixable (`ImproveFirst`), aggregate values below `5000` become `ImproveFirst`, and non-blocking aggregate values of `5000` or higher reach one of the score-based rows. This ordering intentionally lets evidence insufficiency and all blockers override a high aggregate score. Class names are stable enum values. User-facing localized labels belong to `DES-0012` / `DES-0016`.
 
 ### Step 7: Generate Improvement Candidates
 
