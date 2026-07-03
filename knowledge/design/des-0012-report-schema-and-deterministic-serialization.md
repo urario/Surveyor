@@ -349,6 +349,8 @@ GenerateAsync(request, token):
   validate request is non-null
   validate request.RunId == request.SanitizedRunResult.RunId
   validate request.ConfidentialityDecision == request.SanitizedRunResult.ConfidentialityDecision
+  validate request.SanitizedRunResult.ScreenModel is non-null
+  validate request.SanitizedRunResult.ScoreResult is non-null
   validate request.SanitizedRunResult.ScreenModel.Key == request.SanitizedRunResult.ScoreResult.ScreenKey
   validate request.SanitizedRunResult.Target.SessionTargetId is a safe opaque id
   validate requested artifacts are non-empty and have unique formats
@@ -483,7 +485,7 @@ sequenceDiagram
 | Destination appears between pre-check and move | Move fails as `IoError`; existing file unchanged; temp cleanup. | `UT-0006` fake filesystem |
 | JSON schema validation fails after rendering | `SchemaInvalid`; no final artifact; diagnostic uses safe schema code. | `UT-0006` |
 | Requested JSON and HTML, JSON succeeds then HTML fails | V1 treats the command as all-or-none: already written final JSON is deleted best effort before returning failure; if deletion fails, report `IoError` with safe diagnostic. | `UT-0006` |
-| `ScoreResult` is null for a failed/cancelled result that still reaches report command | `SchemaInvalid`; report command is not valid unless a useful post-policy score is present. | `UT-0006` |
+| `ScreenModel` or `ScoreResult` is null for a failed/cancelled result that still reaches report command | `SchemaInvalid`; report command is not valid unless a useful post-policy screen and score are both present. The null checks run before the duplicated `screenKey` equality check. | `UT-0006` |
 | `Unavailable(reason)` in model/score | JSON/HTML preserve reason and unknown score null; never serialize as low score. | `UT-0006`, `UT-0007`, `RQ-051` |
 | Missing `ConfidentialityDecision` | `SchemaInvalid`; no artifact. | `UT-0007`; DES-0013 decision consistency |
 | `ProtectedLocal` report | Mandatory handling notice; post-policy content only. | `UT-0007`, `RQ-052` |
@@ -676,7 +678,7 @@ Author-side DRP sweep for the PR body:
 | `DRP-05` Unowned field | finding fixed: field ownership table names single writer, write timing, and sync/fabrication rules for schema version, timestamps, target safe id, duplicated screen key, config version, decision metadata, keys, diagnostics, and content hash. |
 | `DRP-06` Rule overlap without precedence | checked clean. Confidentiality branches, destination collision, all-or-none multi-format behavior, and cancellation-vs-timeout precedence are ordered. Score classification remains DES-0010. |
 | `DRP-07` Numeric under-specification | checked clean. Integer basis points are authoritative; display percentages are fixed invariant strings; no floating point or culture-sensitive formatting. |
-| `DRP-08` Missing failure semantics | checked clean. Atomic write, cleanup, destination collision, schema failure, timeout, cancel, and multi-format partial failure are specified. |
+| `DRP-08` Missing failure semantics | finding fixed: atomic write, cleanup, destination collision, schema failure, timeout, cancel, and multi-format partial failure are specified. Follow-up review added explicit `ScreenModel`/`ScoreResult` null checks before the duplicated `screenKey` equality validation so null report inputs fail as `SchemaInvalid`, not as undefined behavior. |
 | `DRP-09` Port ownership ambiguity | checked clean. Application owns the port; `Surveyor.Reports` implements it; UI/store/export/policy boundaries are separated. |
 | `DRP-10` Patch regression | finding fixed: review changes reshaped the `ReportOptions`, report-document persistence/export, `screenKey`, and `targetSafeId` boundaries; `DRP-02` to `DRP-05` were re-run on the reshaped boundary and the contract diff is summarized in the PR reply. |
 
@@ -699,7 +701,7 @@ End-to-end tabletop simulation:
 
 | Use case | Trigger to output simulation result |
 | -- | -- |
-| JSON happy path | UI requests JSON after analysis review -> use case discards caller-side `GeneratedAtUtc`, stamps `ReportRequest.Options.GeneratedAtUtc` from fake `IClock`, validates decision/run id/screen key/target safe id -> projects `ReportDocument` from sanitized result -> writes ordered JSON -> schema re-read succeeds -> atomic move -> `ReportResult.Ok` with safe artifact ref. |
+| JSON happy path | UI requests JSON after analysis review -> use case discards caller-side `GeneratedAtUtc`, stamps `ReportRequest.Options.GeneratedAtUtc` from fake `IClock`, validates decision/run id/non-null screen and score/screen key/target safe id -> projects `ReportDocument` from sanitized result -> writes ordered JSON -> schema re-read succeeds -> atomic move -> `ReportResult.Ok` with safe artifact ref. |
 | HTML happy path | Same request with HTML -> renderer emits required sections and notice -> raw-sensitive fixture tokens absent -> atomic move -> `ReportResult.Ok`. |
 | Masked export alignment | DES-0013 creates `MaskedExportModel.Documents` as `MaskedReportDocument` with export-local fallback keys -> report vocabulary emits pseudonym keys and `stableAcrossExports=false` -> no canonical fallback token or reverse dictionary appears. |
 | Cancel after temp write | Fake filesystem records temp write -> token canceled before move -> temp deleted best effort -> no final path -> cancellation wins over timeout. |
