@@ -18,6 +18,9 @@ Use this skill when working with Git in the Surveyor repository.
 7. Include lifecycle phase and artifact IDs in PR descriptions when durable evidence exists.
 8. Link the related Japanese GitHub Issue in the PR and keep Project fields current when issue context exists.
 9. Run relevant tests or validation before suggesting merge readiness.
+10. Write the PR body in Japanese using `.github/pull_request_template.md`; fill every section and mark non-applicable ones as `N/A`. Keep identifiers, Project field names, commands, and code in their original form.
+11. Crystallize a self-review in the "自己レビュー" section (findings and trade-offs, not just checkboxes), confirming requirement/design alignment, layer boundaries, read-only (`RQ-048`), determinism (`RQ-051`), and confidentiality (`RQ-052`).
+12. For implementation PRs (`feat` / `fix` / `refactor`), attach quantitative quality-gate evidence per `CS-01`–`CS-10` and DES-0008.
 
 ## Branch Naming
 
