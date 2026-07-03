@@ -1,21 +1,19 @@
 ---
 type: Decision
 title: ADR-0002 Adapter Technology Selection (UIA Client, Capture API, Packaging)
-description: Draft decision record for the RSK-RD-001 spike comparing UIA client (raw COM vs FlaUI), capture API (PrintWindow vs Windows.Graphics.Capture), and packaging form; final selection and promotion are a human decision.
+description: Accepted decision record for the RSK-RD-001 spike comparing UIA client (raw COM vs FlaUI), capture API (PrintWindow vs Windows.Graphics.Capture), and packaging form.
 tags: [adr, spike, uia, capture, packaging, rq-048, rq-049, rq-050, rq-051]
 timestamp: 2026-07-02T00:00:00+09:00
 ---
 
 # Status
 
-**Proposed (measurements integrated — awaiting human promotion).** Scaffold, desk analysis,
+**Accepted (human-approved 2026-07-03, issue #30).** Scaffold, desk analysis,
 and per-axis measurements against real targets ([TRC-0001](../traces/trc-0001-adr-0002-spike-measurements.md),
 including the human owner's TortoiseGit/MFC run of 2026-07-03) are complete, and the
-Decision section below names one recommended candidate per dimension. Per
-[DES-0007](../design/des-0007-detailed-design-execution-strategy.md) §4.2 and §8.1, the
-final selection and the promotion of this ADR to *Accepted* remain a **human decision**
-(issue #30); on promotion, the `DES-0014`/`DES-0015`/`DES-0018`(wiring)/`IMP-0013`/`IMP-0014`
-gates (#25/#26/#29/#71/#72) open.
+Decision section below fixes one selected candidate per dimension. This promotion opens the
+`DES-0014`/`DES-0015`/`DES-0018`(wiring)/`IMP-0013`/`IMP-0014` gates (#25/#26/#29/#71/#72)
+while carrying the residual risks listed below.
 
 # Context
 
@@ -108,7 +106,7 @@ integrity.
 
 # Decision
 
-**Recommendation (one candidate per dimension; human approval promotes this ADR):**
+**Accepted selection (one candidate per dimension):**
 
 1. **UIA client: raw COM (`Interop.UIAutomationClient` PIA)** wrapped in a thin
    Surveyor-owned internal layer inside `Surveyor.Adapters.Uia`. Measurements confirmed the
@@ -129,7 +127,7 @@ integrity.
 
 # Consequences
 
-- Until promotion, adapter-bound packages stay gated ([DES-0007](../design/des-0007-detailed-design-execution-strategy.md) §4.2 *Gate*).
+- Adapter-bound packages are unblocked by the human approval of issue #30; residual risks stay attached to their downstream design/test owners rather than reopening this decision.
 - Threading/async findings feed the `DES-0011` acquisition-port contracts **before** they
   are frozen: MTA-safe client confirmed; first-acquisition warm-up/lazy-realization rule;
   WGC async first-frame budget (~400 ms) in the capture-stage timeout; cancellation on a
@@ -159,10 +157,11 @@ integrity.
   [spikes/adr-0002/README.md](../../spikes/adr-0002/README.md)).
 - Exit criteria ([DES-0007](../design/des-0007-detailed-design-execution-strategy.md) §4.2): **met** — every axis has a pass/fail result with
   evidence ([TRC-0001](../traces/trc-0001-adr-0002-spike-measurements.md)), one candidate is
-  recommended per dimension (Decision above), and reproduction steps are captured in
+  selected per dimension (Decision above), and reproduction steps are captured in
   TRC-0001; the carried items are named in Residual risks with downstream owners.
 - Human owner ran the harness against the real MFC target (TortoiseGit, 2026-07-03);
-  supplementary large-tree/failure-mode runs executed on the same machine.
+  supplementary large-tree/failure-mode runs executed on the same machine; human approval
+  completed in issue #30 on 2026-07-03.
 - `tools/okf/Validate-Okf.ps1` green after this revision's registration.
 
 # Related
