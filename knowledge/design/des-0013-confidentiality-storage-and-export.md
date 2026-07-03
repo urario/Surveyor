@@ -135,7 +135,8 @@ classDiagram
 
   class IAccessControlService {
     <<interface>>
-    +void ApplyUserOnlyAcl(DirectoryInfo directory)
+    +DirectoryInfo CreateUserOnlyDirectory(string path)
+    +void VerifyUserOnlyAcl(DirectoryInfo directory)
   }
 
   class IStoreFileSystem {
@@ -304,7 +305,8 @@ public interface IDataProtector
 
 public interface IAccessControlService
 {
-    void ApplyUserOnlyAcl(DirectoryInfo directory);
+    DirectoryInfo CreateUserOnlyDirectory(string path);
+    void VerifyUserOnlyAcl(DirectoryInfo directory);
 }
 
 public interface IStoreFileSystem
@@ -642,15 +644,15 @@ ACL:
 
 Atomic write:
 
-1. create temp directory under the same root;
-2. apply the user-only ACL to the temp directory before any protected blob or manifest is written;
-3. write protected blobs and plaintext manifest into the ACL-hardened temp directory;
+1. create the temp directory under the same root through `IAccessControlService.CreateUserOnlyDirectory`, using a Windows security descriptor at creation time so the directory is never visible with inherited broad ACLs;
+2. verify the temp directory is not a reparse point and has the user-only ACL before any protected blob or manifest is written;
+3. write protected blobs and plaintext manifest into the creation-hardened temp directory;
 4. fsync/flush where supported;
-5. move/rename the ACL-hardened temp directory to final run directory;
+5. move/rename the creation-hardened temp directory to final run directory;
 6. verify the final directory is not a reparse point and still has the user-only ACL; if verification fails, return `IoError` and delete the final directory best-effort;
 7. on failure, mark partial and remove temp best-effort.
 
-`ApplyUserOnlyAcl` must never be deferred until after the final move. The final run directory is created only by moving the already-hardened temp directory, so there is no interval where a broad-ACL final run directory is visible. The final verification is a defense-in-depth check, not the first ACL application.
+The implementation must not create the temp directory with inherited ACLs and then repair it in a second step. If the platform path cannot create the directory with a user-only security descriptor, `SaveAsync` fails with `IoError` before writing data. The final run directory is created only by moving the already-hardened temp directory, so there is no interval where a broad-ACL temp or final run directory is visible. The final verification is a defense-in-depth check, not the first ACL application.
 
 Expected store failures return `OperationStatus.IoError` or `Timeout`, not raw exceptions.
 
@@ -781,8 +783,8 @@ flowchart TD
 | -- | -- |
 | Store path hygiene | generated paths contain run id/date only, no label/title/raw key. |
 | DPAPI wrapper invoked | fake protection service records `CurrentUser`; plaintext blob is not written. |
-| ACL service invoked | fake ACL service receives the temp run directory before writes and before final move; final ACL verification is observed after move. |
-| Atomic write | ACL-hardened temp directory is used; failure leaves no final partial directory. |
+| ACL service invoked | fake ACL service creates the temp run directory with a user-only ACL before writes; temp and final ACL verification are observed. |
+| Atomic write | creation-hardened temp directory is used; failure leaves no final partial directory. |
 | Store/load symmetry | fixed `StoredResultDocument`, `StoredCaptureDocument`, `StoredReportDocument`, and `MaskingDictionaryDocument` are protected, saved, unprotected, and deserialized into one `StoredRunSnapshot`; scorer/report generation are not called during load. |
 | Export atomic write | temp ZIP is used; cancellation/failure deletes temp and leaves no final partial bundle; destination collision returns `IoError` without overwrite. |
 | Export determinism | fixed inputs and fixed `ExportId` yield stable ZIP entry order and normalized timestamps. |

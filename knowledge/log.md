@@ -1,5 +1,9 @@
 # Surveyor Knowledge Log
 
+## 2026-07-04
+
+* **Review Response**: Tightened the `DES-0013` local-store temp-directory contract after PR #83 follow-up review. The atomic writer now requires `IAccessControlService.CreateUserOnlyDirectory` to create the temp run directory with a user-only security descriptor at creation time, verifies the temp ACL before writes, and fails with `IoError` if creation-time ACL hardening is unavailable. This closes the remaining mkdir-to-ACL race window for `RQ-052` / `R-SEC-02` and updates `UT-0009` expectations.
+
 ## 2026-07-03
 
 * **Review Response**: Closed the medium design-review findings from issues #32/#33/#35 for `DES-0010`, `DES-0011`, and `DES-0013`: defined the `ScoreResult.Confidence` derivation from participating axis confidence plus `unknownWeightBp` caps (`RQ-051`), fixed `PriorityBasis` shape and `ScreenSelectionMetadata` -> `PriorityBasis` mapping/timing without computed priority (`RD-016`), and made local-store atomic write apply user-only ACL to the temp run directory before final move (`RQ-052` / `R-SEC-02`). Added matching UT handoff expectations for `UT-0002`, `UT-0012`, and `UT-0009`.
