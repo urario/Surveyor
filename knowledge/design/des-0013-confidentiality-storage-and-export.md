@@ -411,7 +411,21 @@ public sealed record StoredCaptureArtifact(
 
 public sealed record StoredReportDocument(
     string SchemaVersion,
-    IReadOnlyList<MaskedReportDocument> Documents);
+    IReadOnlyList<StoredReportArtifactDocument> Documents);
+
+public sealed record StoredReportArtifactDocument(
+    string SchemaVersion,
+    ReportFormat Format,
+    byte[] Utf8Bytes,
+    string ContentSha256Hex,
+    bool ContainsCanonicalFallbackKeys);
+
+public sealed record MaskedReportDocument(
+    string SchemaVersion,
+    ReportFormat Format,
+    byte[] Utf8Bytes,
+    string ContentSha256Hex,
+    bool ContainsCanonicalFallbackKeys);
 
 public sealed record MaskingDictionaryDocument(
     string SchemaVersion,
@@ -609,10 +623,16 @@ Protected blobs are deterministic serialized documents encrypted with `Protected
 | -- | -- | -- | -- |
 | `ProtectedResultBytes` | UTF-8 deterministic JSON for `StoredResultDocument` | Yes | Contains the post-policy `SanitizedRunResult`; load does not recompute scoring, classification, diagnostics, or report fields. |
 | `ProtectedCaptureBytes` | UTF-8 deterministic JSON header plus binary-safe payload for `StoredCaptureDocument` | No, unless export profile includes captures | Missing/corrupt capture payload yields a safe diagnostic and capture placeholders when export can continue without raw pixels. |
-| `ProtectedReportBytes` | UTF-8 deterministic JSON for `StoredReportDocument` | No | Used only when a generated local report was persisted. |
+| `ProtectedReportBytes` | UTF-8 deterministic JSON for `StoredReportDocument` | No | Used only when a generated local report was persisted. `StoredReportDocument.Documents` contains protected-local `StoredReportArtifactDocument` entries, not shareable-export `MaskedReportDocument` entries. |
 | `ProtectedMaskingDictionaryBytes` | UTF-8 deterministic JSON for `MaskingDictionaryDocument` | Yes for export | Contains protected local reverse mappings and canonical fallback tokens; it is never written to shareable export. |
 
 `PolicyApplicationResult.SanitizedRunResult` and `StoredResultDocument.SanitizedRunResult` are the same logical DTO. `AnalyzeScreenUseCase` returns this sanitized result to the UI and passes `ProtectedRunModel` to `IResultStorePort.SaveRunAsync`. `GenerateReportUseCase` formats only this sanitized result. `ExportResultUseCase` loads `StoredRunSnapshot`, then passes the snapshot to `CreateShareableExportModel`; it never treats encrypted protected bytes as a report model.
+
+`StoredReportArtifactDocument` and `MaskedReportDocument` deliberately use the same DES-0012 report vocabulary but are not interchangeable:
+
+- `ReportFormat` is the DES-0012 application DTO enum; store/export uses it only to preserve the generated report artifact kind without inferring behavior from file names.
+- `StoredReportArtifactDocument` is protected-local only. It may carry canonical fallback keys when the enclosing blob is DPAPI-protected and ACL-restricted, and `ContainsCanonicalFallbackKeys` records that fact for load/export policy checks.
+- `MaskedReportDocument` is shareable-export only. `CreateShareableExportModel` must produce it after applying export masking and fallback-key pseudonymization; `ContainsCanonicalFallbackKeys` must be `false`. A protected-local stored report must never be copied into `MaskedExportModel.Documents` without rebuilding it through the export masking path.
 
 Load algorithm:
 

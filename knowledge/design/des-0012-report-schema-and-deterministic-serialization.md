@@ -83,7 +83,7 @@ Binding upstream inventory:
 | -- | -- | -- |
 | `DES-0002` `M10` | Report writer serializes shared result model to HTML/JSON and must not re-score, re-key, or emit raw pre-policy content. | The report projection copies values from `ReportRequest.SanitizedRunResult`; score/key/policy fields have single upstream writers in [Contract Closure](#contract-closure). |
 | `DES-0003` `IReportWriter` | Input is post-policy analysis result plus destination; output is written artifact/result; failures are modeled statuses; cancel/failure leaves no partial artifact. | `IReportGenerationPort.GenerateAsync` uses `ReportRequest`; atomic write and status mapping are fixed below. |
-| `DES-0004` Stage 7 | Stage 7 writes HTML + JSON, uses `IClock`, is byte-stable, and presents carried candidates/priority basis without computing priority. | `ReportOptions.GeneratedAtUtc` is supplied by `GenerateReportUseCase` from `IClock`; `ScoreResult.PriorityBasis` and candidate basis are copied only. |
+| `DES-0004` Stage 7 | Stage 7 writes HTML + JSON, uses `IClock`, is byte-stable, and presents carried candidates/priority basis without computing priority. | `ReportRequest.Options.GeneratedAtUtc` is supplied by `GenerateReportUseCase` from `IClock`; any caller-side value on `GenerateReportRequest.Options.GeneratedAtUtc` is discarded. `ScoreResult.PriorityBasis` and candidate basis are copied only. |
 | `DES-0007` package 5 | JSON schema/version, HTML structure, stable ordering, timestamp format, atomic write, serializer determinism, golden governance. | All are first-class sections in this document. |
 | `DES-0007` `R-NET-03` | Explicit property order, `InvariantCulture`, fixed numeric/date format, UTF-8 no BOM, newline normalization. | [Serializer Determinism Contract](#serializer-determinism-contract) is normative. |
 | `DES-0007` `R-QA-02` | Golden regeneration command, semantic-diff review, approval. | [Golden-File Governance](#golden-file-governance) is normative. |
@@ -134,7 +134,7 @@ public enum ReportCollisionPolicy { FailIfDestinationExists }
 
 Rules:
 
-- `ReportOptions.GeneratedAtUtc` is written by `GenerateReportUseCase` from `IClock.UtcNow` immediately before it builds `ReportRequest`. The port implementation must not read ambient time.
+- `ReportOptions` appears on both DES-0011 request shapes. In caller-supplied `GenerateReportRequest.Options`, `GeneratedAtUtc` is not semantic input; callers set it to `default`, and `GenerateReportUseCase` ignores any non-default value. The use case copies only `Artifacts` and `CollisionPolicy`, reads `IClock.UtcNow`, and builds a new `ReportOptions` for `ReportRequest.Options` with that clock value. The port implementation must not read ambient time.
 - `ReportDestination.AbsolutePathForWrite` is input-only command data. It must not appear in JSON, HTML, diagnostics, logs, manifests, or `SafeArtifactReference.RelativeSafePath`.
 - V1 supports only `FailIfDestinationExists`. Silent overwrite is prohibited. If overwrite support is ever added, it is a new enum value with its own edge-case and golden tests.
 - `ReportResult.Artifacts` is sorted by `ReportFormat` enum order (`Json`, then `Html`) regardless of request order.
@@ -253,19 +253,21 @@ HTML escaping rules:
 | Contract/output | Required input | Derivation source | Output consumer | Closure rule |
 | -- | -- | -- | -- | -- |
 | `GenerateReportUseCase.ExecuteAsync` input `RunResult` | Post-policy `AnalysisRunResult` | `PolicyApplicationResult.SanitizedRunResult` from DES-0013, returned by DES-0011 analysis orchestration | `GenerateReportUseCase` | Must have non-null `ConfidentialityDecision`; otherwise report command returns `SchemaInvalid` and writes nothing. |
-| `GenerateReportUseCase.ExecuteAsync` input `Options.GeneratedAtUtc` | Current UTC instant | `IClock.UtcNow` from DES-0011, read by the use case before building `ReportRequest` | `IReportGenerationPort` | Writer must not read ambient time. |
+| `GenerateReportUseCase.ExecuteAsync` input `Options.Artifacts` / `Options.CollisionPolicy` | Requested formats, destinations, collision policy | Caller-provided `GenerateReportRequest.Options` from presentation/application command | `GenerateReportUseCase` | Only these fields are copied from caller options into the port request. |
+| `GenerateReportUseCase.ExecuteAsync` input `Options.GeneratedAtUtc` | None; non-semantic placeholder on the caller-side DTO | Caller may pass `default` or any value, but the use case discards it | None | This value must not affect report bytes, diagnostics, or artifact metadata. `UT-0010` uses a non-default caller value counter-example. |
+| `ReportRequest.Options.GeneratedAtUtc` | Current UTC instant | `IClock.UtcNow` from DES-0011, read by the use case before building `ReportRequest` | `IReportGenerationPort` and JSON/HTML `generatedAtUtc` | Writer must not read ambient time; caller-side timestamp values cannot flow here. |
 | `IReportGenerationPort.GenerateAsync` input `ReportRequest.RunId` | Run identity | `AnalysisRunResult.RunId` from DES-0011 | `M10` writer | Must equal `SanitizedRunResult.RunId`; mismatch is `SchemaInvalid`. |
 | `IReportGenerationPort.GenerateAsync` input `SanitizedRunResult` | Report data | DES-0011 `AnalysisRunResult`, after DES-0013 policy application | JSON/HTML projection | Writer treats it as read-only and never calls policy again. |
 | `IReportGenerationPort.GenerateAsync` input `ConfidentialityDecision` | Policy metadata | DES-0013 stamped decision | JSON/HTML confidentiality section | Must equal `SanitizedRunResult.ConfidentialityDecision`; mismatch is `SchemaInvalid`. |
 | JSON artifact bytes | `ReportDocument`, JSON destination, schema constants, serialization rules | `ReportDocument` projected from DES-0011/0010/0013 inputs plus M10 constants | External tools, CI comparison, optional DES-0013 protected report blob | Rendered through explicit writer order; schema-readback must pass before final move. |
 | HTML artifact bytes | `ReportDocument`, HTML destination, required section outline, serialization rules | Same `ReportDocument` projected from DES-0011/0010/0013 inputs plus M10 fixed labels/notices | Human readers, `DES-0016` preview host, optional DES-0013 protected report blob | Rendered from the same post-policy document as JSON; semantic parser must find required sections before golden approval. |
-| JSON `run` object | Run id, timestamps, outcome, target safe id, metadata-presence flag | DES-0011 `AnalysisRunResult`; generated timestamp from `ReportOptions.GeneratedAtUtc` | External tools, CI comparison, store/export manifests | No raw target title/path. Target id must be the safe id carried by DTOs/diagnostics. |
+| JSON `run` object | Run id, timestamps, outcome, target safe id, metadata-presence flag | DES-0011 `AnalysisRunResult`; generated timestamp from `ReportRequest.Options.GeneratedAtUtc`; `targetSafeId` from `AnalysisRunResult.Target.SessionTargetId` | External tools, CI comparison, store/export manifests | `SessionTargetId` must be the DES-0011 opaque safe id and pass the report safe-id pattern (`[A-Za-z0-9._:-]+`, no path separators, no whitespace). `SafeDisplayHint` is display-only and must not be serialized as `targetSafeId`. |
 | JSON `score`, `axes`, `findings`, `improvementCandidates` | `ScoreResult` and nested fields | DES-0010 `ScoreResult` carried inside DES-0011 `AnalysisRunResult` | External tools, HTML renderer, golden semantic diff | Copy only; no scoring, rounding, classification, priority sorting, or candidate generation. |
 | JSON/HTML key fields | `ScreenKey`, `ElementKey`, `IsFallback`, key version | DES-0009 values carried by DES-0011 `ScreenModel`/`ScoreResult`; DES-0013 export pseudonyms for shareable export | External comparison (`RQ-053`) | Non-fallback keys may be stable; fallback export keys are pseudonyms with `stableAcrossExports=false`. |
 | JSON/HTML confidentiality notice | Mode, policy version, transforms, fallback stability | DES-0013 `ConfidentialityDecision` and export-key policy | Human readers, external recipients | Notice is mandatory for every HTML report and present in JSON as `handlingNoticeCode`. |
 | JSON/HTML diagnostics | Sanitized diagnostic facts | DES-0011 diagnostic shape, sanitized by DES-0013 | Human readers, CI parsers | Safe codes/status/counts only; no raw exception/path/title/name. |
 | `ReportResult.Artifacts` | Successful final artifact refs and content hashes | M10 atomic writer after final move | `GenerateReportUseCase`, UI/store handoff | Sorted by format; references are safe, never raw absolute paths. |
-| `StoredReportDocument` optional payload | Generated local report document(s) | DES-0013 store receives protected model; M10 can provide report document bytes | `M12` protected local store | Stored report bytes are optional and protected by DES-0013; load does not reconstruct `AnalysisRunResult` from them. |
+| `StoredReportDocument` optional payload | Generated local report document(s) | DES-0013 store receives protected model; M10 can provide report document bytes as `StoredReportArtifactDocument` | `M12` protected local store | Stored report bytes are optional, protected-local only, and never reused as `MaskedExportModel.Documents`. Load does not reconstruct `AnalysisRunResult` from them. |
 
 No output row above requires data outside DES-0011 `AnalysisRunResult`, DES-0010 `ScoreResult`, DES-0013 sanitized/masked policy outputs, report command options, or the writer's own constants. This closes the `DRP-03` data-flow hole for JSON and HTML.
 
@@ -276,8 +278,8 @@ No output row above requires data outside DES-0011 `AnalysisRunResult`, DES-0010
 | JSON serialize/deserialize | `ReportDocument` -> UTF-8 JSON bytes using `ReportJsonWriter` | UTF-8 JSON bytes -> `ReportDocument` using `ReportJsonReader` for schema/golden validation | Same `ReportDocument` schema version and property vocabulary. It is not an `AnalysisRunResult` loader. | Unknown schema, missing required fields, wrong order in strict golden mode, or invalid enum -> `SchemaInvalid`; no artifact write. |
 | JSON schema validation | `ReportDocument` -> JSON bytes -> v1 schema validator | Validator returns normalized semantic tree for diff | Schema vocabulary comes from this document. | Validation failure is `SchemaInvalid` and temp file cleanup. |
 | HTML render/semantic parse | `ReportDocument` -> HTML bytes | Test-only semantic parser extracts required section ids and normalized table facts | One-way render; parser is a UT oracle, not application load. | Missing required section/notice or raw sensitive token fixture -> failing `UT-0007`. |
-| Local protected report persistence | M10-generated `ReportDocument` bytes may be included in DES-0013 `StoredReportDocument.Documents` | DES-0013 load returns `StoredRunSnapshot.Report` as optional stored report document; it does not recompute reports or analysis | `StoredReportDocument` uses the same `schemaVersion` and report document vocabulary. | Missing/corrupt optional report blob yields DES-0013 partial snapshot/diagnostic, not regenerated report. |
-| Masked export symmetry | `StoredRunSnapshot` -> DES-0013 `MaskedExportModel.Documents` using DES-0012 report vocabulary | External consumer reads `result.masked.json` as `ReportDocument` v1 with masked/export keys | Field names and enum strings align with DES-0012; fallback keys are export-local pseudonyms and `stableAcrossExports=false`. | Missing masking dictionary for fallback export is DES-0013 `IoError`; M10 never substitutes canonical fallback tokens. |
+| Local protected report persistence | M10-generated `ReportDocument` bytes may be included in DES-0013 `StoredReportDocument.Documents` as `StoredReportArtifactDocument` | DES-0013 load returns `StoredRunSnapshot.Report` as optional stored report document; it does not recompute reports or analysis | `StoredReportArtifactDocument` uses the same `schemaVersion` and report document vocabulary. It may contain canonical fallback keys only inside the protected local blob when DES-0013 allows that. | Missing/corrupt optional report blob yields DES-0013 partial snapshot/diagnostic, not regenerated report. |
+| Masked export symmetry | `StoredRunSnapshot` -> DES-0013 `MaskedExportModel.Documents` as `MaskedReportDocument` using DES-0012 report vocabulary | External consumer reads `result.masked.json` as `ReportDocument` v1 with masked/export keys | `MaskedReportDocument` is shareable-export only. It must not contain canonical fallback keys; fallback keys are export-local pseudonyms and `stableAcrossExports=false`. | Missing masking dictionary for fallback export is DES-0013 `IoError`; M10 never substitutes canonical fallback tokens. |
 | Atomic file write | Render complete bytes -> temp file -> final move | Test fake reads final path only after success | Final artifact bytes equal rendered bytes; temp path is not semantic state. | Cancel/timeout/schema/I/O/collision leaves no final partial file; temp cleanup best effort with safe diagnostic only. |
 
 ### Field Ownership Table
@@ -286,9 +288,10 @@ No output row above requires data outside DES-0011 `AnalysisRunResult`, DES-0010
 | -- | -- | -- | -- |
 | `ReportDocument.schemaVersion` | M10 report writer | Projection creation | Constant `surveyor.report.v1`; must match schema file, JSON, HTML `data-schema-version`, and goldens. |
 | `serializerVersion` | M10 report writer | Projection creation | Constant for writer behavior, starts `report-writer-v1`; changing byte behavior requires golden governance. |
-| `generatedAtUtc` | `GenerateReportUseCase` via DES-0011 `IClock` | Before `ReportRequest` is created | M10 copies only; no `DateTime.Now`, `UtcNow`, or local time in writer. |
+| `generatedAtUtc` | `GenerateReportUseCase` via DES-0011 `IClock` | Before `ReportRequest` is created | Caller-side `GenerateReportRequest.Options.GeneratedAtUtc` is discarded. M10 copies `ReportRequest.Options.GeneratedAtUtc` only; no `DateTime.Now`, `UtcNow`, or local time in writer. |
 | `startedAtUtc`, `completedAtUtc` | DES-0011 `AnalyzeScreenUseCase` via `IClock` | Result assembly | M10 formats only; never edits run timestamps. |
 | `runId` | DES-0011 `AnalysisRunResult` writer | Result assembly | `ReportRequest.RunId` must equal `SanitizedRunResult.RunId`; mismatch fails. |
+| `targetSafeId` | DES-0011 `TargetReference.SessionTargetId` writer | Target discovery/selection before analysis request | M10 copies only after validating the safe-id pattern. `SafeDisplayHint` is optional display text and must not be used as `targetSafeId`, key material, path material, or ordering material. |
 | `ConfidentialityDecision` fields | DES-0013 `IConfidentialityPolicy.Apply` or export decision path | Policy application/export sanitization | M10 copies; missing/mismatch fails; no default decision fabrication. |
 | `ScoreResult.ConfigVersion` | DES-0010 scoring config resolver/scorer | Scoring stage | M10 copies to `score.scoringConfigVersion`; never resolves config. |
 | `ScoreResult.CandidateRulesVersion` | DES-0010 scorer | Scoring stage | M10 copies to `score.candidateRulesVersion`; never chooses candidate rules. |
@@ -296,6 +299,7 @@ No output row above requires data outside DES-0011 `AnalysisRunResult`, DES-0010
 | `AggregateScorePercentText`, `AxisScore.scorePercentText` | M10 report projection | Projection creation | Derived from integer bp using `InvariantCulture` and `F2`; display-only. If `ScoreBp` is null, text is null. |
 | `TestabilityClass`, `Confidence` | DES-0010 scorer | Scoring stage | M10 copies enum names; no reclassification. |
 | `PriorityBasis` | DES-0010 copies from DES-0011 `ScreenSelectionMetadata` | Scoring stage | M10 copies presence and fields; it must not rank, weight, or synthesize priority. |
+| `screen.screenKey` and `score.screenKey` | DES-0009 domain model for `ScreenModel.Key`; DES-0010 scorer copies the same key into `ScoreResult.ScreenKey` | Model construction and scoring stage | Report projection must validate `SanitizedRunResult.ScreenModel.Key == SanitizedRunResult.ScoreResult.ScreenKey` before writing. Mismatch is `SchemaInvalid`; M10 must not choose one side or rewrite either value. |
 | `ScreenKey`/`ElementKey` canonical value and `IsFallback` | DES-0009 domain model, with DES-0013 export pseudonym substitution for shareable export | Model construction or export sanitization | Local protected reports may carry canonical safe keys as allowed by DES-0013; shareable exports must use export pseudonyms for fallback keys and mark `stableAcrossExports=false`. |
 | `Unavailable(reason)` | DES-0009/0011 acquisition and domain model | Acquisition/model construction | M10 serializes explicit reason; never converts to score zero or omission. |
 | `Diagnostics.safeArgs` | DES-0011 diagnostic builder, sanitized by DES-0013 | Stage completion / policy application | M10 copies allowlisted values; unknown unsafe args are dropped with a safe writer diagnostic. |
@@ -345,6 +349,8 @@ GenerateAsync(request, token):
   validate request is non-null
   validate request.RunId == request.SanitizedRunResult.RunId
   validate request.ConfidentialityDecision == request.SanitizedRunResult.ConfidentialityDecision
+  validate request.SanitizedRunResult.ScreenModel.Key == request.SanitizedRunResult.ScoreResult.ScreenKey
+  validate request.SanitizedRunResult.Target.SessionTargetId is a safe opaque id
   validate requested artifacts are non-empty and have unique formats
   validate every destination is input-only and outside diagnostics
 
@@ -383,8 +389,8 @@ Cancellation-vs-timeout precedence follows DES-0011: caller cancellation wins wh
 
 | Mode/path | Report behavior |
 | -- | -- |
-| `ProtectedLocal` | JSON/HTML use `SanitizedRunResult`; HTML includes handling notice; local protected reports may include canonical fallback keys only as allowed by DES-0013. |
-| `MaskedShareableExport` | JSON vocabulary is the same, but content is from DES-0013 `MaskedExportModel`; fallback keys are export-local pseudonyms and `stableAcrossExports=false`; reverse masking dictionary is never included. |
+| `ProtectedLocal` | JSON/HTML use `SanitizedRunResult`; HTML includes handling notice; local protected stored reports use DES-0013 `StoredReportArtifactDocument` and may include canonical fallback keys only inside protected local storage when DES-0013 allows that. |
+| `MaskedShareableExport` | JSON vocabulary is the same, but content is from DES-0013 `MaskedExportModel.Documents` as `MaskedReportDocument`; fallback keys are export-local pseudonyms and `stableAcrossExports=false`; canonical fallback keys and the reverse masking dictionary are never included. |
 | `ExplicitLocalOptOut` | Allowed only when DES-0013 decision records it. HTML notice must show opt-out mode and reason code; tests assert it is never the default. |
 | Missing decision | `SchemaInvalid`; no artifact. |
 | Decision mismatch | `SchemaInvalid`; no artifact. |
@@ -592,7 +598,7 @@ Goldens protect these semantic properties:
 | `UT-0007` | Confidentiality notice appears for every mode | Shared HTML lacks handling warning (`RQ-052`) | `masked-export-fallback-run.json`, `explicit-local-opt-out-run.json`; counterexample notice removed | Notice section contains mode, policy version, fallback stability note when needed | Testing only default mode |
 | `UT-0007` | HTML/JSON contain post-policy content only | Raw title/name/path leaks | `unsafe-diagnostic-arg-run.json`; counterexample `raw-window-title-leak.html` | Known sensitive tokens absent; safe pseudonyms/codes present | Allow-all policy fixture only |
 | `UT-0007` | `Unavailable` and partial-result statuses are explicit | Missing data is misread as low score or success | `unavailable-and-partial-run.json`; counterexample `unavailable-as-zero-score.json` | HTML has partial/unavailable section; JSON has `applicability=UnknownDueToUnavailable` and null score | Asserting only aggregate score |
-| `UT-0010` | `generatedAtUtc` comes only from `IClock` | Ambient time breaks reproducibility | fixed fake clock fixture; counterexample `ambient-clock-writer.json` | Generated timestamp equals fake clock and bytes repeat | Letting `DateTimeOffset.UtcNow` into expected output |
+| `UT-0010` | `generatedAtUtc` comes only from `IClock` | Ambient time or caller-controlled time breaks reproducibility | fixed fake clock fixture; counterexamples `ambient-clock-writer.json`, `caller-generated-at-leak.json` | Generated timestamp equals fake clock and bytes repeat even when `GenerateReportRequest.Options.GeneratedAtUtc` contains a different non-default value | Letting `DateTimeOffset.UtcNow` or caller-side timestamp values into expected output |
 | `UT-0010` | Timestamp format is fixed UTC with seven fractional digits | Local offset/culture changes bytes | culture-change fixture | `yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'` exactly for generated/start/completed/decision timestamps | Comparing parsed times only |
 
 ## Integration Assumptions
@@ -664,15 +670,15 @@ Author-side DRP sweep for the PR body:
 | Pattern | Result |
 | -- | -- |
 | `DRP-01` Upstream drift | checked clean. Upstream inventory lists DES-0002/0003/0004/0007/0009/0010/0011/0013 decisions; no use case, port, state, or decision is renamed. `IReportGenerationPort` is explicitly treated as the DES-0011 realization of DES-0003 `IReportWriter`. |
-| `DRP-02` Dangling reference | finding fixed: `ReportOptions`, `ReportArtifactRequest`, `ReportDestination`, `ReportResult`, `GeneratedReportArtifact`, `ReportFormat`, and `ReportCollisionPolicy` are defined here because DES-0011 named the report result/options without field detail. External types resolve to their upstream owners. |
-| `DRP-03` Data-flow closure | checked clean. The I/O derivation table traces every JSON/HTML output to DES-0011 `AnalysisRunResult`, DES-0010 `ScoreResult`, DES-0013 sanitized/masked policy outputs, report command options, or M10 constants. |
-| `DRP-04` Round-trip asymmetry | checked clean. JSON serialize/deserialize targets `ReportDocument`, not `AnalysisRunResult`; local protected report and masked export symmetry use DES-0013 vocabulary and failure semantics. |
-| `DRP-05` Unowned field | checked clean. Field ownership table names single writer, write timing, and sync/fabrication rules for schema version, timestamps, config version, decision metadata, keys, diagnostics, and content hash. |
+| `DRP-02` Dangling reference | finding fixed: `ReportOptions`, `ReportArtifactRequest`, `ReportDestination`, `ReportResult`, `GeneratedReportArtifact`, `ReportFormat`, and `ReportCollisionPolicy` are defined here because DES-0011 named the report result/options without field detail. Review follow-up fixed the unresolved DES-0013 `MaskedReportDocument` dependency by splitting protected-local `StoredReportArtifactDocument` from shareable-export `MaskedReportDocument`. |
+| `DRP-03` Data-flow closure | finding fixed: the I/O derivation table traces every JSON/HTML output to DES-0011 `AnalysisRunResult`, DES-0010 `ScoreResult`, DES-0013 sanitized/masked policy outputs, report command options, or M10 constants. Review follow-up made caller-side `Options.GeneratedAtUtc` non-semantic and resolved `targetSafeId` to `TargetReference.SessionTargetId` with validation. |
+| `DRP-04` Round-trip asymmetry | finding fixed: JSON serialize/deserialize targets `ReportDocument`, not `AnalysisRunResult`; local protected persistence now uses `StoredReportArtifactDocument`, while masked export uses `MaskedReportDocument`, both with DES-0012 vocabulary and DES-0013 failure semantics. |
+| `DRP-05` Unowned field | finding fixed: field ownership table names single writer, write timing, and sync/fabrication rules for schema version, timestamps, target safe id, duplicated screen key, config version, decision metadata, keys, diagnostics, and content hash. |
 | `DRP-06` Rule overlap without precedence | checked clean. Confidentiality branches, destination collision, all-or-none multi-format behavior, and cancellation-vs-timeout precedence are ordered. Score classification remains DES-0010. |
 | `DRP-07` Numeric under-specification | checked clean. Integer basis points are authoritative; display percentages are fixed invariant strings; no floating point or culture-sensitive formatting. |
 | `DRP-08` Missing failure semantics | checked clean. Atomic write, cleanup, destination collision, schema failure, timeout, cancel, and multi-format partial failure are specified. |
 | `DRP-09` Port ownership ambiguity | checked clean. Application owns the port; `Surveyor.Reports` implements it; UI/store/export/policy boundaries are separated. |
-| `DRP-10` Patch regression | N/A for initial authoring. If review fixes reshape the report boundary, rerun `DRP-02` to `DRP-05` and include a contract-diff reply. |
+| `DRP-10` Patch regression | finding fixed: review changes reshaped the `ReportOptions`, report-document persistence/export, `screenKey`, and `targetSafeId` boundaries; `DRP-02` to `DRP-05` were re-run on the reshaped boundary and the contract diff is summarized in the PR reply. |
 
 DES-0007 section 9 checklist sweep:
 
@@ -693,8 +699,8 @@ End-to-end tabletop simulation:
 
 | Use case | Trigger to output simulation result |
 | -- | -- |
-| JSON happy path | UI requests JSON after analysis review -> use case stamps `GeneratedAtUtc` from fake `IClock` -> writer validates decision and run id -> projects `ReportDocument` from sanitized result -> writes ordered JSON -> schema re-read succeeds -> atomic move -> `ReportResult.Ok` with safe artifact ref. |
+| JSON happy path | UI requests JSON after analysis review -> use case discards caller-side `GeneratedAtUtc`, stamps `ReportRequest.Options.GeneratedAtUtc` from fake `IClock`, validates decision/run id/screen key/target safe id -> projects `ReportDocument` from sanitized result -> writes ordered JSON -> schema re-read succeeds -> atomic move -> `ReportResult.Ok` with safe artifact ref. |
 | HTML happy path | Same request with HTML -> renderer emits required sections and notice -> raw-sensitive fixture tokens absent -> atomic move -> `ReportResult.Ok`. |
-| Masked export alignment | DES-0013 creates `MaskedExportModel` with export-local fallback keys -> report vocabulary emits pseudonym keys and `stableAcrossExports=false` -> no canonical fallback token or reverse dictionary appears. |
+| Masked export alignment | DES-0013 creates `MaskedExportModel.Documents` as `MaskedReportDocument` with export-local fallback keys -> report vocabulary emits pseudonym keys and `stableAcrossExports=false` -> no canonical fallback token or reverse dictionary appears. |
 | Cancel after temp write | Fake filesystem records temp write -> token canceled before move -> temp deleted best effort -> no final path -> cancellation wins over timeout. |
 | Destination collision | Existing destination fixture -> writer returns `IoError`, existing bytes unchanged, no raw path diagnostic. |
