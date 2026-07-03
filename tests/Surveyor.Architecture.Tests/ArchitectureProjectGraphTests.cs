@@ -49,6 +49,21 @@ public sealed class ArchitectureProjectGraphTests
         "AnalysisLevel",
         "EnforceCodeStyleInBuild",
         "TreatWarningsAsErrors",
+        "GenerateDocumentationFile",
+    ];
+
+    private static readonly string[] SourceProjects =
+    [
+        "Surveyor.Domain",
+        "Surveyor.Application",
+        "Surveyor.Policy",
+        "Surveyor.Reports",
+        "Surveyor.Adapters.Discovery",
+        "Surveyor.Adapters.Uia",
+        "Surveyor.Adapters.Capture",
+        "Surveyor.Adapters.Store",
+        "Surveyor.Presentation",
+        "Surveyor.App",
     ];
 
     private static readonly string[] WindowsFacingProjects =
@@ -121,14 +136,22 @@ public sealed class ArchitectureProjectGraphTests
         AssertProperty(props, "LangVersion", "latest");
         AssertProperty(props, "ImplicitUsings", "enable");
         AssertProperty(props, "EnableNETAnalyzers", "true");
-        AssertProperty(props, "AnalysisLevel", "latest-Recommended");
+        AssertProperty(props, "AnalysisLevel", "latest-All");
         AssertProperty(props, "EnforceCodeStyleInBuild", "true");
         AssertProperty(props, "TreatWarningsAsErrors", "true");
         AssertProperty(props, "SurveyorCoreTargetFramework", "net10.0");
         AssertProperty(props, "SurveyorWindowsTargetFramework", "net10.0-windows10.0.19041.0");
 
         string propsText = File.ReadAllText(Path.Combine(RepositoryRoot, "Directory.Build.props"));
+        Assert.Contains("GenerateDocumentationFile", propsText, StringComparison.Ordinal);
+        Assert.Contains("CodeMetricsConfig.txt", propsText, StringComparison.Ordinal);
+
         foreach (string project in WindowsFacingProjects)
+        {
+            Assert.Contains(project, propsText, StringComparison.Ordinal);
+        }
+
+        foreach (string project in SourceProjects)
         {
             Assert.Contains(project, propsText, StringComparison.Ordinal);
         }
@@ -161,6 +184,55 @@ public sealed class ArchitectureProjectGraphTests
         Assert.Contains("P:System.DateTimeOffset.Now", bannedSymbols, StringComparison.Ordinal);
         Assert.Contains("M:System.DateTime.Parse(System.String)", bannedSymbols, StringComparison.Ordinal);
         Assert.Contains("M:System.DateTime.ToString", bannedSymbols, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CodingStandardsQualityGatesAreMechanicallyConfigured()
+    {
+        string propsText = File.ReadAllText(Path.Combine(RepositoryRoot, "Directory.Build.props"));
+        string packagesText = File.ReadAllText(Path.Combine(RepositoryRoot, "Directory.Packages.props"));
+        string editorConfigText = File.ReadAllText(Path.Combine(RepositoryRoot, ".editorconfig"));
+        string codeMetricsText = File.ReadAllText(Path.Combine(RepositoryRoot, "CodeMetricsConfig.txt"));
+
+        Assert.Contains("SurveyorIsSourceProject", propsText, StringComparison.Ordinal);
+        Assert.Contains("<GenerateDocumentationFile Condition=\"'$(SurveyorIsSourceProject)' == 'true'\">true</GenerateDocumentationFile>", propsText, StringComparison.Ordinal);
+        Assert.Contains("<GenerateDocumentationFile Condition=\"'$(SurveyorIsSourceProject)' != 'true'\">false</GenerateDocumentationFile>", propsText, StringComparison.Ordinal);
+        Assert.Contains("System.Runtime.CompilerServices.InternalsVisibleToAttribute", propsText, StringComparison.Ordinal);
+        Assert.Contains("<_Parameter1>$(AssemblyName).Tests</_Parameter1>", propsText, StringComparison.Ordinal);
+        Assert.Contains("<_Parameter1>Surveyor.TestSupport</_Parameter1>", propsText, StringComparison.Ordinal);
+        Assert.Contains("Microsoft.CodeAnalysis.PublicApiAnalyzers", propsText, StringComparison.Ordinal);
+        Assert.Contains("Microsoft.CodeAnalysis.PublicApiAnalyzers", packagesText, StringComparison.Ordinal);
+
+        Assert.Contains("dotnet_diagnostic.CA1501.severity = error", editorConfigText, StringComparison.Ordinal);
+        Assert.Contains("dotnet_diagnostic.CA1502.severity = error", editorConfigText, StringComparison.Ordinal);
+        Assert.Contains("dotnet_diagnostic.CA1505.severity = error", editorConfigText, StringComparison.Ordinal);
+        Assert.Contains("dotnet_diagnostic.CA1506.severity = error", editorConfigText, StringComparison.Ordinal);
+        Assert.Contains("dotnet_diagnostic.CA1509.severity = warning", editorConfigText, StringComparison.Ordinal);
+        Assert.Contains("dotnet_diagnostic.CA1005.severity = warning", editorConfigText, StringComparison.Ordinal);
+        Assert.Contains("dotnet_diagnostic.CA1014.severity = none", editorConfigText, StringComparison.Ordinal);
+        Assert.Contains("dotnet_diagnostic.CA1017.severity = none", editorConfigText, StringComparison.Ordinal);
+        Assert.Contains("dotnet_diagnostic.CA1021.severity = none", editorConfigText, StringComparison.Ordinal);
+        Assert.Contains("dotnet_diagnostic.CA1045.severity = warning", editorConfigText, StringComparison.Ordinal);
+        Assert.Contains("dotnet_diagnostic.CA1060.severity = warning", editorConfigText, StringComparison.Ordinal);
+        Assert.Contains("dotnet_diagnostic.RS0016.severity = error", editorConfigText, StringComparison.Ordinal);
+
+        Assert.Contains("CA1501: 5", codeMetricsText, StringComparison.Ordinal);
+        Assert.Contains("CA1502: 10", codeMetricsText, StringComparison.Ordinal);
+        Assert.Contains("CA1505: 20", codeMetricsText, StringComparison.Ordinal);
+        Assert.Contains("CA1506: 30", codeMetricsText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SourceProjectsDeclarePublicApiBaselines()
+    {
+        foreach (string sourceProject in SourceProjects)
+        {
+            string projectDirectory = Path.GetDirectoryName(GetProjectFile(sourceProject))
+                ?? throw new InvalidOperationException($"Project has no directory: {sourceProject}");
+
+            Assert.True(File.Exists(Path.Combine(projectDirectory, "PublicAPI.Shipped.txt")), $"{sourceProject} is missing PublicAPI.Shipped.txt.");
+            Assert.True(File.Exists(Path.Combine(projectDirectory, "PublicAPI.Unshipped.txt")), $"{sourceProject} is missing PublicAPI.Unshipped.txt.");
+        }
     }
 
     [Fact]

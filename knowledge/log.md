@@ -2,6 +2,8 @@
 
 ## 2026-07-04
 
+* **Review Response**: Addressed the PR #85 review on the `DES-0008` scaffold quality gates. `Directory.Build.props` now realizes the already-approved `CS-01`/`CS-02`/`CS-05`/`CS-06`/`CS-08` decisions for the scaffold slice: source projects generate XML documentation files, source internals are visible to `$(AssemblyName).Tests` and `Surveyor.TestSupport`, `AnalysisLevel` is `latest-All`, `CodeMetricsConfig.txt` is wired as an additional file with CA1501/CA1502/CA1505/CA1506 enabled, and `Microsoft.CodeAnalysis.PublicApiAnalyzers` plus per-source-project `PublicAPI.Shipped.txt`/`PublicAPI.Unshipped.txt` files track the public surface. `Surveyor.Architecture.Tests` now asserts these settings so the DES-0008 drift identified in review fails mechanically (`RQ-054`, `RQ-051`).
+
 * **Design Alignment**: Updated `DES-0008` to name `Surveyor.slnx` as the canonical solution file for the new C#/.NET scaffold, aligning the detailed-design artifact with PR #85 implementation and minimizing drift between design and code.
 
 * **Implementation Evidence**: Added `TRC-0002` for the `DES-0008` scaffold implementation slice. It records the `Surveyor.slnx` / `Surveyor.Unit.slnf` scaffold, ten `src` projects, `Surveyor.TestSupport`, `Surveyor.Architecture.Tests`, fixture/integration placement directories, architecture-test behavior names, the required forbidden-reference RED evidence (`Surveyor.Domain` -> `Surveyor.Application`), GREEN verification, and the carried Human validation risk for Windows-facing build / final TFM-SDK-Windows App SDK pins (`RQ-054`, `RQ-051`).

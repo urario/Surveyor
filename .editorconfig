@@ -6,13 +6,6 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.cs]
-dotnet_analyzer_diagnostic.category-Design.severity = warning
-dotnet_analyzer_diagnostic.category-Reliability.severity = warning
-dotnet_analyzer_diagnostic.category-Security.severity = warning
-dotnet_analyzer_diagnostic.category-Usage.severity = warning
-dotnet_diagnostic.RS0030.severity = error
-
 [*.{csproj,props,targets,slnf}]
 indent_style = space
 indent_size = 2
@@ -20,3 +13,28 @@ indent_size = 2
 [*.cs]
 indent_style = space
 indent_size = 4
+dotnet_analyzer_diagnostic.category-Design.severity = warning
+dotnet_analyzer_diagnostic.category-Reliability.severity = warning
+dotnet_analyzer_diagnostic.category-Security.severity = warning
+dotnet_analyzer_diagnostic.category-Usage.severity = warning
+
+# CS-05: opt in to non-metric rules that remain disabled under AnalysisLevel=latest-All.
+dotnet_diagnostic.CA1005.severity = warning
+dotnet_diagnostic.CA1045.severity = warning
+dotnet_diagnostic.CA1060.severity = warning
+
+# CS-05: intentional project-wide exclusions. Surveyor is a C# application, not a CLS/COM library surface,
+# and DES-0003 favors result contracts over blanket out-parameter prohibition.
+dotnet_diagnostic.CA1014.severity = none
+dotnet_diagnostic.CA1017.severity = none
+dotnet_diagnostic.CA1021.severity = none
+
+# CS-06: code-metrics gates are explicit because these rules are disabled by default.
+dotnet_diagnostic.CA1501.severity = error
+dotnet_diagnostic.CA1502.severity = error
+dotnet_diagnostic.CA1505.severity = error
+dotnet_diagnostic.CA1506.severity = error
+dotnet_diagnostic.CA1509.severity = warning
+
+dotnet_diagnostic.RS0016.severity = error
+dotnet_diagnostic.RS0030.severity = error

@@ -15,8 +15,8 @@ timestamp: 2026-07-04T00:00:00+09:00
 | Artifact | `TRC-0002`, DES-0008 scaffold implementation and architecture-test evidence |
 | Upstream | `DES-0008`, `RQ-054`, `RQ-051`, Issue #20 |
 | Downstream | `Surveyor.slnx`, `Surveyor.Unit.slnf`, `src/**`, `tests/Surveyor.TestSupport`, `tests/Surveyor.Architecture.Tests`, `tests/fixtures/**`, `tests/integration/**`, `tests/it-fixtures/**` |
-| Evidence | Created the DES-0008 project scaffold; used `Surveyor.slnx` as the solution file per human instruction during this slice; centralized determinism and quality settings; added architecture tests for dependency direction, root namespaces, centralized settings, banned-API analyzer wiring, and the unit solution filter; recorded the required failing-first forbidden-reference counter-example and a banned-API analyzer probe. |
-| Verification | RED: `dotnet test tests\Surveyor.Architecture.Tests\Surveyor.Architecture.Tests.csproj --no-restore -v normal` failed after temporarily adding `Surveyor.Domain -> Surveyor.Application`. Banned API probe: `dotnet build src\Surveyor.Domain\Surveyor.Domain.csproj --no-restore -v minimal` failed with `RS0030` for temporary `DateTime.UtcNow`. GREEN: `dotnet build Surveyor.Unit.slnf -v minimal` and `dotnet test tests\Surveyor.Architecture.Tests\Surveyor.Architecture.Tests.csproj --no-restore -v minimal` passed with 0 warnings/errors and 6 passing tests. |
+| Evidence | Created the DES-0008 project scaffold; used `Surveyor.slnx` as the solution file per human instruction during this slice; centralized determinism and quality settings; added architecture tests for dependency direction, root namespaces, centralized settings, coding-standards quality gates (`CS-01`/`CS-02`/`CS-05`/`CS-06`/`CS-08`), banned-API analyzer wiring, public API baselines, and the unit solution filter; recorded the required failing-first forbidden-reference counter-example and a banned-API analyzer probe. |
+| Verification | RED: `dotnet test tests\Surveyor.Architecture.Tests\Surveyor.Architecture.Tests.csproj --no-restore -v normal` failed after temporarily adding `Surveyor.Domain -> Surveyor.Application`. Banned API probe: `dotnet build src\Surveyor.Domain\Surveyor.Domain.csproj --no-restore -v minimal` failed with `RS0030` for temporary `DateTime.UtcNow`. Public API probe: a temporary documented `public` type in `Surveyor.Domain` failed with `RS0016`. GREEN: `dotnet build Surveyor.Unit.slnf --no-restore -v minimal`, `dotnet test tests\Surveyor.Architecture.Tests\Surveyor.Architecture.Tests.csproj --no-restore -v minimal`, and `dotnet format Surveyor.Unit.slnf --verify-no-changes --no-restore` passed with 0 warnings/errors and 8 passing tests. |
 | Residual Risk | Windows-facing project build, final Windows TFM / SDK pin, and Windows App SDK package pin remain Human validation items on Windows 11. Integration fixture apps are placement-only README scaffolds in this slice; DES-0014/DES-0015 own fixture content. |
 
 ## Created Projects
@@ -55,6 +55,8 @@ Placement-only harness directories:
 - `RootNamespacesMatchProjectModuleMap`
 - `DeterminismAndQualitySettingsAreCentralized`
 - `BannedApiAnalyzerIsEnabledForDomainAndApplicationCore`
+- `CodingStandardsQualityGatesAreMechanicallyConfigured`
+- `SourceProjectsDeclarePublicApiBaselines`
 - `DomainAndApplicationStayFreeOfWindowsFrameworkReferences`
 - `UnitSolutionFilterContainsOnlyCoreLaneProjects`
 
@@ -93,14 +95,28 @@ error RS0030: シンボル 'DateTime.UtcNow' は、このプロジェクト : Us
 
 The temporary probe was then removed and the core lane passed.
 
+## Public-API Probe
+
+Temporary `src/Surveyor.Domain/PublicApiProbe.cs` declared a documented `public sealed class PublicApiProbe` without adding it to `PublicAPI.Unshipped.txt`.
+
+Observed failure:
+
+```text
+error RS0016: シンボル 'PublicApiProbe' は宣言されたパブリック API の一部ではありません
+```
+
+The temporary probe was then removed and the core lane passed.
+
 ## Verification Commands
 
 ```powershell
 dotnet restore tests\Surveyor.Architecture.Tests\Surveyor.Architecture.Tests.csproj --force-evaluate
 dotnet test tests\Surveyor.Architecture.Tests\Surveyor.Architecture.Tests.csproj --no-restore -v normal
 dotnet build src\Surveyor.Domain\Surveyor.Domain.csproj --no-restore -v minimal
-dotnet build Surveyor.Unit.slnf -v minimal
+dotnet restore Surveyor.Unit.slnf --force-evaluate
+dotnet build Surveyor.Unit.slnf --no-restore -v minimal
 dotnet test tests\Surveyor.Architecture.Tests\Surveyor.Architecture.Tests.csproj --no-restore -v minimal
+dotnet format Surveyor.Unit.slnf --verify-no-changes --no-restore
 ```
 
 `Surveyor.Unit.slnf` intentionally includes only the core subset and excludes `tests/integration/**` and `tests/it-fixtures/**`.
