@@ -643,10 +643,14 @@ ACL:
 Atomic write:
 
 1. create temp directory under the same root;
-2. write protected blobs and plaintext manifest;
-3. fsync/flush where supported;
-4. move/rename temp directory to final run directory;
-5. on failure, mark partial and remove temp best-effort.
+2. apply the user-only ACL to the temp directory before any protected blob or manifest is written;
+3. write protected blobs and plaintext manifest into the ACL-hardened temp directory;
+4. fsync/flush where supported;
+5. move/rename the ACL-hardened temp directory to final run directory;
+6. verify the final directory is not a reparse point and still has the user-only ACL; if verification fails, return `IoError` and delete the final directory best-effort;
+7. on failure, mark partial and remove temp best-effort.
+
+`ApplyUserOnlyAcl` must never be deferred until after the final move. The final run directory is created only by moving the already-hardened temp directory, so there is no interval where a broad-ACL final run directory is visible. The final verification is a defense-in-depth check, not the first ACL application.
 
 Expected store failures return `OperationStatus.IoError` or `Timeout`, not raw exceptions.
 
@@ -777,8 +781,8 @@ flowchart TD
 | -- | -- |
 | Store path hygiene | generated paths contain run id/date only, no label/title/raw key. |
 | DPAPI wrapper invoked | fake protection service records `CurrentUser`; plaintext blob is not written. |
-| ACL service invoked | fake ACL service receives final run directory. |
-| Atomic write | temp directory is used; failure leaves no final partial directory. |
+| ACL service invoked | fake ACL service receives the temp run directory before writes and before final move; final ACL verification is observed after move. |
+| Atomic write | ACL-hardened temp directory is used; failure leaves no final partial directory. |
 | Store/load symmetry | fixed `StoredResultDocument`, `StoredCaptureDocument`, `StoredReportDocument`, and `MaskingDictionaryDocument` are protected, saved, unprotected, and deserialized into one `StoredRunSnapshot`; scorer/report generation are not called during load. |
 | Export atomic write | temp ZIP is used; cancellation/failure deletes temp and leaves no final partial bundle; destination collision returns `IoError` without overwrite. |
 | Export determinism | fixed inputs and fixed `ExportId` yield stable ZIP entry order and normalized timestamps. |
