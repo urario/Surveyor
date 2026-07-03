@@ -250,6 +250,13 @@ public sealed record ExportSanitizationResult(
     IReadOnlyList<RunDiagnostic> Diagnostics);
 ```
 
+Decision consistency contract:
+
+- `PolicyApplicationRequest.Decision` is the source value for protected-local policy application.
+- `IConfidentialityPolicy.Apply` must stamp that exact value into `PolicyApplicationResult.Decision`, `PolicyApplicationResult.SanitizedRunResult.ConfidentialityDecision`, `ProtectedRunModel.Decision`, and the `StoredResultDocument.Decision` serialized into `ProtectedResultBytes`.
+- `StoredRunSnapshot.Decision` is copied from the deserialized `StoredResultDocument.Decision` only after the loader verifies it equals `StoredResultDocument.SanitizedRunResult.ConfidentialityDecision`.
+- No use case, store adapter, report writer, or export writer recomputes a decision or fills a missing decision with a default. Missing or mismatched decision metadata is a schema/invariant failure.
+
 Store/export interfaces:
 
 ```csharp
@@ -518,11 +525,11 @@ Function rules:
 | API | Throws / status | Test rule |
 | -- | -- | -- |
 | `IConfidentialityPolicy.Decide` | `ArgumentException` for invalid opt-out; otherwise no expected throw | `UT-0008` verifies default `ProtectedLocal`, explicit opt-out recording, policy version, and UTC timestamp. |
-| `IConfidentialityPolicy.Apply` | Programmer-invalid model is `ArgumentException` | Returns both `SanitizedRunResult` and `ProtectedRunModel`; no raw labels, titles, paths, exception messages, or export-unsafe fallback tokens appear in the sanitized result or diagnostics. |
+| `IConfidentialityPolicy.Apply` | Programmer-invalid model is `ArgumentException` | Returns both `SanitizedRunResult` and `ProtectedRunModel`; stamps the request decision into all post-policy decision fields; no raw labels, titles, paths, exception messages, or export-unsafe fallback tokens appear in the sanitized result or diagnostics. |
 | `CreateShareableExportModel` | Programmer-invalid profile or missing required snapshot data is `ArgumentException` | Uses `StoredRunSnapshot`, not raw protected bytes; fallback keys become export-local pseudonyms and `StableAcrossExports=false`. |
 | `ISensitiveValueSanitizer.*` | No expected throw for malformed external text/exception | Sanitizer is allowlist-based and deterministic for fixed context. |
 | `ILocalRunStore.SaveAsync` | Expected I/O/DPAPI/ACL failures return `StoreResult` with `IoError`; caller cancellation propagates | Fake `IDataProtector` and `IAccessControlService` prove DPAPI CurrentUser and ACL seams are invoked before final result. |
-| `ILocalRunStore.LoadAsync` | Expected missing run, DPAPI, manifest, deserialization, or I/O failures return `StoredRunResult` with `NotFound`, `IoError`, or `PartialResult` for optional capture/report payload loss; caller cancellation propagates | Fake `IDataProtector` proves matching purpose strings are used; fixture protected documents round-trip to `StoredRunSnapshot` without recomputing scoring/report data; no raw paths/text enter diagnostics. |
+| `ILocalRunStore.LoadAsync` | Expected missing run, DPAPI, manifest, deserialization, decision mismatch, or I/O failures return `StoredRunResult` with `NotFound`, `SchemaInvalid`, `IoError`, or `PartialResult` for optional capture/report payload loss; caller cancellation propagates | Fake `IDataProtector` proves matching purpose strings are used; fixture protected documents round-trip to `StoredRunSnapshot` without recomputing scoring/report data; mismatch fixtures fail safely; no raw paths/text enter diagnostics. |
 | `ILocalRunStore.PruneAsync` | Expected deletion failures become diagnostics | Tests verify no reparse-point traversal and no non-Surveyor deletion. |
 | `IExportBundleWriter.WriteMaskedExportAsync` | Expected I/O failures return `ExportResult` with `IoError`; caller cancellation propagates | Fixed inputs produce deterministic ZIP entry order and normalized timestamps. |
 
@@ -610,7 +617,7 @@ Load algorithm:
 1. Resolve and validate `manifest.json` by `RunId`; missing manifest returns `NotFound`.
 2. Read the blob file names and purpose strings from the manifest; raw filesystem paths stay inside `M12`.
 3. Unprotect each required blob with the exact purpose string recorded in the manifest.
-4. Deserialize `StoredResultDocument`; if schema version, run id, or required fields do not match, return `IoError` with sanitized diagnostics.
+4. Deserialize `StoredResultDocument`; if schema version, run id, required fields, or decision metadata do not match, return `SchemaInvalid` with sanitized diagnostics.
 5. Deserialize `MaskingDictionaryDocument` when export needs it; failure is `IoError` for export because fallback-key remapping cannot be proven safe.
 6. Deserialize capture/report documents when available and requested; missing optional documents become diagnostics/placeholders rather than raw fallback output.
 7. Return `StoredRunSnapshot` from the deserialized documents. The adapter must not synthesize a new `AnalysisRunResult` from blob names or recompute any scoring/report data during load.

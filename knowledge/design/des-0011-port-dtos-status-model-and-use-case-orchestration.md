@@ -196,6 +196,8 @@ ROI order is deterministic by `SourceFindingId`, `ElementKey`, then `Id`. Missin
 
 `StartedAtUtc` and `CompletedAtUtc` are read from injected `IClock.UtcNow` only. Domain scoring never reads time. A successful or partial result emitted to UI/report/export is the post-policy `SanitizedRunResult` returned by `IConfidentialityPolicy.Apply`; raw pre-policy labels, titles, exception messages, and export-unsafe fallback tokens do not appear in the emitted result.
 
+`ConfidentialityDecision` is nullable only for failed/cancelled results that never reached the confidentiality gate. For a post-policy result, `IConfidentialityPolicy.Apply` owns the population rule: `PolicyApplicationResult.Decision`, `PolicyApplicationResult.SanitizedRunResult.ConfidentialityDecision`, and the protected-store decision metadata must all equal the `PolicyApplicationRequest.Decision`. `AnalyzeScreenUseCase` returns exactly `PolicyApplicationResult.SanitizedRunResult` to the UI, verifies the equality before save/report handoff, and treats a missing or mismatched decision as a `ResultAssembly` invariant failure rather than fabricating a replacement.
+
 ## Class Design (UML)
 
 `M03` exposes four use cases, matching [DES-0002](des-0002-module-responsibility-basic-design.md), [DES-0003](des-0003-module-interface-basic-design.md), and [DES-0004](des-0004-analysis-flow-basic-design.md): `SelectTargetUseCase`, `AnalyzeScreenUseCase`, `GenerateReportUseCase`, and `ExportResultUseCase`. Ports are public because adapters implement them and unit tests replace them with fakes. DTO records are immutable and contain only domain/application types.
@@ -574,7 +576,7 @@ Function rules:
 | API | Throws / cancellation | Test rule |
 | -- | -- | -- |
 | `SelectTargetUseCase.*Async` | `ArgumentNullException` for null query/target; observes caller cancellation | Fake discovery port can assert ViewModel never calls discovery adapters directly. |
-| `AnalyzeScreenUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation and returns `RunOutcome.Cancelled` at the boundary | Fake ports can assert stage order, no later ports after cancellation, timestamps from fake clock, metadata copied unchanged, and `ScoringConfigReference` resolved through `IScoringConfigProvider`. |
+| `AnalyzeScreenUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation and returns `RunOutcome.Cancelled` at the boundary | Fake ports can assert stage order, no later ports after cancellation, timestamps from fake clock, metadata copied unchanged, `ScoringConfigReference` resolved through `IScoringConfigProvider`, and policy decision equality before the sanitized result is returned or saved. |
 | `GenerateReportUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation; returns report failure when `RunResult.ConfidentialityDecision` is missing | Fake report port verifies report generation is separate from analysis, is triggered after review, and receives a `ReportRequest` built from the post-policy `SanitizedRunResult` without calling `IConfidentialityPolicy` again. |
 | `ExportResultUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation | Fake store port verifies export is explicit user-command flow, loads a `StoredRunSnapshot` by `RunId`, and receives a masked export model. |
 | `ITargetDiscoveryPort.*Async` | Expected failures are statuses; caller cancellation propagates | Fakes return stable candidate ordering. |
@@ -648,7 +650,7 @@ sequenceDiagram
   AS->>P: Decide(ProtectedLocal)
   P-->>AS: ConfidentialityDecision
   AS->>P: Apply(policy decision + run result)
-  P-->>AS: PolicyApplicationResult(SanitizedRunResult + ProtectedRunModel)
+  P-->>AS: PolicyApplicationResult(decision-stamped SanitizedRunResult + ProtectedRunModel)
   AS->>Store: SaveRunAsync
   Store-->>AS: StoreResult
   AS-->>UI: SanitizedRunResult
@@ -680,7 +682,7 @@ The run returns `FailedUnexpected` only for invariant breaches or unexpected exc
 
 Export is not part of `AnalyzeScreenUseCase`; `ExportResultUseCase` has its own result and expected failure status. It starts from `RunId`, loads a persisted `StoredRunSnapshot` through `IResultStorePort.LoadRunAsync`, and then builds the masked export model through `IConfidentialityPolicy`. `GenerateReportUseCase` is separate so the user can review analysis results before generating a report; it writes only the post-policy `SanitizedRunResult` produced by analysis and does not call `IConfidentialityPolicy.Apply` a second time.
 
-The `Apply` contract deliberately returns two outputs: `SanitizedRunResult` for UI/report/export orchestration and `ProtectedRunModel` for local encrypted persistence. Use cases must not treat `ProtectedRunModel` as a report input; it is an opaque store payload whose serialization and load symmetry are owned by [DES-0013](des-0013-confidentiality-storage-and-export.md).
+The `Apply` contract deliberately returns two outputs: `SanitizedRunResult` for UI/report/export orchestration and `ProtectedRunModel` for local encrypted persistence. Use cases must not treat `ProtectedRunModel` as a report input; it is an opaque store payload whose serialization and load symmetry are owned by [DES-0013](des-0013-confidentiality-storage-and-export.md). `GenerateReportUseCase` copies `RunResult.ConfidentialityDecision` into `ReportRequest.ConfidentialityDecision`; it does not recompute or re-decide policy.
 
 ### Stage Criticality
 
@@ -695,7 +697,7 @@ Outcome derivation uses this table. New stages must be added here before impleme
 | `RegionPlanning` | `AnalyzeScreenUseCase` | Optional/recoverable | Missing ROI bounds becomes diagnostic and partial result. |
 | `Capture` | `AnalyzeScreenUseCase` | Optional unless `RequireCapture == true` | `Unavailable`/`Timeout` yields partial when optional; required capture failure yields `FailedUnexpected`. |
 | `ConfidentialityPolicy` | `AnalyzeScreenUseCase`, `ExportResultUseCase` | Required emission gate | Policy invariant failure yields `FailedUnexpected`; sanitizer recoveries are diagnostics. `GenerateReportUseCase` consumes only `SanitizedRunResult` already emitted by analysis. |
-| `ResultAssembly` | `AnalyzeScreenUseCase` | Required | Invariant failure yields `FailedUnexpected`. |
+| `ResultAssembly` | `AnalyzeScreenUseCase` | Required | Invariant failure, including missing/mismatched post-policy `ConfidentialityDecision`, yields `FailedUnexpected`. |
 | `ReportGeneration` | `GenerateReportUseCase` | Required for report command, not analysis | Expected `Timeout`/`IoError` returns `ReportResult` failure. |
 | `Store` | `AnalyzeScreenUseCase` | Recoverable after protected in-memory result exists | `Timeout`/`IoError` yields `SucceededWithPartialResult` with unsaved-result diagnostic. |
 | `Export` | `ExportResultUseCase` | Required for export command, not analysis | Load failure, expected `Timeout`, or expected `IoError` returns `ExportResult` failure. |
@@ -771,7 +773,8 @@ Do not use `DateTime.Now`, `DateTimeOffset.Now`, or ambient local time in applic
 | Happy path | all ports return `Ok`; result is `Succeeded`, timestamps from fake clock, metadata copied unchanged. |
 | Use-case split | ViewModel-facing tests call `SelectTargetUseCase`, `AnalyzeScreenUseCase`, `GenerateReportUseCase`, and `ExportResultUseCase` separately; no test requires direct adapter-port access from presentation. |
 | Config resolution | request `ScoringConfigReference` is resolved through `IScoringConfigProvider`; scorer receives the resolved config. |
-| Confidentiality decision timing | `AnalyzeScreenUseCase` calls `Decide(ProtectedLocal)` before `Apply` and returns `PolicyApplicationResult.SanitizedRunResult`; `GenerateReportUseCase` does not call policy and fails safely if the result lacks `ConfidentialityDecision`; `ExportResultUseCase` calls `LoadRunAsync`, then `Decide(MaskedShareableExport)`, then `CreateShareableExportModel`. |
+| Confidentiality decision timing | `AnalyzeScreenUseCase` calls `Decide(ProtectedLocal)` before `Apply`, verifies `PolicyApplicationResult.Decision == SanitizedRunResult.ConfidentialityDecision`, then returns `PolicyApplicationResult.SanitizedRunResult`; `GenerateReportUseCase` does not call policy and fails safely if the result lacks `ConfidentialityDecision`; `ExportResultUseCase` calls `LoadRunAsync`, then `Decide(MaskedShareableExport)`, then `CreateShareableExportModel`. |
+| Decision consistency | fake policy returns a mismatched or missing `SanitizedRunResult.ConfidentialityDecision`; analysis fails at result assembly and does not save or return a reportable/exportable result. |
 | Report request shaping | fake report port receives `ReportRequest.SanitizedRunResult` and never receives `ProtectedRunModel` or protected blob bytes. |
 | Export load path | fake store returns `StoredRunResult` with `StoredRunSnapshot` for `RunId`; export fails with a safe diagnostic when load returns `NotFound`, `IoError`, or null `Snapshot`. |
 | Acquisition partial | fake acquisition hits cap; scoring still runs; outcome `SucceededWithPartialResult`. |
