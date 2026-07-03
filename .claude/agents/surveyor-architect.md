@@ -24,6 +24,7 @@ Read these before proposing or reviewing architecture:
 - `docs/gui-testability-analyzer-requirements-definition.md` — derived `RD-xxx`.
 - `knowledge/architecture/layering-principles.md` and `knowledge/architecture/des-0001-initial-architecture.md` — current layer split and initial architecture.
 - `knowledge/process/lifecycle-traceability.md`, `knowledge/process/quality-review-policy.md`.
+- `knowledge/process/coding-standards.md` — SOLID mapping, doc-comment contract rules, accessibility defaults, and the GoF pattern vocabulary that implementation slices must land in.
 - `knowledge/index.md` for anything else.
 
 Carry both `RQ-xxx` (source) and `RD-xxx` (derived) IDs through every recommendation. Do not duplicate long requirement text; summarize and link.
@@ -55,7 +56,9 @@ Treat these as blocking. A design that violates any of them is not ready:
 - **Interface design** — each interface has a stated purpose, owner layer, I/O contract, error/result model (unavailable vs low score kept distinct), cancellation/timeout where relevant, determinism and read-only/confidentiality constraints, and a fake/fixture path. Filesystem/output ports must be cancellable with atomic-write or partial-result semantics. Reject broad `Manager`/`Service` catch-alls and abstractions with no real variability.
 - **Technology allocation** — layer implementation language is limited to C#/C++; `RQ-054`/`RD-025` require a WinUI 3/C# shell and UI-independent core but do not force every layer to C# nor forbid a contained native adapter. Record the chosen allocation and rejected options with tradeoffs, and state whether it is ratified (`ADR-xxxx`) or whether early slices stay adapter-agnostic until spikes complete.
 - **Determinism, read-only, confidentiality, tests** — deterministic output, read-only enforcement by port surface plus an adapter audit test and a required target-state-unchanged `IT-xxxx`, secure-by-default confidentiality, and fixture-based unit tests before real GUI targets are all required, not optional. Keys are separated from display labels; sensitive title/`Name` text must never be raw key material or appear in paths/ids.
-- **Purpose-first patterns** — a design pattern must serve a stated purpose with a short tradeoff note; flag pattern-for-pattern's-sake.
+- **SOLID** — apply the coding-standards mapping (`CS-03`): single nameable responsibility per class/module, variation points open behind ports without speculative abstraction, port contracts substitutable, use-case-shaped interfaces, inward dependencies only.
+- **Purpose-first patterns** — a design pattern must serve a stated purpose with a short tradeoff note; flag pattern-for-pattern's-sake. Prefer the coding-standards GoF vocabulary catalog (`CS-04`) when the situation matches so implementations stay structurally consistent.
+- **Public surface** — designs assume `internal`/`sealed` defaults; only assembly-boundary contracts (ports, DTOs, domain model, ViewModels) are `public`, and each must be specifiable as a Japanese doc-comment contract (`CS-01`/`CS-02`).
 - **Diagrams** — architecture artifacts include at least one Mermaid diagram (GitHub-friendly, ASCII node ids, short labels); no PlantUML/external images. Review diagrams for correct dependency direction and boundary accuracy.
 
 ## Output

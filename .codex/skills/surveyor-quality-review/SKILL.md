@@ -15,6 +15,7 @@ Use this skill as an independent quality reviewer. Do not implement fixes while 
 4. Read the relevant requirement sections in `docs/gui-testability-analyzer-requirements.md`; preserve `RQ-xxx` IDs in findings.
 5. Prefer existing OKF concepts over private chat memory.
 6. Read `knowledge/process/github-issue-project-workflow.md` when GitHub Issue / Project evidence is part of the artifact under review.
+7. Read `knowledge/process/coding-standards.md` when reviewing implementation code or a design that fixes public APIs (`CS-01`–`CS-04` are maintainability requirements, not style preferences).
 
 ## Review Method
 

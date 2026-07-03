@@ -197,6 +197,8 @@ The architecture-test suite is the failing-first, mechanical evidence for the `R
 
 ## Determinism And Quality Settings (R-NET-02)
 
+> **Version note (2026-07-03, extended by [Coding Standards](../process/coding-standards.md), per DES-0007 §5.3):** two rows were added to this table — `GenerateDocumentationFile` (mandatory Japanese XML doc comments on public APIs, `CS-01`) and central `InternalsVisibleTo` (internal-default accessibility, `CS-02`). The coding-standards process document owns the rules; this table owns their `Directory.Build.props` realization. No previously decided setting changed.
+
 Set once in `Directory.Build.props` and inherited by every project, so no project can drift:
 
 | Setting | Value | Reason |
@@ -212,6 +214,8 @@ Set once in `Directory.Build.props` and inherited by every project, so no projec
 | `EnableNETAnalyzers` + `AnalysisLevel` | `true`, `latest-Recommended` | .NET analyzers on by default |
 | `EnforceCodeStyleInBuild` | `true` | `.editorconfig` style rules enforced at build |
 | `TreatWarningsAsErrors` | `true` | Zero-warning per-slice DoD ([DES-0007](des-0007-detailed-design-execution-strategy.md) §5.1) |
+| `GenerateDocumentationFile` | `true` for `src/**`; `false` (or `NoWarn: CS1591`) for `tests/**` and `Surveyor.TestSupport` | Japanese XML documentation comments on every public API are mandatory (`CS-01` in [Coding Standards](../process/coding-standards.md)); with `TreatWarningsAsErrors`, a missing doc comment (`CS1591`) is a build error. Generated code (`*.g.cs`, XAML codegen) is excluded |
+| `InternalsVisibleTo` | each `src` project → `$(AssemblyName).Tests` + `Surveyor.TestSupport`, granted centrally | Internal-default accessibility policy (`CS-02` in [Coding Standards](../process/coding-standards.md)): only assembly-boundary contracts are `public`, tests reach `internal` members without visibility promotion |
 
 Supporting control files:
 

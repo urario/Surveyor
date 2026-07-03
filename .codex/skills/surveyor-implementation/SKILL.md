@@ -15,11 +15,12 @@ Use this skill when implementing or changing Surveyor code, tests, project struc
 4. If working from a GitHub Issue, read the Japanese Issue body and Project fields, then keep `Status`, `Phase`, `Artifact`, `RQ`, `RD`, and `Owner Role` current.
 5. Check `knowledge/index.md` and related OKF files for existing decisions.
 6. Check `knowledge/process/lifecycle-traceability.md` for phase artifact and trace evidence rules.
-7. Write or update the smallest useful failing test first whenever the behavior is testable.
-8. Implement the smallest production change that makes the test pass.
-9. Run targeted tests and any relevant validation scripts.
-10. Update OKF logs or trace notes when the change creates durable knowledge.
-11. Report completion to `surveyor-project-management` with the Issue, artifact, verification result, OKF update, residual risk, and recommended next Project `Status` / `Owner Role`.
+7. Read `knowledge/process/coding-standards.md` before writing production code; apply `CS-01`–`CS-04`.
+8. Write or update the smallest useful failing test first whenever the behavior is testable.
+9. Implement the smallest production change that makes the test pass.
+10. Run targeted tests and any relevant validation scripts.
+11. Update OKF logs or trace notes when the change creates durable knowledge.
+12. Report completion to `surveyor-project-management` with the Issue, artifact, verification result, OKF update, residual risk, and recommended next Project `Status` / `Owner Role`.
 
 ## Architecture Rules
 
@@ -29,6 +30,13 @@ Use this skill when implementing or changing Surveyor code, tests, project struc
 - Treat target-application inspection as read-only.
 - Make scoring and machine-readable output deterministic.
 - Do not mix testability scoring with modernization/migration difficulty scoring.
+
+## Coding Standards (knowledge/process/coding-standards.md)
+
+- Apply SOLID as mapped to Surveyor structures (`CS-03`): one responsibility per class, ports for known variation points, port contracts honored by every implementation, small use-case-shaped interfaces, inward dependencies only.
+- Write Japanese XML documentation comments on every public API in `src/**` (`CS-01`): `<summary>` in concise Japanese, `<param>`/`<returns>`/`<exception>` where applicable, guardrail contracts (`RQ-048`/`RQ-051`/`RQ-052`, cancellation, threading) in `<remarks>` on the port, `<inheritdoc/>` + deltas on implementations. A missing comment is a `CS1591` build error.
+- Default to `internal` and `sealed`; make `public` only assembly-boundary contracts (`CS-02`). Tests use `InternalsVisibleTo`, never visibility promotion.
+- Use the GoF pattern vocabulary purpose-first (`CS-04`): when a catalog situation matches, follow its recommended pattern and record pattern/purpose/rejected-simpler-alternative in one line in the PR or design artifact; never add a pattern without a stated purpose.
 
 ## TDD Targets
 
@@ -44,6 +52,7 @@ Prefer tests around:
 ## References
 
 - See `references/workflow.md` for the detailed implementation checklist.
+- Follow `knowledge/process/coding-standards.md` for SOLID, Japanese XML doc comments, accessibility defaults, and pattern usage.
 - If unsure about requirements, architecture, process, Git workflow, or prior decisions, read `knowledge/index.md` first.
 - Follow `knowledge/process/lifecycle-traceability.md` for `DES-xxxx`, `IMP-xxxx`, `UT-xxxx`, `IT-xxxx`, and `TRC-xxxx` evidence.
 - Follow `knowledge/process/git-policy.md` for branch, commit, and PR rules.

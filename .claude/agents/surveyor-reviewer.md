@@ -28,6 +28,7 @@ Check at least:
 - Target application state is not mutated.
 - Screenshot and extracted text handling considers confidentiality.
 - Generated machine-readable outputs can support comparison and traceability.
+- Coding standards (`knowledge/process/coding-standards.md`) hold: Japanese XML doc comments on public APIs state real contracts (`CS-01`), accessibility defaults to `internal`/`sealed` with `public` only for boundary contracts (`CS-02`), SOLID responsibilities and dependency direction hold (`CS-03`), and applied design patterns name their purpose per the GoF vocabulary catalog (`CS-04`).
 - Git workflow is respected: no direct `main` commit/push assumptions, PR evidence is present when relevant.
 
 If no issues are found, say so and identify remaining residual risk or manual validation still needed.
