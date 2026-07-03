@@ -8,10 +8,14 @@ timestamp: 2026-07-02T00:00:00+09:00
 
 # Status
 
-**Proposed (draft)** — scaffold + desk analysis complete; per-axis measurements against real
-legacy targets are pending the human owner's PoC runs. Per [DES-0007](../design/des-0007-detailed-design-execution-strategy.md)
-§4.2 and §8.1, the final technology selection and the promotion of this ADR to *Accepted*
-are a **human decision**; this draft is the AI-owned synthesis vehicle (issue #30).
+**Proposed (measurements integrated — awaiting human promotion).** Scaffold, desk analysis,
+and per-axis measurements against real targets ([TRC-0001](../traces/trc-0001-adr-0002-spike-measurements.md),
+including the human owner's TortoiseGit/MFC run of 2026-07-03) are complete, and the
+Decision section below names one recommended candidate per dimension. Per
+[DES-0007](../design/des-0007-detailed-design-execution-strategy.md) §4.2 and §8.1, the
+final selection and the promotion of this ADR to *Accepted* remain a **human decision**
+(issue #30); on promotion, the `DES-0014`/`DES-0015`/`DES-0018`(wiring)/`IMP-0013`/`IMP-0014`
+gates (#25/#26/#29/#71/#72) open.
 
 # Context
 
@@ -78,49 +82,88 @@ Desk analysis in [spikes/adr-0002/packaging/README.md](../../spikes/adr-0002/pac
 distribution later if `uiAccess` proves unnecessary. **Not decided** — elevated-target
 behavior measurements drive whether `uiAccess` matters at all.
 
-# Measurement results (pending — human owner)
+# Measurement results
 
-> To be filled from `spikes/adr-0002/measurement/results/` (per-target filled copies of
-> `results-template.md`) after the human owner runs the harness against real legacy
-> targets: per-axis pass/fail with evidence, threading/apartment observations, legacy
-> acquisition edges, capture failure modes, elevated-target/packaging outcomes.
+Full evidence, raw numbers, environment, and reproduction steps: [TRC-0001](../traces/trc-0001-adr-0002-spike-measurements.md).
+Targets: **T1 TortoiseGit (real C++/MFC, 48 elements — run by the human owner)**, T2 Visual
+Studio Code (Chromium, 1029 elements — large-tree case), T3 shell/UWP windows (WGC
+failure-mode probes). Single Windows 11 machine, DPI 144, same integrity, unpackaged.
 
 | Axis | uia-raw-com | uia-flaui | capture-printwindow | capture-wgc |
 | -- | -- | -- | -- | -- |
-| Read-only | pending | pending | pending | pending |
-| Determinism | pending | pending | n/a (metadata only) | n/a (metadata only) |
-| Fixtureability | pending | pending | pending | pending |
-| Permissions/integrity | pending | pending | pending | pending |
-| Packaging | pending | pending | pending | pending |
-| Performance | pending | pending | pending | pending |
+| Read-only | PASS (read-only API surface; idle-tree hash unchanged across 4 runs) | PASS (same basis) | PASS with caveat (WM_PRINT-style render request into the target) | PASS (compositor-side, no foregrounding) |
+| Determinism | PASS (byte-identical tree hash across fresh processes; T2 post-realization) | PASS (same) | n/a (metadata only) | n/a (metadata only) |
+| Fixtureability | PASS (COM mockable at adapter seam; lazy-realization case expressible as `NotRealized` fixture) | PASS (extra wrapper layer to fake) | PASS | PASS |
+| Permissions/integrity | PASS same-integrity; **elevated target not measured (carried)** | same | same | same |
+| Packaging | PASS unpackaged; **MSIX/`uiAccess` not exercised (carried)** | same | same | same |
+| Performance | 48 elem/~125 ms; 1029 elem/~1.6 s | ~+15% vs raw (156 ms / 1.8 s) | 40 ms/frame | ~400 ms first frame (pool warm-up) |
+
+Key live findings (detailed in TRC-0001): Chromium **lazy accessibility-tree realization**
+(first touch returns a 19-element skeleton; stable 1029 thereafter → `DES-0014` warm-up +
+`Unavailable(NotRealized)` rule); **DPI virtualization** (non-PMv2 process captured 455×537
+while WGC delivered physical 664×796 → `DES-0015` PMv2 obligation confirmed); WGC
+`CreateForWindow` `ArgumentException` on shell/UWP-frame windows (→ failure-mode table +
+fallback); both UIA candidates ran correctly from **MTA**; no permission failures at same
+integrity.
 
 # Decision
 
-**Pending measurements.** The recommendation will name exactly one candidate per dimension
-with per-axis evidence; the human owner approves, this ADR moves to *Accepted*, and the
-`DES-0014`/`DES-0015`/`DES-0018`(wiring)/`IMP-0013`/`IMP-0014` gates open.
+**Recommendation (one candidate per dimension; human approval promotes this ADR):**
+
+1. **UIA client: raw COM (`Interop.UIAutomationClient` PIA)** wrapped in a thin
+   Surveyor-owned internal layer inside `Surveyor.Adapters.Uia`. Measurements confirmed the
+   desk lean: identical read behavior and determinism to FlaUI, ~15–20% faster, direct
+   HRESULT visibility for the `RQ-049` status mapping, and — decisive for the guardrails —
+   a 1:1 auditable mapping between the `RD-032` prohibited-pattern list and COM methods that
+   simply are never referenced (`RQ-048`, `UT-0005`). FlaUI's measured advantage was
+   ergonomics only, which the thin internal wrapper recovers.
+2. **Capture: Windows.Graphics.Capture primary, PrintWindow(PW_RENDERFULLCONTENT) fallback.**
+   WGC captured the real MFC target compositor-side at physical DPI without touching the
+   target; PrintWindow remains necessary for WGC-uncapturable windows (shell/UWP-frame
+   `ArgumentException` cases measured) and degrades gracefully via the `DES-0015`
+   failure-mode table (`Unavailable(reason)` when both fail).
+3. **Packaging: unpackaged (self-contained) primary.** Verified working at same integrity
+   with no prompts; keeps the signed classic-manifest `uiAccess` escape hatch available
+   (MSIX conflicts with `uiAccess`); optional MSIX distribution can be added later if the
+   elevated-target calibration shows `uiAccess` is never needed.
 
 # Consequences
 
 - Until promotion, adapter-bound packages stay gated ([DES-0007](../design/des-0007-detailed-design-execution-strategy.md) §4.2 *Gate*).
-- Threading/async findings from the runs feed the `DES-0011` acquisition-port contracts
-  (cancellation/timeout, apartment model) **before** those contracts are frozen.
-- The spike PoCs remain throwaway evidence tooling; whichever candidates are picked, the
-  production adapters are re-implemented under `DES-0014`/`DES-0015` designs with
-  `UT-0005` read-only spy coverage — no PoC code is promoted into `src/**`.
-- If measurements show neither UIA candidate fully covers the legacy edges, a hybrid
-  (UIA + strengthened MSAA fallback) lands as additional `DES-0014` design work (recorded
-  residual risk of issue #30).
+- Threading/async findings feed the `DES-0011` acquisition-port contracts **before** they
+  are frozen: MTA-safe client confirmed; first-acquisition warm-up/lazy-realization rule;
+  WGC async first-frame budget (~400 ms) in the capture-stage timeout; cancellation on a
+  hung target still unexercised (→ `DES-0014`/`IT-0006`).
+- The spike PoCs remain throwaway evidence tooling; the production adapters are implemented
+  under `DES-0014`/`DES-0015` designs with `UT-0005` read-only spy coverage — no PoC code is
+  promoted into `src/**`.
+- The MSAA/`IAccessible` fallback strength for legacy edges (owner-draw, MSAA-only proxies)
+  remains a `DES-0014` design item with the IT fixture app; nothing measured contradicts the
+  raw-COM pick for it.
+
+## Residual risks (carried at promotion)
+
+- **Elevated-target behavior not calibrated** — the exact `PermissionDenied`/`IntegrityMismatch`
+  failure shape per candidate awaits a UAC-elevated target run; owned by `DES-0014`/`IT-0005`.
+- **Mixed-DPI, `uiAccess` signed build, MSIX** not exercised; packaging settings stay
+  provisional in `DES-0008` until `IT-0005` covers them.
+- **Yellow capture border / consent UX** for WGC not visually recorded; affects the `RQ-052`
+  user-notice design in `DES-0016`, not the API pick.
+- Single machine / single Windows build (22621); OS-build variance of WGC border/consent
+  semantics is known and absorbed by the fallback design.
 
 # Verification
 
 - Scaffold: `dotnet build spikes/adr-0002/Spike.Adr0002.slnx` green (0 warnings), all four
   PoCs smoke-run read-only on the dev machine 2026-07-02 (evidence in
   [spikes/adr-0002/README.md](../../spikes/adr-0002/README.md)).
-- Exit criteria ([DES-0007](../design/des-0007-detailed-design-execution-strategy.md) §4.2): every axis pass/fail with evidence; one recommended
-  candidate per dimension; reproduction steps captured — tracked in the measurement
-  results, not yet met.
-- `tools/okf/Validate-Okf.ps1` green after this draft's registration.
+- Exit criteria ([DES-0007](../design/des-0007-detailed-design-execution-strategy.md) §4.2): **met** — every axis has a pass/fail result with
+  evidence ([TRC-0001](../traces/trc-0001-adr-0002-spike-measurements.md)), one candidate is
+  recommended per dimension (Decision above), and reproduction steps are captured in
+  TRC-0001; the carried items are named in Residual risks with downstream owners.
+- Human owner ran the harness against the real MFC target (TortoiseGit, 2026-07-03);
+  supplementary large-tree/failure-mode runs executed on the same machine.
+- `tools/okf/Validate-Okf.ps1` green after this revision's registration.
 
 # Related
 
@@ -129,3 +172,4 @@ with per-axis evidence; the human owner approves, this ADR moves to *Accepted*, 
 - [DES-0003 Module Interface Basic Design](../design/des-0003-module-interface-basic-design.md) — `IUiTreeAcquisitionPort` / `IScreenCapturePort` contracts
 - [ADR-0001 AI Collaboration and OKF](adr-0001-ai-collaboration-and-okf.md)
 - [Spike scaffold](../../spikes/adr-0002/README.md)
+- [TRC-0001 ADR-0002 Spike Measurement Evidence](../traces/trc-0001-adr-0002-spike-measurements.md)
