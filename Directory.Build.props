@@ -1,0 +1,30 @@
+<Project>
+  <PropertyGroup>
+    <SurveyorCoreTargetFramework>net10.0</SurveyorCoreTargetFramework>
+    <SurveyorWindowsTargetFramework>net10.0-windows10.0.19041.0</SurveyorWindowsTargetFramework>
+    <TargetFramework>$(SurveyorCoreTargetFramework)</TargetFramework>
+    <TargetFramework Condition="'$(MSBuildProjectName)' == 'Surveyor.Adapters.Discovery' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Capture' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Store' Or '$(MSBuildProjectName)' == 'Surveyor.Presentation' Or '$(MSBuildProjectName)' == 'Surveyor.App'">$(SurveyorWindowsTargetFramework)</TargetFramework>
+
+    <Nullable>enable</Nullable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <Deterministic>true</Deterministic>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-Recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(CI)' == 'true' Or '$(ContinuousIntegrationBuild)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Surveyor.Domain' Or '$(MSBuildProjectName)' == 'Surveyor.Application'">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)eng\analyzers\BannedSymbols.Core.txt" />
+  </ItemGroup>
+</Project>

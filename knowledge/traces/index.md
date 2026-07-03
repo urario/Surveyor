@@ -11,4 +11,5 @@ Follow [Lifecycle Traceability](../process/lifecycle-traceability.md):
 ## Trace Notes
 
 - [TRC-0001 ADR-0002 Spike Measurement Evidence](trc-0001-adr-0002-spike-measurements.md) - Per-axis measurement evidence (read-only, determinism, fixtureability, permissions, packaging, performance) from running the ADR-0002 PoCs against a real MFC target (human-run), a large Chromium tree, and WGC failure-mode probes; feeds the ADR-0002 recommendation and DES-0011/DES-0014/DES-0015 design inputs.
+- [TRC-0002 DES-0008 Scaffold Implementation Evidence](trc-0002-des-0008-scaffold-evidence.md) - Solution/project scaffold, core unit-lane solution filter, architecture-test behavior names, failing-first forbidden-reference red log, and verification evidence for `RQ-054` / `RQ-051` under `DES-0008`.
 

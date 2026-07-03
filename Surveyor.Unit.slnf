@@ -1,0 +1,13 @@
+{
+  "solution": {
+    "path": "Surveyor.slnx",
+    "projects": [
+      "src/Surveyor.Domain/Surveyor.Domain.csproj",
+      "src/Surveyor.Application/Surveyor.Application.csproj",
+      "src/Surveyor.Policy/Surveyor.Policy.csproj",
+      "src/Surveyor.Reports/Surveyor.Reports.csproj",
+      "tests/Surveyor.TestSupport/Surveyor.TestSupport.csproj",
+      "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj"
+    ]
+  }
+}

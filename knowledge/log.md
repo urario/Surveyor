@@ -2,6 +2,8 @@
 
 ## 2026-07-04
 
+* **Implementation Evidence**: Added `TRC-0002` for the `DES-0008` scaffold implementation slice. It records the `Surveyor.slnx` / `Surveyor.Unit.slnf` scaffold, ten `src` projects, `Surveyor.TestSupport`, `Surveyor.Architecture.Tests`, fixture/integration placement directories, architecture-test behavior names, the required forbidden-reference RED evidence (`Surveyor.Domain` -> `Surveyor.Application`), GREEN verification, and the carried Human validation risk for Windows-facing build / final TFM-SDK-Windows App SDK pins (`RQ-054`, `RQ-051`).
+
 * **Review Response**: Tightened the `DES-0013` local-store temp-directory contract after PR #83 follow-up review. The atomic writer now requires `IAccessControlService.CreateUserOnlyDirectory` to create the temp run directory with a user-only security descriptor at creation time, verifies the temp ACL before writes, and fails with `IoError` if creation-time ACL hardening is unavailable. This closes the remaining mkdir-to-ACL race window for `RQ-052` / `R-SEC-02` and updates `UT-0009` expectations.
 
 ## 2026-07-03

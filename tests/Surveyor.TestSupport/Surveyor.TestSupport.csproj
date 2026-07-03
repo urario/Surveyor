@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Surveyor.TestSupport</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Surveyor.Application\Surveyor.Application.csproj" />
+    <ProjectReference Include="..\..\src\Surveyor.Domain\Surveyor.Domain.csproj" />
+  </ItemGroup>
+</Project>
