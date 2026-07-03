@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Surveyor.Adapters.Capture/Surveyor.Adapters.Capture.csproj" />
+    <Project Path="src/Surveyor.Adapters.Discovery/Surveyor.Adapters.Discovery.csproj" />
+    <Project Path="src/Surveyor.Adapters.Store/Surveyor.Adapters.Store.csproj" />
+    <Project Path="src/Surveyor.Adapters.Uia/Surveyor.Adapters.Uia.csproj" />
+    <Project Path="src/Surveyor.App/Surveyor.App.csproj" />
+    <Project Path="src/Surveyor.Application/Surveyor.Application.csproj" />
+    <Project Path="src/Surveyor.Domain/Surveyor.Domain.csproj" />
+    <Project Path="src/Surveyor.Policy/Surveyor.Policy.csproj" />
+    <Project Path="src/Surveyor.Presentation/Surveyor.Presentation.csproj" />
+    <Project Path="src/Surveyor.Reports/Surveyor.Reports.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj" />
+    <Project Path="tests/Surveyor.TestSupport/Surveyor.TestSupport.csproj" />
+  </Folder>
+</Solution>

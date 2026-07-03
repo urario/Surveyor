@@ -1,0 +1,9 @@
+# CS-06 code metrics thresholds.
+# CA1501 inheritance depth <= 5
+CA1501: 5
+# CA1502 cyclomatic complexity <= 10
+CA1502: 10
+# CA1505 maintainability index >= 20
+CA1505: 20
+# CA1506 class coupling <= 30
+CA1506: 30

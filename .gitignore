@@ -7,3 +7,8 @@
 # Codex agent definitions (kept local unless explicitly shared; .codex/skills/ remains tracked)
 .codex/agents/*
 !.codex/agents/surveyor-project-manager.toml
+
+# .NET build output
+bin/
+obj/
+TestResults/

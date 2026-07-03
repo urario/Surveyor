@@ -1,0 +1,17 @@
+P:System.DateTime.Now;Use the application-owned IClock abstraction instead of ambient local time (RQ-051).
+P:System.DateTime.UtcNow;Use the application-owned IClock abstraction instead of ambient UTC time (RQ-051).
+P:System.DateTimeOffset.Now;Use the application-owned IClock abstraction instead of ambient local time (RQ-051).
+M:System.DateTime.Parse(System.String);Use an overload with IFormatProvider and DateTimeStyles.
+M:System.DateTimeOffset.Parse(System.String);Use an overload with IFormatProvider and DateTimeStyles.
+M:System.Decimal.Parse(System.String);Use an overload with IFormatProvider and NumberStyles.
+M:System.Double.Parse(System.String);Use an overload with IFormatProvider and NumberStyles.
+M:System.Single.Parse(System.String);Use an overload with IFormatProvider and NumberStyles.
+M:System.Int32.Parse(System.String);Use an overload with IFormatProvider and NumberStyles.
+M:System.Int64.Parse(System.String);Use an overload with IFormatProvider and NumberStyles.
+M:System.DateTime.ToString;Use an overload with IFormatProvider.
+M:System.DateTimeOffset.ToString;Use an overload with IFormatProvider.
+M:System.Decimal.ToString;Use an overload with IFormatProvider.
+M:System.Double.ToString;Use an overload with IFormatProvider.
+M:System.Single.ToString;Use an overload with IFormatProvider.
+M:System.Int32.ToString;Use an overload with IFormatProvider.
+M:System.Int64.ToString;Use an overload with IFormatProvider.

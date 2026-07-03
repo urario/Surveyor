@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Surveyor.Policy</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Surveyor.Application\Surveyor.Application.csproj" />
+    <ProjectReference Include="..\Surveyor.Domain\Surveyor.Domain.csproj" />
+  </ItemGroup>
+</Project>

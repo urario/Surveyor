@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Surveyor.App</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Surveyor.Adapters.Capture\Surveyor.Adapters.Capture.csproj" />
+    <ProjectReference Include="..\Surveyor.Adapters.Discovery\Surveyor.Adapters.Discovery.csproj" />
+    <ProjectReference Include="..\Surveyor.Adapters.Store\Surveyor.Adapters.Store.csproj" />
+    <ProjectReference Include="..\Surveyor.Adapters.Uia\Surveyor.Adapters.Uia.csproj" />
+    <ProjectReference Include="..\Surveyor.Application\Surveyor.Application.csproj" />
+    <ProjectReference Include="..\Surveyor.Domain\Surveyor.Domain.csproj" />
+    <ProjectReference Include="..\Surveyor.Policy\Surveyor.Policy.csproj" />
+    <ProjectReference Include="..\Surveyor.Presentation\Surveyor.Presentation.csproj" />
+    <ProjectReference Include="..\Surveyor.Reports\Surveyor.Reports.csproj" />
+  </ItemGroup>
+</Project>

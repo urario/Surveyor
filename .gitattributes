@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+*.sln text eol=crlf
+*.slnx text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+
+tests/fixtures/** text eol=lf
+tests/fixtures/golden/** text eol=lf

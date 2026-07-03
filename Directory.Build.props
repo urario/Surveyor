@@ -1,0 +1,45 @@
+<Project>
+  <PropertyGroup>
+    <SurveyorCoreTargetFramework>net10.0</SurveyorCoreTargetFramework>
+    <SurveyorWindowsTargetFramework>net10.0-windows10.0.19041.0</SurveyorWindowsTargetFramework>
+    <SurveyorIsSourceProject>false</SurveyorIsSourceProject>
+    <SurveyorIsSourceProject Condition="'$(MSBuildProjectName)' == 'Surveyor.Domain' Or '$(MSBuildProjectName)' == 'Surveyor.Application' Or '$(MSBuildProjectName)' == 'Surveyor.Policy' Or '$(MSBuildProjectName)' == 'Surveyor.Reports' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Discovery' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Capture' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Store' Or '$(MSBuildProjectName)' == 'Surveyor.Presentation' Or '$(MSBuildProjectName)' == 'Surveyor.App'">true</SurveyorIsSourceProject>
+    <TargetFramework>$(SurveyorCoreTargetFramework)</TargetFramework>
+    <TargetFramework Condition="'$(MSBuildProjectName)' == 'Surveyor.Adapters.Discovery' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Capture' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Store' Or '$(MSBuildProjectName)' == 'Surveyor.Presentation' Or '$(MSBuildProjectName)' == 'Surveyor.App'">$(SurveyorWindowsTargetFramework)</TargetFramework>
+
+    <Nullable>enable</Nullable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <Deterministic>true</Deterministic>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-All</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile Condition="'$(SurveyorIsSourceProject)' == 'true'">true</GenerateDocumentationFile>
+    <GenerateDocumentationFile Condition="'$(SurveyorIsSourceProject)' != 'true'">false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(CI)' == 'true' Or '$(ContinuousIntegrationBuild)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)CodeMetricsConfig.txt" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Surveyor.Domain' Or '$(MSBuildProjectName)' == 'Surveyor.Application'">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)eng\analyzers\BannedSymbols.Core.txt" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(SurveyorIsSourceProject)' == 'true'">
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>$(AssemblyName).Tests</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Surveyor.TestSupport</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>
