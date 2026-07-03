@@ -24,6 +24,15 @@ Surveyor では、Claude Code を設計・レビュー寄り、Codex を実装�
 7. Claude Code は `.claude/agents/surveyor-reviewer.md` の観点でレビューする。
 8. OKF の `log.md`、該当概念、必要な `knowledge/traces/` 証跡を更新する。
 
+## 詳細設計レビュー運用
+
+詳細設計 PR は `knowledge/process/ai-design-review-strategy.md` の多層防御に従う。
+
+1. 作成側は `knowledge/process/design-review-patterns.md` の `DRP-xxx` を全件セルフチェックし、PR 本文に Self-Review Evidence を記載する(Codex: `.codex/skills/surveyor-detailed-design`、Claude Code: `surveyor-design-review` のセルフチェックモード)。
+2. レビューはロール別プロンプトを都度書かず、`@claude` に `surveyor-design-review` の詳細設計レビュープロトコルを指定する単一トリガーで多視点レビューを一括実行する。
+3. 指摘対応では境界を変える修正(型・所有・呼び出し順)に対して `DRP-02`〜`DRP-05` を再チェックし、コントラクト差分を返信してから再レビューを依頼する。
+4. 目標は設計 PR あたり再レビュー 1 往復以内。パターン外の Critical/High はカタログへ追記する。
+
 ## 工程別トレーサビリティ
 
 工程はウォーターフォールでもアジャイルでも重視する。小さな実装スライスであっても、要件定義、アーキテクチャ設計、基本設計、詳細設計、実装、単体テスト、結合テストのどの証跡に該当するかを明示する。

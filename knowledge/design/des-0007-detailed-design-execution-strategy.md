@@ -201,7 +201,8 @@ Each detailed-design package should follow this sequence:
 5. Identify fixture files or fixture shapes, even if the fixture files are created later during implementation.
 6. Add downstream handoff notes: candidate module/project area, first failing test, expected implementation slice, verification command.
 7. Update OKF index/log and run OKF validation.
-8. Request design review before implementation for packages that decide algorithms, schemas, adapter technologies, privacy defaults, or UI interaction.
+8. Run the author-side self-review against the [Design Review Pattern Catalog](../process/design-review-patterns.md) (`DRP-xxx` sweep, including end-to-end use-case simulation for the closure patterns) and §9, and record the Self-Review Evidence in the PR body ([AI Design Review Strategy](../process/ai-design-review-strategy.md) L1).
+9. Request design review before implementation for packages that decide algorithms, schemas, adapter technologies, privacy defaults, or UI interaction, using the single multi-perspective review trigger (strategy L2), not per-role prompts.
 
 Implementation may start per slice after the relevant detailed-design package is accepted or explicitly accepted with risks. Adapter-bound implementation should wait for the relevant spike/decision where the package says the technology choice is blocking.
 
@@ -237,7 +238,7 @@ A slice's first failing test going green is necessary but not sufficient (`R-IMP
 
 ### 5.2 Review gates and approver roles
 
-Step 8 requires review before implementation for packages that decide algorithms, schemas, adapter technologies, privacy defaults, or UI behavior. To keep that gate from stalling or becoming a rubber stamp (`R-PM-02`), each gate names an approver role and a response expectation:
+Step 9 requires review before implementation for packages that decide algorithms, schemas, adapter technologies, privacy defaults, or UI behavior. To keep that gate from stalling or becoming a rubber stamp (`R-PM-02`), each gate names an approver role and a response expectation:
 
 | Decision type | Approver role | Target response |
 | -- | -- | -- |
@@ -264,6 +265,7 @@ Every planned `DES-xxxx` detailed-design package should contain these sections u
 | Trace block | Required lifecycle trace fields from [Lifecycle Traceability](../process/lifecycle-traceability.md) |
 | Upstream decisions | Which `RQ`, `RD`, `DES`, and `ADR` inputs are binding |
 | Data and contract design | DTO fields, value objects, status enums, null/empty rules, versioning rules |
+| Contract closure | Port-method I/O derivation table (each input names its source: caller input / prior stage output / persisted state via a defined contract; each output names its consumer); DTO field-ownership table (single writer, write timing, sync rule for fields duplicated across models); round-trip inventory (every save/load, serialize/deserialize, mask/export pair named with symmetric types in both directions) — see `DRP-02`–`DRP-05` in the [Design Review Pattern Catalog](../process/design-review-patterns.md) |
 | Algorithm or rule design | Pseudocode, ordering, rounding, duplicate handling, missing-data behavior |
 | Mermaid UML | Class, sequence, state, or activity diagrams for review-critical structure |
 | Edge-case table | Permission denied, unavailable, duplicate, custom UI, DPI, occlusion, **virtualized/lazy tree**, **capture failure modes**, cancellation, timeout, confidentiality branches as applicable |
@@ -344,6 +346,7 @@ Determinism and integration testing need an execution model, not just design (`R
 Before a package is handed to implementation, review it against these checks:
 
 - Trace: upstream `RQ`/`RD`/`DES` links are explicit and honest; no broad overclaim.
+- Pattern sweep: every `DRP-xxx` in the [Design Review Pattern Catalog](../process/design-review-patterns.md) is checked, and the Contract closure section demonstrates data-flow closure, round-trip symmetry, and field ownership for every contract the package introduces.
 - Module coverage: the package names the `M01`–`M13` module(s) it designs.
 - Guardrails: `RQ-048`, `RQ-051`, `RQ-052`, `RQ-054` are either directly addressed or explicitly not in scope.
 - Determinism: ordering, keys, timestamps, rounding, duplicate handling, and missing-data behavior are defined, and depend on stable hashing/ordinal comparison rather than `Object.GetHashCode()`/iteration order (verified across a fresh process, and culture for serialization).
@@ -361,6 +364,10 @@ Guardrail failing-first coverage (`R-QA-03`) — before phase close, confirm eac
 | `RQ-051` determinism | `UT-0001` cross-process key; `UT-0006` byte-stable across process/culture; `UT-0010` clock |
 | `RQ-052` confidentiality | `UT-0008` secure-by-default; sanitization UT over logs/diagnostics/exceptions (`R-SEC-01`) |
 | `RQ-054` UI-independent core | `UT-0011`/`UT-0012` fakes-only; composition-root invariant test (`R-ARC-01`) |
+
+## Revision Notes
+
+- **2026-07-03** (§5.3 revision): From the PR #81 design-review retrospective ([AI Design Review Strategy](../process/ai-design-review-strategy.md)) — added the author-side self-review step and the single review trigger to §5, the required **Contract closure** template section to §6, and the `DRP-xxx` pattern sweep to §9. No existing decision is superseded; the change adds authoring/review obligations only, and creates no new `UT`/`IT` obligations in [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md).
 
 ## Related
 
