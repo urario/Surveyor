@@ -148,6 +148,9 @@ classDiagram
   class ConfidentialityDecision
   class PolicyApplicationResult
   class ExportSanitizationResult
+  class ProtectedRunModel
+  class StoredRunResult
+  class StoredRunSnapshot
   class StoreResult
   class ExportResult
 
@@ -157,10 +160,14 @@ classDiagram
   IConfidentialityPolicy --> ConfidentialityDecision
   IConfidentialityPolicy --> PolicyApplicationResult
   IConfidentialityPolicy --> ExportSanitizationResult
+  PolicyApplicationResult --> ProtectedRunModel
+  IConfidentialityPolicy --> StoredRunSnapshot
   ILocalRunStore --> IDataProtector
   ILocalRunStore --> IAccessControlService
   ILocalRunStore --> IStoreFileSystem
   ILocalRunStore --> StoreResult
+  ILocalRunStore --> StoredRunResult
+  StoredRunResult --> StoredRunSnapshot
   IExportBundleWriter --> ExportResult
 ```
 
@@ -226,12 +233,13 @@ public sealed record PolicyApplicationRequest(
     ConfidentialityDecision Decision);
 
 public sealed record ExportSanitizationRequest(
-    AnalysisRunResult RunResult,
+    StoredRunSnapshot Snapshot,
     ConfidentialityDecision Decision,
     ExportProfile ExportProfile);
 
 public sealed record PolicyApplicationResult(
     ConfidentialityDecision Decision,
+    AnalysisRunResult SanitizedRunResult,
     ProtectedRunModel ProtectedLocalModel,
     IReadOnlyList<RunDiagnostic> Diagnostics);
 
@@ -271,7 +279,7 @@ public interface IExportBundleWriter
 }
 ```
 
-Relationship to `DES-0011`: `IResultStorePort` is the only application-owned store/export port. The `Surveyor.Adapters.Store` implementation of `IResultStorePort.SaveRunAsync` delegates to `ILocalRunStore.SaveAsync`; `LoadRunAsync` delegates to `ILocalRunStore.LoadAsync` and returns the reconstructed `AnalysisRunResult` needed by `ExportResultUseCase`; `ExportAsync` delegates to `IExportBundleWriter.WriteMaskedExportAsync`. `IExportBundleWriter` receives an already masked `ExportRequest` from `ExportResultUseCase` and must not call `IConfidentialityPolicy` directly.
+Relationship to `DES-0011`: `IResultStorePort` is the only application-owned store/export port. The `Surveyor.Adapters.Store` implementation of `IResultStorePort.SaveRunAsync` delegates to `ILocalRunStore.SaveAsync`; `LoadRunAsync` delegates to `ILocalRunStore.LoadAsync` and returns a `StoredRunSnapshot` built from the same protected documents that `SaveRunAsync` persisted; `ExportAsync` delegates to `IExportBundleWriter.WriteMaskedExportAsync`. `IExportBundleWriter` receives an already masked `ExportRequest` from `ExportResultUseCase` and must not call `IConfidentialityPolicy` directly.
 
 Infrastructure seams:
 
@@ -362,9 +370,48 @@ public sealed record SafeArtifactReference(
 public sealed record StoredRunResult(
     OperationStatus Status,
     RunId RunId,
-    AnalysisRunResult? RunResult,
+    StoredRunSnapshot? Snapshot,
     SafeArtifactReference? Manifest,
     IReadOnlyList<RunDiagnostic> Diagnostics);
+
+public sealed record StoredRunSnapshot(
+    AnalysisRunResult SanitizedRunResult,
+    ConfidentialityDecision Decision,
+    StoredCaptureDocument? Captures,
+    StoredReportDocument? Report,
+    MaskingDictionaryDocument MaskingDictionary,
+    SafeArtifactReference Manifest,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+
+public sealed record StoredResultDocument(
+    string SchemaVersion,
+    AnalysisRunResult SanitizedRunResult,
+    ConfidentialityDecision Decision,
+    string PolicyVersion,
+    string ScoringConfigVersion);
+
+public sealed record StoredCaptureDocument(
+    string SchemaVersion,
+    IReadOnlyList<StoredCaptureArtifact> Captures);
+
+public sealed record StoredCaptureArtifact(
+    CaptureBlobId CaptureBlobId,
+    RegionOfInterest Region,
+    byte[] PngBytes,
+    CaptureCoordinateSpace CoordinateSpace);
+
+public sealed record StoredReportDocument(
+    string SchemaVersion,
+    IReadOnlyList<MaskedReportDocument> Documents);
+
+public sealed record MaskingDictionaryDocument(
+    string SchemaVersion,
+    IReadOnlyList<MaskingDictionaryEntry> Entries);
+
+public sealed record MaskingDictionaryEntry(
+    SensitiveKind Kind,
+    string ProtectedValue,
+    string Pseudonym);
 
 public sealed record LocalStoreOptions(
     string RootDirectory,
@@ -431,6 +478,8 @@ public sealed record SanitizedExceptionInfo(
     int? HResult);
 ```
 
+`StoredRunSnapshot` is an in-memory command DTO for `ExportResultUseCase` only. It may contain decrypted capture bytes and protected-local masking dictionary values, so it must never be returned to presentation, report generation, diagnostics, logs, or shareable export. The only outward path from a snapshot is through `IConfidentialityPolicy.CreateShareableExportModel`.
+
 `ExportDestination.AbsolutePathForWrite` is an input-only command value. It must not appear in diagnostics, manifests, logs, or reports; those surfaces use `SafeArtifactReference` instead.
 
 Enums fixed by this package:
@@ -469,11 +518,11 @@ Function rules:
 | API | Throws / status | Test rule |
 | -- | -- | -- |
 | `IConfidentialityPolicy.Decide` | `ArgumentException` for invalid opt-out; otherwise no expected throw | `UT-0008` verifies default `ProtectedLocal`, explicit opt-out recording, policy version, and UTC timestamp. |
-| `IConfidentialityPolicy.Apply` | Programmer-invalid model is `ArgumentException` | No raw labels, titles, paths, exception messages, or export-unsafe fallback tokens in returned diagnostics/model. |
-| `CreateShareableExportModel` | Programmer-invalid profile is `ArgumentException` | Fallback keys become export-local pseudonyms and `StableAcrossExports=false`. |
+| `IConfidentialityPolicy.Apply` | Programmer-invalid model is `ArgumentException` | Returns both `SanitizedRunResult` and `ProtectedRunModel`; no raw labels, titles, paths, exception messages, or export-unsafe fallback tokens appear in the sanitized result or diagnostics. |
+| `CreateShareableExportModel` | Programmer-invalid profile or missing required snapshot data is `ArgumentException` | Uses `StoredRunSnapshot`, not raw protected bytes; fallback keys become export-local pseudonyms and `StableAcrossExports=false`. |
 | `ISensitiveValueSanitizer.*` | No expected throw for malformed external text/exception | Sanitizer is allowlist-based and deterministic for fixed context. |
 | `ILocalRunStore.SaveAsync` | Expected I/O/DPAPI/ACL failures return `StoreResult` with `IoError`; caller cancellation propagates | Fake `IDataProtector` and `IAccessControlService` prove DPAPI CurrentUser and ACL seams are invoked before final result. |
-| `ILocalRunStore.LoadAsync` | Expected missing run, DPAPI, manifest, or I/O failures return `StoredRunResult` with `NotFound` or `IoError`; caller cancellation propagates | Fake `IDataProtector` proves matching purpose strings are used and no raw paths/text enter diagnostics. |
+| `ILocalRunStore.LoadAsync` | Expected missing run, DPAPI, manifest, deserialization, or I/O failures return `StoredRunResult` with `NotFound`, `IoError`, or `PartialResult` for optional capture/report payload loss; caller cancellation propagates | Fake `IDataProtector` proves matching purpose strings are used; fixture protected documents round-trip to `StoredRunSnapshot` without recomputing scoring/report data; no raw paths/text enter diagnostics. |
 | `ILocalRunStore.PruneAsync` | Expected deletion failures become diagnostics | Tests verify no reparse-point traversal and no non-Surveyor deletion. |
 | `IExportBundleWriter.WriteMaskedExportAsync` | Expected I/O failures return `ExportResult` with `IoError`; caller cancellation propagates | Fixed inputs produce deterministic ZIP entry order and normalized timestamps. |
 
@@ -545,11 +594,26 @@ Path rules:
 - No path segment uses target title, label, process name, screen name, or raw key.
 - File names are fixed: `manifest.json`, `result.protected`, `captures.protected`, `report.protected`, `masking-dictionary.protected`, `diagnostics.json`.
 
-Protected blobs:
+Protected blobs are deterministic serialized documents encrypted with `ProtectedData.Protect(..., DataProtectionScope.CurrentUser)`. The store implementation must not choose an ad hoc shape per blob:
 
-- serialized with deterministic JSON or byte format decided by `DES-0012` / store implementation;
-- encrypted with `ProtectedData.Protect(..., DataProtectionScope.CurrentUser)`;
-- include policy/config versions in plaintext manifest and authenticated protected payload metadata.
+| Blob | Protected payload before encryption | Required on load | Notes |
+| -- | -- | -- | -- |
+| `ProtectedResultBytes` | UTF-8 deterministic JSON for `StoredResultDocument` | Yes | Contains the post-policy `SanitizedRunResult`; load does not recompute scoring, classification, diagnostics, or report fields. |
+| `ProtectedCaptureBytes` | UTF-8 deterministic JSON header plus binary-safe payload for `StoredCaptureDocument` | No, unless export profile includes captures | Missing/corrupt capture payload yields a safe diagnostic and capture placeholders when export can continue without raw pixels. |
+| `ProtectedReportBytes` | UTF-8 deterministic JSON for `StoredReportDocument` | No | Used only when a generated local report was persisted. |
+| `ProtectedMaskingDictionaryBytes` | UTF-8 deterministic JSON for `MaskingDictionaryDocument` | Yes for export | Contains protected local reverse mappings and canonical fallback tokens; it is never written to shareable export. |
+
+`PolicyApplicationResult.SanitizedRunResult` and `StoredResultDocument.SanitizedRunResult` are the same logical DTO. `AnalyzeScreenUseCase` returns this sanitized result to the UI and passes `ProtectedRunModel` to `IResultStorePort.SaveRunAsync`. `GenerateReportUseCase` formats only this sanitized result. `ExportResultUseCase` loads `StoredRunSnapshot`, then passes the snapshot to `CreateShareableExportModel`; it never treats encrypted protected bytes as a report model.
+
+Load algorithm:
+
+1. Resolve and validate `manifest.json` by `RunId`; missing manifest returns `NotFound`.
+2. Read the blob file names and purpose strings from the manifest; raw filesystem paths stay inside `M12`.
+3. Unprotect each required blob with the exact purpose string recorded in the manifest.
+4. Deserialize `StoredResultDocument`; if schema version, run id, or required fields do not match, return `IoError` with sanitized diagnostics.
+5. Deserialize `MaskingDictionaryDocument` when export needs it; failure is `IoError` for export because fallback-key remapping cannot be proven safe.
+6. Deserialize capture/report documents when available and requested; missing optional documents become diagnostics/placeholders rather than raw fallback output.
+7. Return `StoredRunSnapshot` from the deserialized documents. The adapter must not synthesize a new `AnalysisRunResult` from blob names or recompute any scoring/report data during load.
 
 DPAPI purpose strings are fixed and contain no raw target data:
 
@@ -660,15 +724,17 @@ Developer-local debug logs may include stack traces only when explicitly enabled
 ```mermaid
 flowchart TD
   A["AnalysisRunResult"] --> B["ConfidentialityPolicy"]
-  B --> C["Protected local model"]
-  B --> D["Masked export model"]
+  B --> C["SanitizedRunResult + protected local model"]
+  C --> D["ReportRequest from SanitizedRunResult"]
   C --> E["DPAPI CurrentUser encryption"]
   E --> F["LOCALAPPDATA run store with user ACL"]
-  D --> G["Pseudonymized JSON"]
-  D --> H["Redacted captures"]
-  G --> I["Policy-gated ZIP export"]
-  H --> I
-  B --> J["Sanitized diagnostics"]
+  F --> G["StoredRunSnapshot on load"]
+  G --> H["Masked export model"]
+  H --> I["Pseudonymized JSON"]
+  H --> J["Redacted captures/placeholders"]
+  I --> K["Policy-gated ZIP export"]
+  J --> K
+  B --> L["Sanitized diagnostics"]
 ```
 
 ## Edge Cases
@@ -677,8 +743,9 @@ flowchart TD
 | -- | -- |
 | DPAPI encryption fails | Store returns `IoError`, no plaintext fallback. |
 | ACL tightening fails | Store returns `IoError` unless running in a test fixture that explicitly disables ACL checks. |
-| Export requested before local protected store completed | Export operates from in-memory sanitized model or fails safely; it does not read partial temp files. |
-| Fallback-only element appears in report | Local protected report may contain canonical key; shareable export uses `fk-xxxx` and marks not stable across exports. |
+| Export requested before local protected store completed | `ExportResultUseCase` starts from `RunId`; missing/incomplete protected store returns `NotFound` or `IoError` with safe diagnostics and does not read partial temp files. |
+| Fallback-only element appears in report | Local protected report may contain canonical key; shareable export uses `exp-<export-id-short>-fk-xxxx` and marks not stable across exports. |
+| Result blob loads but optional capture/report blob is missing | `LoadAsync` returns `PartialResult` snapshot; export writes placeholders/diagnostics when the selected profile permits omission, otherwise returns `IoError` before creating the final bundle. |
 | Exception message contains UI text | Sanitizer drops message; diagnostic keeps exception kind/HResult/status. |
 | ROI bounds unavailable for text-bearing element | Export omits or placeholders the screenshot rather than leaking full image. |
 | Retention encounters reparse point | Skip and emit safe diagnostic. |
@@ -705,6 +772,7 @@ flowchart TD
 | DPAPI wrapper invoked | fake protection service records `CurrentUser`; plaintext blob is not written. |
 | ACL service invoked | fake ACL service receives final run directory. |
 | Atomic write | temp directory is used; failure leaves no final partial directory. |
+| Store/load symmetry | fixed `StoredResultDocument`, `StoredCaptureDocument`, `StoredReportDocument`, and `MaskingDictionaryDocument` are protected, saved, unprotected, and deserialized into one `StoredRunSnapshot`; scorer/report generation are not called during load. |
 | Export atomic write | temp ZIP is used; cancellation/failure deletes temp and leaves no final partial bundle; destination collision returns `IoError` without overwrite. |
 | Export determinism | fixed inputs and fixed `ExportId` yield stable ZIP entry order and normalized timestamps. |
 | Retention safety | old Surveyor run removed; non-Surveyor/reparse entries skipped; corrupt/missing manifest skipped with `RetentionManifestUnreadable`. |

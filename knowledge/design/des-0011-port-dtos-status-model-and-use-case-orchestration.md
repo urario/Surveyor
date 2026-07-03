@@ -190,10 +190,11 @@ ROI order is deterministic by `SourceFindingId`, `ElementKey`, then `Id`. Missin
 - `CaptureResult? Capture`
 - `ReportResult? Report`
 - `StoreResult? Store`
+- `ConfidentialityDecision? ConfidentialityDecision`
 - `IReadOnlyList<StageResult> Stages`
 - `IReadOnlyList<RunDiagnostic> Diagnostics`
 
-`StartedAtUtc` and `CompletedAtUtc` are read from injected `IClock.UtcNow` only. Domain scoring never reads time.
+`StartedAtUtc` and `CompletedAtUtc` are read from injected `IClock.UtcNow` only. Domain scoring never reads time. A successful or partial result emitted to UI/report/export is the post-policy `SanitizedRunResult` returned by `IConfidentialityPolicy.Apply`; raw pre-policy labels, titles, exception messages, and export-unsafe fallback tokens do not appear in the emitted result.
 
 ## Class Design (UML)
 
@@ -272,6 +273,9 @@ classDiagram
 
   class AnalysisRunRequest
   class AnalysisRunResult
+  class ReportRequest
+  class StoredRunResult
+  class StoredRunSnapshot
   class StageResult
   class RunDiagnostic
   class RegionOfInterest
@@ -287,13 +291,16 @@ classDiagram
   AnalyzeScreenUseCase --> IStageTimeoutController
   AnalyzeScreenUseCase --> IClock
   GenerateReportUseCase --> IReportGenerationPort
-  GenerateReportUseCase --> IConfidentialityPolicy
   GenerateReportUseCase --> IStageTimeoutController
   ExportResultUseCase --> IResultStorePort
   ExportResultUseCase --> IConfidentialityPolicy
   ExportResultUseCase --> IStageTimeoutController
   AnalyzeScreenUseCase --> AnalysisRunRequest
   AnalyzeScreenUseCase --> AnalysisRunResult
+  GenerateReportUseCase --> ReportRequest
+  IResultStorePort --> StoredRunResult
+  StoredRunResult --> StoredRunSnapshot
+  ExportResultUseCase --> StoredRunSnapshot
   AnalysisRunResult "1" o-- "*" StageResult
   AnalysisRunResult "1" o-- "*" RunDiagnostic
   AnalysisRunResult "1" o-- "*" RegionOfInterest
@@ -344,7 +351,6 @@ public sealed class GenerateReportUseCase
 {
     public GenerateReportUseCase(
         IReportGenerationPort reportPort,
-        IConfidentialityPolicy confidentialityPolicy,
         IStageTimeoutController timeoutController,
         IClock clock);
 
@@ -487,6 +493,7 @@ public sealed record AnalysisRunResult(
     CaptureResult? Capture,
     ReportResult? Report,
     StoreResult? Store,
+    ConfidentialityDecision? ConfidentialityDecision,
     IReadOnlyList<StageResult> Stages,
     IReadOnlyList<RunDiagnostic> Diagnostics);
 
@@ -506,6 +513,12 @@ public sealed record GenerateReportRequest(
     AnalysisRunResult RunResult,
     ReportOptions Options);
 
+public sealed record ReportRequest(
+    RunId RunId,
+    AnalysisRunResult SanitizedRunResult,
+    ReportOptions Options,
+    ConfidentialityDecision ConfidentialityDecision);
+
 public sealed record ExportRunRequest(
     RunId RunId,
     ExportProfile ExportProfile,
@@ -513,7 +526,7 @@ public sealed record ExportRunRequest(
     ExportOptions Options);
 ```
 
-`ConfidentialityRequest`, `PolicyApplicationRequest`, `ExportSanitizationRequest`, `ExportProfile`, `ExportDestination`, and `ExportOptions` are application-layer DTOs because they appear on application-owned ports. Their field-level definitions are owned by [DES-0013](des-0013-confidentiality-storage-and-export.md), which is the confidentiality/storage detailed-design package.
+`ConfidentialityRequest`, `PolicyApplicationRequest`, `PolicyApplicationResult`, `ExportSanitizationRequest`, `StoredRunSnapshot`, `ExportProfile`, `ExportDestination`, and `ExportOptions` are application-layer DTOs because they appear on application-owned ports. Their field-level definitions are owned by [DES-0013](des-0013-confidentiality-storage-and-export.md), which is the confidentiality/storage detailed-design package.
 
 Port result DTO records:
 
@@ -551,7 +564,7 @@ public sealed record CaptureResult(
 public sealed record StoredRunResult(
     OperationStatus Status,
     RunId RunId,
-    AnalysisRunResult? RunResult,
+    StoredRunSnapshot? Snapshot,
     SafeArtifactReference? Manifest,
     IReadOnlyList<RunDiagnostic> Diagnostics);
 ```
@@ -562,8 +575,8 @@ Function rules:
 | -- | -- | -- |
 | `SelectTargetUseCase.*Async` | `ArgumentNullException` for null query/target; observes caller cancellation | Fake discovery port can assert ViewModel never calls discovery adapters directly. |
 | `AnalyzeScreenUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation and returns `RunOutcome.Cancelled` at the boundary | Fake ports can assert stage order, no later ports after cancellation, timestamps from fake clock, metadata copied unchanged, and `ScoringConfigReference` resolved through `IScoringConfigProvider`. |
-| `GenerateReportUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation | Fake report port verifies report generation is separate from analysis and can be triggered after review. |
-| `ExportResultUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation | Fake store port verifies export is explicit user-command flow, loads the run by `RunId`, and receives a masked export model. |
+| `GenerateReportUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation; returns report failure when `RunResult.ConfidentialityDecision` is missing | Fake report port verifies report generation is separate from analysis, is triggered after review, and receives a `ReportRequest` built from the post-policy `SanitizedRunResult` without calling `IConfidentialityPolicy` again. |
+| `ExportResultUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation | Fake store port verifies export is explicit user-command flow, loads a `StoredRunSnapshot` by `RunId`, and receives a masked export model. |
 | `ITargetDiscoveryPort.*Async` | Expected failures are statuses; caller cancellation propagates | Fakes return stable candidate ordering. |
 | `IUiTreeAcquisitionPort.AcquireAsync` | Expected Windows/access failures are statuses; caller cancellation propagates | Fakes can return `PartialResult`, `Timeout`, `PermissionDenied`, and a fixture `ScreenModel`. |
 | `IScreenCapturePort.CaptureAsync` | Capture failure returns status when recoverable | Fakes can omit ROI images without blocking scoring. |
@@ -635,23 +648,19 @@ sequenceDiagram
   AS->>P: Decide(ProtectedLocal)
   P-->>AS: ConfidentialityDecision
   AS->>P: Apply(policy decision + run result)
-  P-->>AS: ProtectedRunModel
+  P-->>AS: PolicyApplicationResult(SanitizedRunResult + ProtectedRunModel)
   AS->>Store: SaveRunAsync
   Store-->>AS: StoreResult
-  AS-->>UI: AnalysisRunResult
+  AS-->>UI: SanitizedRunResult
   UI->>GR: GenerateReportRequest(after review)
-  GR->>P: Decide(ProtectedLocal report)
-  P-->>GR: ConfidentialityDecision
-  GR->>P: Apply(policy decision + run result)
-  P-->>GR: PolicyApplicationResult
-  GR->>R: GenerateAsync(policy-applied report request)
+  GR->>R: GenerateAsync(ReportRequest from SanitizedRunResult)
   R-->>GR: ReportResult
   UI->>EX: ExportRunRequest(explicit command)
   EX->>Store: LoadRunAsync(RunId)
-  Store-->>EX: StoredRunResult(AnalysisRunResult)
+  Store-->>EX: StoredRunResult(StoredRunSnapshot)
   EX->>P: Decide(MaskedShareableExport)
   P-->>EX: ConfidentialityDecision
-  EX->>P: CreateShareableExportModel(loaded run)
+  EX->>P: CreateShareableExportModel(loaded snapshot)
   P-->>EX: MaskedExportModel
   EX->>Store: ExportAsync(masked model)
   Store-->>EX: ExportResult
@@ -669,7 +678,9 @@ The run returns `SucceededWithPartialResult` when:
 
 The run returns `FailedUnexpected` only for invariant breaches or unexpected exceptions that are not represented by the status model.
 
-Export is not part of `AnalyzeScreenUseCase`; `ExportResultUseCase` has its own result and expected failure status. It starts from `RunId`, loads the persisted run through `IResultStorePort.LoadRunAsync`, and then builds the masked export model through `IConfidentialityPolicy`. `GenerateReportUseCase` is separate so the user can review analysis results before generating a report; it still passes the requested report input through `IConfidentialityPolicy` before invoking `IReportGenerationPort`.
+Export is not part of `AnalyzeScreenUseCase`; `ExportResultUseCase` has its own result and expected failure status. It starts from `RunId`, loads a persisted `StoredRunSnapshot` through `IResultStorePort.LoadRunAsync`, and then builds the masked export model through `IConfidentialityPolicy`. `GenerateReportUseCase` is separate so the user can review analysis results before generating a report; it writes only the post-policy `SanitizedRunResult` produced by analysis and does not call `IConfidentialityPolicy.Apply` a second time.
+
+The `Apply` contract deliberately returns two outputs: `SanitizedRunResult` for UI/report/export orchestration and `ProtectedRunModel` for local encrypted persistence. Use cases must not treat `ProtectedRunModel` as a report input; it is an opaque store payload whose serialization and load symmetry are owned by [DES-0013](des-0013-confidentiality-storage-and-export.md).
 
 ### Stage Criticality
 
@@ -683,7 +694,7 @@ Outcome derivation uses this table. New stages must be added here before impleme
 | `Scoring` | `AnalyzeScreenUseCase` | Required | Unexpected scoring/config exception yields `FailedUnexpected`; unavailable axis data remains scoring data, not a stage failure. |
 | `RegionPlanning` | `AnalyzeScreenUseCase` | Optional/recoverable | Missing ROI bounds becomes diagnostic and partial result. |
 | `Capture` | `AnalyzeScreenUseCase` | Optional unless `RequireCapture == true` | `Unavailable`/`Timeout` yields partial when optional; required capture failure yields `FailedUnexpected`. |
-| `ConfidentialityPolicy` | `AnalyzeScreenUseCase`, `GenerateReportUseCase`, `ExportResultUseCase` | Required emission gate | Policy invariant failure yields `FailedUnexpected`; sanitizer recoveries are diagnostics. |
+| `ConfidentialityPolicy` | `AnalyzeScreenUseCase`, `ExportResultUseCase` | Required emission gate | Policy invariant failure yields `FailedUnexpected`; sanitizer recoveries are diagnostics. `GenerateReportUseCase` consumes only `SanitizedRunResult` already emitted by analysis. |
 | `ResultAssembly` | `AnalyzeScreenUseCase` | Required | Invariant failure yields `FailedUnexpected`. |
 | `ReportGeneration` | `GenerateReportUseCase` | Required for report command, not analysis | Expected `Timeout`/`IoError` returns `ReportResult` failure. |
 | `Store` | `AnalyzeScreenUseCase` | Recoverable after protected in-memory result exists | `Timeout`/`IoError` yields `SucceededWithPartialResult` with unsaved-result diagnostic. |
@@ -760,8 +771,9 @@ Do not use `DateTime.Now`, `DateTimeOffset.Now`, or ambient local time in applic
 | Happy path | all ports return `Ok`; result is `Succeeded`, timestamps from fake clock, metadata copied unchanged. |
 | Use-case split | ViewModel-facing tests call `SelectTargetUseCase`, `AnalyzeScreenUseCase`, `GenerateReportUseCase`, and `ExportResultUseCase` separately; no test requires direct adapter-port access from presentation. |
 | Config resolution | request `ScoringConfigReference` is resolved through `IScoringConfigProvider`; scorer receives the resolved config. |
-| Confidentiality decision timing | `AnalyzeScreenUseCase` calls `Decide(ProtectedLocal)` before `Apply`; `GenerateReportUseCase` calls `Decide(ProtectedLocal report)` before `Apply` and report generation; `ExportResultUseCase` calls `LoadRunAsync`, then `Decide(MaskedShareableExport)`, then `CreateShareableExportModel`. |
-| Export load path | fake store returns `StoredRunResult` for `RunId`; export fails with a safe diagnostic when load returns `NotFound`, `IoError`, or null `RunResult`. |
+| Confidentiality decision timing | `AnalyzeScreenUseCase` calls `Decide(ProtectedLocal)` before `Apply` and returns `PolicyApplicationResult.SanitizedRunResult`; `GenerateReportUseCase` does not call policy and fails safely if the result lacks `ConfidentialityDecision`; `ExportResultUseCase` calls `LoadRunAsync`, then `Decide(MaskedShareableExport)`, then `CreateShareableExportModel`. |
+| Report request shaping | fake report port receives `ReportRequest.SanitizedRunResult` and never receives `ProtectedRunModel` or protected blob bytes. |
+| Export load path | fake store returns `StoredRunResult` with `StoredRunSnapshot` for `RunId`; export fails with a safe diagnostic when load returns `NotFound`, `IoError`, or null `Snapshot`. |
 | Acquisition partial | fake acquisition hits cap; scoring still runs; outcome `SucceededWithPartialResult`. |
 | Capture timeout optional | fake capture returns `Timeout`; result remains partial when `RequireCapture=false`. |
 | Caller cancellation | token canceled during acquisition; public result `Cancelled`; later ports not called. |
