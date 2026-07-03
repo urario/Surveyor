@@ -143,10 +143,22 @@ public interface IUiTreeAcquisitionPort
 ## CS-05: コード解析 — Microsoft 全規則
 
 - `Directory.Build.props` で `AnalysisLevel=latest-All` を設定し、既定重大度を持つ全 CA 規則を有効化する。`TreatWarningsAsErrors=true` により全違反がビルドエラーになる。
-- **`latest-All` でも自動有効化されない規則がある点に注意する。** [Microsoft Learn](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview#enable-additional-rules) の通り、既定で無効(`severity: none`)な規則 — 主にコードメトリクス系 `CA1501`/`CA1502`/`CA1505`/`CA1506`/`CA1509` — は `dotnet_diagnostic.CAxxxx.severity` による**明示オプトインが必須**である。したがって「全 CA 規則」を実効化するには次を満たす:
-  - メトリクス系 `CA1501`/`CA1502`/`CA1505`/`CA1506` は `CS-06` で `.editorconfig` にて明示的に `error` へ昇格する(下記表)。
-  - `CA1509`(`CodeMetricsConfig.txt` の書式検証)も明示的に `warning` 以上へ昇格する。
-  - 上記以外に既定無効の規則が将来 SDK で増えた場合は、スキャフォールドスライスでビルドログを突き合わせ、**有効化するか意図的除外として理由付き記録するか**を明示する(「有効なはずが黙って走らない」状態を残さない)。
+- **`latest-All` でも自動有効化されない規則がある点に注意する。** [Microsoft Learn](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview#enable-additional-rules) の通り、`All` モードでも既定で無効(`severity: none`)のまま残る規則があり、`dotnet_diagnostic.CAxxxx.severity` による**明示オプトインが必須**である。これらは 2 群に分かれる。「全 CA 規則」の主張を維持するため、**両群とも規約で明示判断を確定する**(判断のない黙殺=「有効なはずが走らない」状態を残さない)。
+
+  **(a) コードメトリクス系** — `CS-06` で `.editorconfig` にて明示昇格する: `CA1501`/`CA1502`/`CA1505`/`CA1506` を `error` へ、`CA1509`(`CodeMetricsConfig.txt` 書式検証)を `warning` 以上へ(下記 `CS-06` 表)。
+
+  **(b) 既定無効の既存非メトリクス規則** — Microsoft が `All` でも意図的に無効にしている確立規則群。各規則の初期方針を次表で確定する:
+
+  | 規則 | 内容 | Surveyor 初期方針 |
+  | -- | -- | -- |
+  | `CA1005` | ジェネリック型の過剰な型パラメータ回避 | **有効化**(`warning`)。SRP に資し、害がない |
+  | `CA1060` | P/Invoke を `NativeMethods` クラスへ集約 | **有効化**(`warning`)。UIA/Capture アダプターの P/Invoke 整理に有用 |
+  | `CA1045` | 参照渡し(`ref`)引数の回避 | **有効化**(`warning`)。必要な箇所は局所抑制+理由で逃がす |
+  | `CA1021` | `out` パラメータの回避 | **意図的除外**。`TryXxx` パターン等 .NET 標準慣行のため。ポート契約は result 型優先(`DES-0003`)で乱用はレビューが抑制 |
+  | `CA1014` | アセンブリへ `CLSCompliant` 付与 | **意図的除外**。外部ライブラリ配布せず C# 単一言語消費のため不要 |
+  | `CA1017` | アセンブリへ `ComVisible` 付与 | **意図的除外**。本アセンブリを COM 公開しない(UIA COM interop は消費側であり公開側ではない) |
+
+  上記以外に将来 SDK で既定無効規則が増えた場合も、スキャフォールドスライスでビルドログを突き合わせ、同様に**有効化するか意図的除外として理由付き記録するか**を確定する。
 - プロジェクト実態に合わない規則(例: `CA1303` ローカライズ要求 — 本プロジェクトのメッセージは日本語リテラルが正、`CA2007` `ConfigureAwait` — アプリケーションコードでは不要)は `.editorconfig` の専用セクションで抑制し、**各行に理由コメントを付ける**。理由のない抑制はレビューで却下する。
 - コード内の局所抑制(`#pragma warning disable` / `[SuppressMessage]`)は `Justification` 必須とし、PR レビューの明示的な確認対象とする。抑制の追加は「見えない品質劣化」ではなく「見える設計判断」として扱う。
 
