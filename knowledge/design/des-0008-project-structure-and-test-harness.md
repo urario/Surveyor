@@ -65,10 +65,10 @@ Out of scope (inherited exclusions and downstream owners):
 
 ## Solution And Project Layout
 
-One solution, `Surveyor.sln`, with `src` (shipping code), `tests` (unit + architecture + integration + shared support), and repository-root MSBuild/SDK control files.
+One solution, `Surveyor.slnx`, with `src` (shipping code), `tests` (unit + architecture + integration + shared support), and repository-root MSBuild/SDK control files. The scaffold uses the modern SDK XML solution format (`.slnx`) for the new C#/.NET project rather than the legacy `.sln` format.
 
 ```
-Surveyor.sln
+Surveyor.slnx
 global.json                     # pins the .NET SDK version (deterministic build across machines)
 Directory.Build.props           # central determinism/quality MSBuild settings (inherited by all projects)
 Directory.Packages.props        # central package versions (ManagePackageVersionsCentrally)
@@ -246,7 +246,7 @@ flowchart LR
 - **Unit lane (unattended):** builds `src/**` and the `*.Tests` + `Surveyor.Architecture.Tests` projects only. It **excludes** `tests/it-fixtures/**` (especially the C++ MFC project, which needs the C++ workload) and `tests/integration/**`. All `UT` and architecture/banned-API checks are deterministic and headless. The lane also runs `dotnet format --verify-no-changes` (`CS-09`) and the coverlet core-layer coverage gate (`CS-07`). This keeps the pure-core lane green on a machine without the C++ workload or a live desktop.
 - **Integration lane (manual gate now):** builds the mixed fixture apps and `Surveyor.IntegrationTests`, run manually on the developer's local Windows 11 machine with the DPI/monitor/integrity assumptions each `IT` states. Self-hosted interactive-runner automation of the automatable subset (e.g. read-only invariants `IT-0001`, capture `IT-0003`) is revisited once the fixture app and adapters exist.
 
-Solution-folder grouping keeps `it-fixtures` and `integration` visible in `Surveyor.sln` but a `Directory.Build.props`/solution-filter (`.slnf`) split lets the unattended lane build the unit subset without the native/interactive projects.
+Solution-folder grouping keeps `it-fixtures` and `integration` visible in `Surveyor.slnx` but a `Directory.Build.props`/solution-filter (`.slnf`) split lets the unattended lane build the unit subset without the native/interactive projects.
 
 ## Test Harness: Unit Fixtures And Mixed Integration Fixture App
 
@@ -304,7 +304,7 @@ These are structural tests, not new behavior `UT`s; they strengthen the `RQ-054`
 
 ## Downstream Handoff
 
-- **Candidate project area / first slice:** an `IMP-xxxx` scaffold slice creates `Surveyor.sln`, the ten `src` projects, the control files (`global.json`, `Directory.Build.props`, `Directory.Packages.props`, `.editorconfig`, `.gitattributes`), `Surveyor.TestSupport`, and `Surveyor.Architecture.Tests`.
+- **Candidate project area / first slice:** an `IMP-xxxx` scaffold slice creates `Surveyor.slnx`, the ten `src` projects, the control files (`global.json`, `Directory.Build.props`, `Directory.Packages.props`, `.editorconfig`, `.gitattributes`), `Surveyor.TestSupport`, and `Surveyor.Architecture.Tests`.
 - **First failing test:** the dependency-direction suite in `Surveyor.Architecture.Tests` — write it red against an intentionally-wrong reference (or before the projects satisfy the rule), then make it green by establishing the correct `ProjectReference` graph and settings.
 - **Verification command:** `dotnet build` (warnings-as-errors) + `dotnet test tests/Surveyor.Architecture.Tests` on the unit lane; `Validate-Okf.ps1` for the design artifact.
 - **Minimal context bundle for the slice:** this package's [Solution And Project Layout](#solution-and-project-layout), [Project ↔ Module Map](#project--module-map), [Dependency Direction Rule](#dependency-direction-rule-inward-and-mechanical-verification), and [Determinism And Quality Settings](#determinism-and-quality-settings-r-net-02); `RQ-054` and `RQ-051` from the requirement source; the resolved `R-NET-02`/`R-OPS-01`/`R-OPS-03` decisions in [DES-0007](des-0007-detailed-design-execution-strategy.md) §8.1.
