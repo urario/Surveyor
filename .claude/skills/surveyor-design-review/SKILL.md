@@ -15,6 +15,8 @@ Read these before reviewing:
 - `docs/gui-testability-analyzer-requirements-definition.md` — derived `RD-xxx`.
 - `knowledge/architecture/layering-principles.md` and `knowledge/architecture/des-0001-initial-architecture.md`.
 - `knowledge/process/lifecycle-traceability.md` and `knowledge/process/quality-review-policy.md`.
+- `knowledge/process/design-review-patterns.md` — the `DRP-xxx` defect-pattern catalog (mandatory sweep for detailed design).
+- `knowledge/process/ai-design-review-strategy.md` — review-round targets and the fix-loop protocol.
 
 Carry both `RQ-xxx` and `RD-xxx` through the review. Summarize and link; do not duplicate long requirement text.
 
@@ -45,6 +47,34 @@ These are blocking — a design that violates any is not ready:
 - **Purpose-first patterns**: each design pattern serves a stated purpose with a short tradeoff note; flag pattern-for-pattern's-sake.
 - **Diagrams**: architecture artifacts include at least one Mermaid diagram (GitHub-friendly, ASCII node ids, short labels, no PlantUML/external images); check dependency direction and boundary accuracy.
 - **Traceability**: upstream requirements and downstream implementation/test obligations are named.
+
+## Detailed-Design Review Protocol (one-shot multi-perspective)
+
+For a `DES-xxxx` detailed-design package (or PR of packages), run all four lenses in a **single pass** instead of separate review requests:
+
+1. **Architect lens**: overall structure, responsibility separation, dependency direction, extensibility break points, consistency with basic design (`DES-0002`–`DES-0006`) and ADRs, rework risk after implementation.
+2. **Implementer lens**: can implementation start from this document alone; unclear inputs/outputs/returns/errors; ambiguous class/function responsibility; traceable processing order; decisions silently delegated to the implementer.
+3. **Quality lens**: bug-prone spots, missing abnormal paths, ambiguous boundary conditions, state inconsistency, exception/failure/cancellation breakdown, weakness against future spec change.
+4. **Test lens**: unit-test decomposability, integration-test seams, regression cases worth keeping, abnormal/boundary/cancel/timeout coverage, hard-to-mock dependencies, designs verifiable only manually.
+
+Then sweep **every `DRP-xxx` pattern** in `knowledge/process/design-review-patterns.md` explicitly — especially the closure patterns `DRP-02`–`DRP-05`, which require simulating each use case end-to-end from trigger to outputs against the package's Contract closure section.
+
+Finding format: `DRP-xxx` (or `—` if no pattern matches) + severity (Critical/High/Medium/Low) + the affected artifact/section. Group by severity. If a Critical/High finding matches no pattern, say so — it becomes a catalog candidate.
+
+Verdict: end with **Accept / Accept with risks / Changes required**, plus the list of patterns checked clean, so re-review can be scoped to what changed.
+
+### Author self-check mode
+
+When *authoring* (not reviewing) a design, run the same lens-and-pattern sweep against your own draft before opening the PR, and record the result as a **Self-Review Evidence** section in the PR body (per pattern: checked clean / finding fixed / not applicable + reason). Verify the package fills the DES-0007 §6 template including the Contract closure section.
+
+### Re-review protocol
+
+When reviewing a fix commit:
+
+1. Verify each prior finding is resolved as claimed.
+2. Classify each fix as local or boundary-reshaping (types, ownership, call sequences changed).
+3. For boundary-reshaping fixes, re-run `DRP-02`–`DRP-05` on the reshaped boundary — a fix that closes one hole routinely opens an adjacent one (`DRP-10`).
+4. Do not re-litigate patterns checked clean on unchanged sections.
 
 ## Output Shape
 
