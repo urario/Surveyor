@@ -120,6 +120,18 @@ The non-equal weights are deliberate: stable identity and operation seams are th
 
 `PriorityBasis` is copied from upstream `ScreenSelectionMetadata` when present. `M08` never computes business priority, urgency, or implementation order.
 
+`PriorityBasis` contains only the recorded user-supplied prioritization basis:
+
+- `PriorityBasisSource Source`: `EnteredByUser` or `AcceptedRecordedDefaults`;
+- `PriorityBand RegressionTestCost`;
+- `PriorityBand ChangeFrequency`;
+- `PriorityBand ExecutionFrequency`;
+- `PriorityBand UiPatternRepresentativeness`;
+- `bool HasJudgmentSplit`;
+- `bool HasSelectionRationale`.
+
+`PriorityBand` values are `Low`, `Medium`, `High`, or `Unspecified`. `HasSelectionRationale` records only presence/absence; rationale text is not part of scoring and belongs to downstream report/store policy after sanitization. `M08` copies this value to `ScoreResult.PriorityBasis` and each generated `ImprovementCandidate.UserSuppliedPriorityBasis` without sorting, weighting, ranking, or filling absent values.
+
 ### AxisScore
 
 `AxisScore` contains:
@@ -242,7 +254,15 @@ classDiagram
 
   class ScreenModel
   class UiElement
-  class PriorityBasis
+  class PriorityBasis {
+    +PriorityBasisSource Source
+    +PriorityBand RegressionTestCost
+    +PriorityBand ChangeFrequency
+    +PriorityBand ExecutionFrequency
+    +PriorityBand UiPatternRepresentativeness
+    +bool HasJudgmentSplit
+    +bool HasSelectionRationale
+  }
 
   TestabilityScorer --> ScreenModel : reads
   TestabilityScorer --> ScoringConfig : validates
@@ -347,6 +367,15 @@ public sealed record ImprovementCandidate(
     IReadOnlyList<string> SourceFindingIds,
     CandidateScope Scope,
     PriorityBasis? UserSuppliedPriorityBasis);
+
+public sealed record PriorityBasis(
+    PriorityBasisSource Source,
+    PriorityBand RegressionTestCost,
+    PriorityBand ChangeFrequency,
+    PriorityBand ExecutionFrequency,
+    PriorityBand UiPatternRepresentativeness,
+    bool HasJudgmentSplit,
+    bool HasSelectionRationale);
 ```
 
 Enums fixed by this package:
@@ -370,6 +399,8 @@ public enum FindingSeverity { Info, Warning, Blocking }
 public enum ScoringRounding { BasisPointHalfAwayFromZero }
 public enum CandidateScope { Element, Screen, Application }
 public enum ExpectedEffect { UnlockAutomation, ImproveReliability, ImproveObservability, ReduceMaintenanceCost, ReduceManualReview }
+public enum PriorityBasisSource { EnteredByUser, AcceptedRecordedDefaults }
+public enum PriorityBand { Low, Medium, High, Unspecified }
 
 public enum RootCauseCode
 {
@@ -517,6 +548,18 @@ AggregateScoreBp = (weightedSum + usedWeight / 2) / usedWeight
 
 If `usedWeight == 0`, aggregate is null internally and the public result uses `AggregateScoreBp = 0`, `Confidence = Unknown`, and `TestabilityClass = NotEnoughEvidence` with a blocking `NoScorableAxes` finding. This case is distinct from a valid low score and must include the `Unavailable` reasons.
 
+`AggregateScorePercent` is derived only from `AggregateScoreBp` as `AggregateScoreBp / 100m`, with no culture-sensitive formatting in domain code.
+
+Overall `ScoreResult.Confidence` is derived deterministically from the participating axis confidence values and unavailable weight:
+
+1. if `usedWeight == 0`, confidence is `Unknown`;
+2. otherwise start from the lowest `AxisScore.Confidence` among axes with `Applicability == Applicable` and non-null `ScoreBp`;
+3. cap the value to at most `Medium` when `unknownWeightBp > 500`;
+4. cap the value to `Low` when `unknownWeightBp > 3000`;
+5. keep `Unknown` only for the no-participating-axis case in step 1.
+
+Confidence ordering for this derivation is `High` > `Medium` > `Low` > `Unknown`. The confidence cap is independent from classification rows: for example, `unknownWeightBp > 3000` reaches `ImproveFirst` or `NotEnoughEvidence` through Step 6, and the same unavailable evidence also caps overall confidence to `Low`. This makes the row 3 `ImmediatelyAutomatable` condition "confidence not lower than `Medium`" observable without implementation-specific judgment.
+
 ### Step 5: De-Duplicate Root Causes
 
 Findings are grouped by:
@@ -638,6 +681,7 @@ flowchart TD
 | `Unavailable` is not low score | Pattern availability unknown yields `UnknownDueToUnavailable`, confidence cap, and no zero penalty. |
 | Root-cause de-duplication | One missing identity on a custom button emits one primary candidate. |
 | Rounding | Basis-point midpoint cases use half-away-from-zero. |
+| Overall confidence | participating axis confidence and `unknownWeightBp` caps produce the exact `High`/`Medium`/`Low`/`Unknown` results specified in Step 4; row 3 cannot classify `ImmediatelyAutomatable` when confidence is below `Medium`. |
 | Classification boundary order | Each class threshold has `-1`, exact, and `+1` cases; overlapping conditions prove the ordered decision list (`NotEnoughEvidence` before `ImproveFirst` before score-based classes). |
 | Config validation | invalid weight sum, negative axis weight, missing axis, missing/invalid signal weights, and unknown config version fail fast before scoring. |
 | Dictionary order independence | Reordered `AxisWeights`, `SignalThresholds`, and `SignalWeights` dictionaries produce equal results. |

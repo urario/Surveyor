@@ -106,6 +106,24 @@ Required fields:
 
 `ScreenSelectionMetadata` is passed through unchanged. `M03` may validate shape but must not fabricate priority, business criticality, or screen intent. If metadata is absent, downstream `PriorityBasis` remains null.
 
+### PriorityBasis Mapping
+
+`AnalyzeScreenUseCase` is the only application-layer component that maps `AnalysisRunRequest.ScreenSelectionMetadata` to the scoring `PriorityBasis` defined by [DES-0010](des-0010-scoring-classification-and-improvement-candidates.md). The mapping happens after scoring config resolution and before `TestabilityScorer.Score`.
+
+Mapping rules:
+
+| Source field | `PriorityBasis` field | Rule |
+| -- | -- | -- |
+| metadata acknowledgement | `Source` | entered values -> `EnteredByUser`; explicit default acceptance -> `AcceptedRecordedDefaults` |
+| regression-test cost | `RegressionTestCost` | copy normalized band; absent metadata yields null `PriorityBasis` rather than a synthesized band |
+| change frequency | `ChangeFrequency` | copy normalized band; do not combine with execution frequency |
+| execution frequency | `ExecutionFrequency` | copy normalized band |
+| UI-pattern representativeness | `UiPatternRepresentativeness` | copy normalized band |
+| judgment-split flag | `HasJudgmentSplit` | copy boolean |
+| selection rationale note | `HasSelectionRationale` | true when a non-empty rationale was recorded; never pass the rationale text to scoring |
+
+When `ScreenSelectionMetadata` is null, `AnalyzeScreenUseCase` passes `null` to the scorer and leaves `ScoreResult.PriorityBasis` / `ImprovementCandidate.UserSuppliedPriorityBasis` null. It must not synthesize defaults at this stage; default acceptance is valid only when `SCR-03` recorded it before the request was created. Report and store writers serialize the post-policy `ScoreResult.PriorityBasis` and candidate basis exactly as carried by the result model; they may redact/suppress rationale text per `DES-0013`, but they do not compute a priority order.
+
 ### AnalysisRunOptions
 
 V1 defaults:
@@ -637,11 +655,12 @@ sequenceDiagram
   ST->>D: ListTargetsAsync / ResolveAsync
   D-->>ST: TargetCandidate / TargetReference
   ST-->>UI: selection DTOs
-  UI->>AS: AnalysisRunRequest(selected TargetReference)
+  UI->>AS: AnalysisRunRequest(selected TargetReference + ScreenSelectionMetadata)
   AS->>CFG: ResolveAsync(ScoringConfigReference)
   CFG-->>AS: ScoringConfig
   AS->>A: Acquire tree
   A-->>AS: AcquisitionResult
+  AS->>AS: Map ScreenSelectionMetadata to PriorityBasis
   AS->>S: Score(ScreenModel, config, priority basis)
   S-->>AS: ScoreResult
   AS->>AS: Plan ROIs from findings
@@ -784,7 +803,7 @@ Do not use `DateTime.Now`, `DateTimeOffset.Now`, or ambient local time in applic
 | Unexpected adapter exception | fake port throws; use case returns `FailedUnexpected` with sanitized diagnostic. |
 | Combined partial result | cap reached plus optional capture failure plus missing ROI bounds still yields one deterministic partial result. |
 | Expected permission denial | acquisition returns `PermissionDenied`; result has safe diagnostic and no raw exception text. |
-| No fabricated priority | absent `ScreenSelectionMetadata` remains absent through scorer and result. |
+| No fabricated priority | absent `ScreenSelectionMetadata` remains absent through scorer and result; explicit default acceptance maps to `PriorityBasisSource.AcceptedRecordedDefaults`; entered metadata maps field-for-field to `PriorityBasis` without ranking or recomputation. |
 | Diagnostic ordering | multiple fake stage diagnostics sort deterministically. |
 
 `UT-0003` should cover discovery/selection DTOs and status mapping. `UT-0004` should cover acquisition/capture port DTOs and cancellation/timeout contracts.
