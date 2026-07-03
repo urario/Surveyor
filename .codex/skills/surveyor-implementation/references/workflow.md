@@ -21,9 +21,12 @@
 
 ## Before Handoff
 
-- Run targeted tests.
+- Run targeted tests (core-layer coverage gate ≥ 80% line must pass, `CS-07`).
+- Run `dotnet format --verify-no-changes` (`CS-09`).
 - Run OKF validation if knowledge files changed.
-- Confirm every new public API is genuinely boundary-crossing and carries a Japanese doc comment whose `<remarks>` names the applicable guardrail contracts.
+- Confirm every new public API is genuinely boundary-crossing, carries a Japanese doc comment whose `<remarks>` names the applicable guardrail contracts, and has its `PublicAPI.Unshipped.txt` entry (`CS-08`).
+- List every new analyzer/metrics suppression added in this slice with its justification; zero suppressions is the expected default.
+- On slice completion (or per the agreed cadence), run Stryker.NET on the core layers and record the mutation score in the trace evidence (`CS-10`, target ≥ 80%).
 - State which RQ IDs were touched.
 - State lifecycle phase and artifact IDs, or explain why PR evidence is enough.
 - State which validations were not possible locally.

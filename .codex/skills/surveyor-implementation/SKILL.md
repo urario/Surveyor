@@ -35,8 +35,9 @@ Use this skill when implementing or changing Surveyor code, tests, project struc
 
 - Apply SOLID as mapped to Surveyor structures (`CS-03`): one responsibility per class, ports for known variation points, port contracts honored by every implementation, small use-case-shaped interfaces, inward dependencies only.
 - Write Japanese XML documentation comments on every public API in `src/**` (`CS-01`): `<summary>` in concise Japanese, `<param>`/`<returns>`/`<exception>` where applicable, guardrail contracts (`RQ-048`/`RQ-051`/`RQ-052`, cancellation, threading) in `<remarks>` on the port, `<inheritdoc/>` + deltas on implementations. A missing comment is a `CS1591` build error.
-- Default to `internal` and `sealed`; make `public` only assembly-boundary contracts (`CS-02`). Tests use `InternalsVisibleTo`, never visibility promotion.
+- Default to `internal` and `sealed`; make `public` only assembly-boundary contracts (`CS-02`). Tests use `InternalsVisibleTo`, never visibility promotion. New public APIs also require a `PublicAPI.Unshipped.txt` entry (`CS-08`).
 - Use the GoF pattern vocabulary purpose-first (`CS-04`): when a catalog situation matches, follow its recommended pattern and record pattern/purpose/rejected-simpler-alternative in one line in the PR or design artifact; never add a pattern without a stated purpose.
+- Respect the quantitative gates (`CS-05`–`CS-09`): all Microsoft CA rules and the code-metrics thresholds (cyclomatic complexity ≤ 10, inheritance depth ≤ 5, maintainability index ≥ 20, class coupling ≤ 30) are build errors — refactor (extract method, Strategy) instead of suppressing. Any suppression (`.editorconfig`, `#pragma`, `[SuppressMessage]`, metrics exception) carries a written justification and is a review target. Core-layer tests must keep line coverage ≥ 80% (`CS-07`); run `dotnet format --verify-no-changes` before handoff (`CS-09`).
 
 ## TDD Targets
 

@@ -50,6 +50,7 @@ This repository builds Surveyor, a Windows GUI testability analyzer for legacy C
 - Every public API in `src/**` carries a Japanese XML documentation comment; a missing one is a `CS1591` build error.
 - Accessibility defaults to `internal`/`sealed`; only assembly-boundary contracts are `public`, and tests use `InternalsVisibleTo`.
 - Apply SOLID via the coding-standards mapping and use the GoF pattern vocabulary purpose-first, recording pattern/purpose/tradeoff in the PR or design artifact.
+- Quantitative gates are build-enforced (`CS-05`–`CS-08`): all Microsoft CA rules, code-metrics thresholds (cyclomatic complexity ≤ 10, inheritance depth ≤ 5, maintainability index ≥ 20, class coupling ≤ 30), public-API tracking, and the core-layer 80% line-coverage gate. Refactor instead of suppressing; every suppression needs a written justification.
 
 ## Local Agent Assets
 

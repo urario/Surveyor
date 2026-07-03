@@ -22,6 +22,12 @@ timestamp: 2026-07-03T00:00:00+09:00
 | `CS-02` | アクセシビリティは `internal` 既定とし、アセンブリ境界を越える契約のみ `public` にする | `InternalsVisibleTo` を `Directory.Build.props` で一元付与 + レビュー |
 | `CS-03` | SOLID 原則を既存アーキテクチャガードレールへ写像して適用する | 一部機械的(依存方向・banned API)、残りはレビューゲート |
 | `CS-04` | GoF パターンは語彙カタログとして共有し、適用時に目的とトレードオフを一行記録する(purpose-first) | 設計レビュー / PR レビューゲート |
+| `CS-05` | コード解析は Microsoft の全 CA 規則(`AnalysisLevel=latest-All`)を有効化し、抑制は理由付きで一元管理する | `.editorconfig` + `TreatWarningsAsErrors`(全違反がビルドエラー) |
+| `CS-06` | コードメトリクスしきい値をビルド時に強制する: サイクロマティック複雑度 ≤ 10、継承深度 ≤ 5、保守容易性指数 ≥ 20、クラス結合度 ≤ 30 | `CA1501`/`CA1502`/`CA1505`/`CA1506` + `CodeMetricsConfig.txt` |
+| `CS-07` | コア層(Domain/Application/Policy/Reports)は行カバレッジ 80% 未満でユニットテスト失敗。他層はレポート記録のみ | coverlet しきい値ゲート |
+| `CS-08` | 公開 API 面は `PublicAPI.Unshipped.txt` で明示追跡し、無断の公開 API 追加・変更をビルドエラーにする | `Microsoft.CodeAnalysis.PublicApiAnalyzers` |
+| `CS-09` | 整形は `dotnet format --verify-no-changes` で差分ゼロを検証する | ユニットレーンの検証コマンド |
+| `CS-10` | ミューテーションスコアをスライス完了時の定期ゲートとして記録する(コア層目標 ≥ 80%) | Stryker.NET(定期実行、ビルド非ブロッキング) |
 
 # SOLID 原則の適用
 
@@ -127,6 +133,60 @@ public interface IUiTreeAcquisitionPort
 - リフレクションによる私的メンバーへのアクセスは禁止。テスト困難は設計のシグナルとして扱い、テストシーム(ポート/フェイク)を設計へ差し戻す。
 - それ以外の規約(命名、Nullable、決定性、フェイクは `Surveyor.TestSupport` へ集約)はプロダクションコードと同一に適用する。
 
+# 機械的品質ゲート(定量)
+
+コードの品質は主観レビューではなく、ビルド・テスト実行で落ちる定量ゲートで担保する。Visual Studio 2026 では同じアナライザー群がエディタ上でリアルタイムに動く(`EnforceCodeStyleInBuild` + .NET アナライザー)ため、違反は実装時にその場で可視化され、ビルド(=CI ユニットレーン)で最終強制される。VS の「分析 > コード メトリックスの計算」で表示される指標と、ビルドで強制される `CA1501`/`CA1502`/`CA1505`/`CA1506` は同一の定義である。
+
+## CS-05: コード解析 — Microsoft 全規則
+
+- `Directory.Build.props` で `AnalysisLevel=latest-All` を設定し、Microsoft の全 CA 規則を有効化する。`TreatWarningsAsErrors=true` により全違反がビルドエラーになる。
+- プロジェクト実態に合わない規則(例: `CA1303` ローカライズ要求 — 本プロジェクトのメッセージは日本語リテラルが正、`CA2007` `ConfigureAwait` — アプリケーションコードでは不要)は `.editorconfig` の専用セクションで抑制し、**各行に理由コメントを付ける**。理由のない抑制はレビューで却下する。
+- コード内の局所抑制(`#pragma warning disable` / `[SuppressMessage]`)は `Justification` 必須とし、PR レビューの明示的な確認対象とする。抑制の追加は「見えない品質劣化」ではなく「見える設計判断」として扱う。
+
+## CS-06: コードメトリクスしきい値
+
+`CodeMetricsConfig.txt`(`AdditionalFiles`)でしきい値を定義し、対応する CA 規則を `.editorconfig` でエラーに昇格して強制する(これらの規則は既定無効のため明示有効化が必要):
+
+| 規則 | 指標 | しきい値 | 根拠 |
+| -- | -- | -- | -- |
+| `CA1502` | サイクロマティック複雑度(メソッド) | ≤ 10 | 分岐 10 超のメソッドはテストケース網羅が実務上崩れる。分割(メソッド抽出、Strategy 化)を強制する |
+| `CA1501` | 継承深度 | ≤ 5 | 深い継承は LSP 違反の温床。Surveyor は合成優先(`CS-03`) |
+| `CA1505` | 保守容易性指数 | ≥ 20(20 未満で違反) | VS のメトリクス計算と同一指標。長大・複雑・低凝集の複合検出 |
+| `CA1506` | クラス結合度 | ≤ 30 | 結合過多は SRP 違反のシグナル。ポート分離(ISP)へ差し戻す |
+
+- 正当な例外(enum 網羅の `switch`、UIA パターン種別の分岐など、分割すると却って読めなくなるもの)はメソッド単位の局所抑制+理由コメントで逃がす。しきい値自体は緩めない。
+- 実装時の確認: ビルドで自動判定される。俯瞰したい場合は VS の「コード メトリックスの計算」でソリューション全体の数値を確認できる。
+
+## CS-07: テストカバレッジゲート
+
+- コア層のテストプロジェクト(`Surveyor.Domain.Tests` / `Surveyor.Application.Tests` / `Surveyor.Policy.Tests` / `Surveyor.Reports.Tests`)は coverlet のしきい値ゲートを有効にし、**行カバレッジ 80% 未満でテスト実行を失敗**させる(`/p:CollectCoverage=true /p:Threshold=80 /p:ThresholdType=line /p:ThresholdStat=total`、恒常設定はテストプロジェクト側 props に置く)。
+- コア層は純粋ロジックであり TDD 前提(既存ワークフロー)のため 80% は下限であって目標ではない。カバレッジを満たすためだけのアサーションなしテストは TDD レビューで却下する。
+- アダプター/`Presentation`/`App` はしきい値なし・レポート記録のみ。実 Windows API の薄いラッパーはユニットテスト対象外で、挙動は IT レーン(`IT-xxxx`)が担う。
+
+## CS-08: 公開 API 面の追跡
+
+- 全 `src` プロジェクトに `Microsoft.CodeAnalysis.PublicApiAnalyzers` を導入し、公開 API を `PublicAPI.Shipped.txt` / `PublicAPI.Unshipped.txt` で宣言的に管理する。宣言なしの公開 API 追加・シグネチャ変更はビルドエラー(`RS0016` 等)。
+- これは `CS-02`(internal 既定)の機械化である: 「public にする」という判断が必ず `PublicAPI.Unshipped.txt` の diff として PR に現れ、レビュー可能になる。
+
+## CS-09: 整形検証
+
+- ユニットレーンの検証コマンドに `dotnet format --verify-no-changes` を含め、`.editorconfig` 違反の整形漏れを差分ゼロで検証する。
+
+## CS-10: ミューテーションテスト(定期)
+
+- Stryker.NET をコア層に対して定期実行し(実装スライス完了時、または複数スライスごと)、ミューテーションスコアを `knowledge/traces/` の evidence に記録する。コア層の目標スコアは **≥ 80%**。
+- ビルド非ブロッキング。スコアはカバレッジより強い「テストが本当にバグを検出できるか」の指標であり、低下はレビューで扱う(カバレッジ稼ぎの形骸化テスト検出が主目的)。
+
+## ゲートの実行タイミング
+
+| タイミング | 動くゲート |
+| -- | -- |
+| エディタ入力時(VS 2026) | 全 CA 規則・スタイル規則のリアルタイム表示(実装時の即時フィードバック) |
+| ビルド | `CS-01`(CS1591)、`CS-05`(全 CA 規則)、`CS-06`(メトリクス)、`CS-08`(公開 API)、依存方向(DES-0008)、banned API — 全て警告=エラー |
+| ユニットテスト実行 | `CS-07`(カバレッジ 80%)、アーキテクチャテスト |
+| ハンドオフ前 | `dotnet format --verify-no-changes`(`CS-09`)、対象テスト、OKF 検証 |
+| スライス完了時(定期) | `CS-10`(Stryker.NET スコア記録) |
+
 # 命名・スタイル
 
 .NET 標準の命名規約(PascalCase 型・メンバー、camelCase ローカル/引数、`I` 接頭辞インターフェイス、`Async` 接尾辞)に従う。詳細なスタイル規則は `.editorconfig` が機械的に担い(DES-0008 所有)、本書は判断を要する規則のみ定める:
@@ -143,8 +203,14 @@ public interface IUiTreeAcquisitionPort
 | ドキュメント内容の質・日本語 | 実装 skill の自己チェック + レビュー | 本書 + レビュー skill |
 | 依存方向(DIP) | `ProjectReference` + `Surveyor.Architecture.Tests` | DES-0008 |
 | 決定性 API 禁止 | `BannedApiAnalyzers` | DES-0008 |
-| アクセシビリティ既定(`CS-02`) | レビュー(+ 公開 API 面の diff 確認) | 本書 + レビュー skill |
+| アクセシビリティ既定(`CS-02`) | レビュー + `PublicAPI.Unshipped.txt` diff(`CS-08`) | 本書 + レビュー skill |
 | SOLID(`CS-03`)・パターン運用(`CS-04`) | 設計レビュー / 実装レビューのチェックリスト | 本書 + `.claude` / `.codex` skill |
+| 全 CA 規則(`CS-05`) | `AnalysisLevel=latest-All` + 理由付き抑制リスト | `Directory.Build.props` / `.editorconfig`(DES-0008) |
+| メトリクスしきい値(`CS-06`) | `CA1501`/`CA1502`/`CA1505`/`CA1506` + `CodeMetricsConfig.txt` | DES-0008 |
+| カバレッジ 80%(`CS-07`) | coverlet しきい値ゲート(コア層テスト実行時) | テストプロジェクト props(DES-0008) |
+| 公開 API 追跡(`CS-08`) | `PublicApiAnalyzers` ビルドエラー | DES-0008 |
+| 整形(`CS-09`) | `dotnet format --verify-no-changes` | ユニットレーン(DES-0008) |
+| ミューテーションスコア(`CS-10`) | Stryker.NET 定期実行 + trace 記録 | 本書 + 実装 skill |
 | 命名・スタイル | `.editorconfig` + `EnforceCodeStyleInBuild` | DES-0008 |
 
 # Related
