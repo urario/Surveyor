@@ -82,7 +82,10 @@ public interface IUiTreeAcquisitionPort
 
 - `Directory.Build.props` で `src/**` に `GenerateDocumentationFile=true` を設定する。`CS1591`(公開メンバーのドキュメント欠落)は既存の `TreatWarningsAsErrors=true` によりビルドエラーになる。
 - テストプロジェクト(`tests/**`)と `Surveyor.TestSupport` はドキュメント生成の対象外とする(`GenerateDocumentationFile=false` または `NoWarn: CS1591`)。
-- 生成コード(`*.g.cs`、`*.g.i.cs`、XAML コード生成、`GeneratedCodeAttribute` 付与コード)は対象外とする。WinUI 3 の生成コードが `CS1591` を発火させる場合、抑制は生成物に限定し、手書きコードには適用しない。
+- 生成コードは対象外とする。ただし `CS1591` は**コンパイラ警告**であって .NET アナライザー診断ではないため、`.editorconfig` の `generated_code = true` では抑制できない(`generated_code` はアナライザー診断のみに効く)。したがって生成物の除外は次のいずれかの**コンパイラ側**の機構で行う:
+  - XAML/WinUI コード生成を含むプロジェクト(`Surveyor.App` / `Surveyor.Presentation`)で、生成 `Compile` 項目に限定して `CS1591` を `NoWarn` する(`<Compile Update="**/*.g.cs;**/*.g.i.cs;**/*.xaml.g.*.cs"><NoWarn>$(NoWarn);CS1591</NoWarn></Compile>`)。抑制は生成物パスに限定し、手書きコードには効かせない。
+  - あるいはジェネレーターが `#pragma warning disable CS1591` を出力する生成物はそのまま尊重する。
+  - この scoped-NoWarn の実配線はスキャフォールドスライスで確定する(下記残リスク)。手書きコードの `CS1591` 抑制は禁止。
 - この設定は DES-0008 の決定性・品質設定表に統合済みであり、スキャフォールドスライスで適用する。
 
 コメントの「存在」はビルドが守る。コメントの「質」(契約が書かれているか、summary が実装の言い換えになっていないか)はレビューが守る。
@@ -139,7 +142,11 @@ public interface IUiTreeAcquisitionPort
 
 ## CS-05: コード解析 — Microsoft 全規則
 
-- `Directory.Build.props` で `AnalysisLevel=latest-All` を設定し、Microsoft の全 CA 規則を有効化する。`TreatWarningsAsErrors=true` により全違反がビルドエラーになる。
+- `Directory.Build.props` で `AnalysisLevel=latest-All` を設定し、既定重大度を持つ全 CA 規則を有効化する。`TreatWarningsAsErrors=true` により全違反がビルドエラーになる。
+- **`latest-All` でも自動有効化されない規則がある点に注意する。** [Microsoft Learn](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview#enable-additional-rules) の通り、既定で無効(`severity: none`)な規則 — 主にコードメトリクス系 `CA1501`/`CA1502`/`CA1505`/`CA1506`/`CA1509` — は `dotnet_diagnostic.CAxxxx.severity` による**明示オプトインが必須**である。したがって「全 CA 規則」を実効化するには次を満たす:
+  - メトリクス系 `CA1501`/`CA1502`/`CA1505`/`CA1506` は `CS-06` で `.editorconfig` にて明示的に `error` へ昇格する(下記表)。
+  - `CA1509`(`CodeMetricsConfig.txt` の書式検証)も明示的に `warning` 以上へ昇格する。
+  - 上記以外に既定無効の規則が将来 SDK で増えた場合は、スキャフォールドスライスでビルドログを突き合わせ、**有効化するか意図的除外として理由付き記録するか**を明示する(「有効なはずが黙って走らない」状態を残さない)。
 - プロジェクト実態に合わない規則(例: `CA1303` ローカライズ要求 — 本プロジェクトのメッセージは日本語リテラルが正、`CA2007` `ConfigureAwait` — アプリケーションコードでは不要)は `.editorconfig` の専用セクションで抑制し、**各行に理由コメントを付ける**。理由のない抑制はレビューで却下する。
 - コード内の局所抑制(`#pragma warning disable` / `[SuppressMessage]`)は `Justification` 必須とし、PR レビューの明示的な確認対象とする。抑制の追加は「見えない品質劣化」ではなく「見える設計判断」として扱う。
 
