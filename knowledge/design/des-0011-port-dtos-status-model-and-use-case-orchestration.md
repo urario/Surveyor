@@ -197,14 +197,27 @@ ROI order is deterministic by `SourceFindingId`, `ElementKey`, then `Id`. Missin
 
 ## Class Design (UML)
 
-`M03` exposes an application use case plus port interfaces. Ports are public because adapters implement them and unit tests replace them with fakes. DTO records are immutable and contain only domain/application types.
+`M03` exposes four use cases, matching [DES-0002](des-0002-module-responsibility-basic-design.md), [DES-0003](des-0003-module-interface-basic-design.md), and [DES-0004](des-0004-analysis-flow-basic-design.md): `SelectTargetUseCase`, `AnalyzeScreenUseCase`, `GenerateReportUseCase`, and `ExportResultUseCase`. Ports are public because adapters implement them and unit tests replace them with fakes. DTO records are immutable and contain only domain/application types.
 
 ```mermaid
 classDiagram
   direction LR
 
-  class AnalyzeTargetUseCase {
+  class SelectTargetUseCase {
+    +Task~TargetDiscoveryResult~ ListTargetsAsync(DiscoveryQuery query, CancellationToken cancellationToken)
+    +Task~TargetResolveResult~ ResolveAsync(TargetReference target, CancellationToken cancellationToken)
+  }
+
+  class AnalyzeScreenUseCase {
     +Task~AnalysisRunResult~ ExecuteAsync(AnalysisRunRequest request, CancellationToken cancellationToken)
+  }
+
+  class GenerateReportUseCase {
+    +Task~ReportResult~ ExecuteAsync(GenerateReportRequest request, CancellationToken cancellationToken)
+  }
+
+  class ExportResultUseCase {
+    +Task~ExportResult~ ExecuteAsync(ExportRunRequest request, CancellationToken cancellationToken)
   }
 
   class ITargetDiscoveryPort {
@@ -225,7 +238,9 @@ classDiagram
 
   class IConfidentialityPolicy {
     <<interface>>
+    +ConfidentialityDecision Decide(ConfidentialityRequest request)
     +PolicyApplicationResult Apply(PolicyApplicationRequest request)
+    +ExportSanitizationResult CreateShareableExportModel(ExportSanitizationRequest request)
   }
 
   class IReportGenerationPort {
@@ -237,6 +252,16 @@ classDiagram
     <<interface>>
     +Task~StoreResult~ SaveRunAsync(StoreRunRequest request, CancellationToken cancellationToken)
     +Task~ExportResult~ ExportAsync(ExportRequest request, CancellationToken cancellationToken)
+  }
+
+  class IScoringConfigProvider {
+    <<interface>>
+    +Task~ScoringConfig~ ResolveAsync(ScoringConfigReference reference, CancellationToken cancellationToken)
+  }
+
+  class IStageTimeoutController {
+    <<interface>>
+    +RunAsync(stage, timeout, operation, callerToken)
   }
 
   class IClock {
@@ -252,15 +277,22 @@ classDiagram
   class ScoreResult
   class ScreenModel
 
-  AnalyzeTargetUseCase --> ITargetDiscoveryPort
-  AnalyzeTargetUseCase --> IUiTreeAcquisitionPort
-  AnalyzeTargetUseCase --> IScreenCapturePort
-  AnalyzeTargetUseCase --> IConfidentialityPolicy
-  AnalyzeTargetUseCase --> IReportGenerationPort
-  AnalyzeTargetUseCase --> IResultStorePort
-  AnalyzeTargetUseCase --> IClock
-  AnalyzeTargetUseCase --> AnalysisRunRequest
-  AnalyzeTargetUseCase --> AnalysisRunResult
+  SelectTargetUseCase --> ITargetDiscoveryPort
+  AnalyzeScreenUseCase --> IUiTreeAcquisitionPort
+  AnalyzeScreenUseCase --> IScreenCapturePort
+  AnalyzeScreenUseCase --> IConfidentialityPolicy
+  AnalyzeScreenUseCase --> IScoringConfigProvider
+  AnalyzeScreenUseCase --> IResultStorePort
+  AnalyzeScreenUseCase --> IStageTimeoutController
+  AnalyzeScreenUseCase --> IClock
+  GenerateReportUseCase --> IReportGenerationPort
+  GenerateReportUseCase --> IConfidentialityPolicy
+  GenerateReportUseCase --> IStageTimeoutController
+  ExportResultUseCase --> IResultStorePort
+  ExportResultUseCase --> IConfidentialityPolicy
+  ExportResultUseCase --> IStageTimeoutController
+  AnalyzeScreenUseCase --> AnalysisRunRequest
+  AnalyzeScreenUseCase --> AnalysisRunResult
   AnalysisRunResult "1" o-- "*" StageResult
   AnalysisRunResult "1" o-- "*" RunDiagnostic
   AnalysisRunResult "1" o-- "*" RegionOfInterest
@@ -275,21 +307,61 @@ These signatures are the implementation contract for `IMP-0004`, `IMP-0005`, `IM
 ```csharp
 namespace Surveyor.Application.UseCases;
 
-public sealed class AnalyzeTargetUseCase
+public sealed class SelectTargetUseCase
 {
-    public AnalyzeTargetUseCase(
+    public SelectTargetUseCase(
         ITargetDiscoveryPort discoveryPort,
+        IStageTimeoutController timeoutController);
+
+    public Task<TargetDiscoveryResult> ListTargetsAsync(
+        DiscoveryQuery query,
+        CancellationToken cancellationToken);
+
+    public Task<TargetResolveResult> ResolveAsync(
+        TargetReference target,
+        CancellationToken cancellationToken);
+}
+
+public sealed class AnalyzeScreenUseCase
+{
+    public AnalyzeScreenUseCase(
         IUiTreeAcquisitionPort acquisitionPort,
         IScreenCapturePort capturePort,
         IConfidentialityPolicy confidentialityPolicy,
-        IReportGenerationPort reportPort,
         IResultStorePort storePort,
         TestabilityScorer scorer,
-        ScoringConfig scoringConfig,
+        IScoringConfigProvider scoringConfigProvider,
+        IStageTimeoutController timeoutController,
         IClock clock);
 
     public Task<AnalysisRunResult> ExecuteAsync(
         AnalysisRunRequest request,
+        CancellationToken cancellationToken);
+}
+
+public sealed class GenerateReportUseCase
+{
+    public GenerateReportUseCase(
+        IReportGenerationPort reportPort,
+        IConfidentialityPolicy confidentialityPolicy,
+        IStageTimeoutController timeoutController,
+        IClock clock);
+
+    public Task<ReportResult> ExecuteAsync(
+        GenerateReportRequest request,
+        CancellationToken cancellationToken);
+}
+
+public sealed class ExportResultUseCase
+{
+    public ExportResultUseCase(
+        IResultStorePort storePort,
+        IConfidentialityPolicy confidentialityPolicy,
+        IStageTimeoutController timeoutController,
+        IClock clock);
+
+    public Task<ExportResult> ExecuteAsync(
+        ExportRunRequest request,
         CancellationToken cancellationToken);
 }
 ```
@@ -342,6 +414,13 @@ public interface IResultStorePort
         ExportRequest request,
         CancellationToken cancellationToken);
 }
+
+public interface IScoringConfigProvider
+{
+    Task<ScoringConfig> ResolveAsync(
+        ScoringConfigReference reference,
+        CancellationToken cancellationToken);
+}
 ```
 
 Policy and clock interfaces:
@@ -351,7 +430,14 @@ namespace Surveyor.Application.Ports;
 
 public interface IConfidentialityPolicy
 {
-    PolicyApplicationResult Apply(PolicyApplicationRequest request);
+    ConfidentialityDecision Decide(
+        ConfidentialityRequest request);
+
+    PolicyApplicationResult Apply(
+        PolicyApplicationRequest request);
+
+    ExportSanitizationResult CreateShareableExportModel(
+        ExportSanitizationRequest request);
 }
 
 namespace Surveyor.Application.Time;
@@ -359,6 +445,15 @@ namespace Surveyor.Application.Time;
 public interface IClock
 {
     DateTimeOffset UtcNow { get; }
+}
+
+public interface IStageTimeoutController
+{
+    Task<StageCallResult<T>> RunAsync<T>(
+        RunStage stage,
+        TimeSpan timeout,
+        Func<CancellationToken, Task<T>> operation,
+        CancellationToken callerToken);
 }
 ```
 
@@ -395,6 +490,22 @@ public sealed record StageResult(
     OperationStatus Status,
     TimeSpan? TimeoutBudget,
     IReadOnlyList<RunDiagnostic> Diagnostics);
+
+public sealed record StageCallResult<T>(
+    T? Value,
+    bool TimedOut,
+    bool CancelledByCaller,
+    IReadOnlyList<RunDiagnostic> Diagnostics);
+
+public sealed record GenerateReportRequest(
+    AnalysisRunResult RunResult,
+    ReportOptions Options);
+
+public sealed record ExportRunRequest(
+    RunId RunId,
+    ExportProfile ExportProfile,
+    ExportDestination Destination,
+    ExportOptions Options);
 ```
 
 Port result DTO records:
@@ -435,12 +546,16 @@ Function rules:
 
 | API | Throws / cancellation | Test rule |
 | -- | -- | -- |
-| `AnalyzeTargetUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation and returns `RunOutcome.Cancelled` at the boundary | Fake ports can assert stage order, no later ports after cancellation, timestamps from fake clock, and metadata copied unchanged. |
+| `SelectTargetUseCase.*Async` | `ArgumentNullException` for null query/target; observes caller cancellation | Fake discovery port can assert ViewModel never calls discovery adapters directly. |
+| `AnalyzeScreenUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation and returns `RunOutcome.Cancelled` at the boundary | Fake ports can assert stage order, no later ports after cancellation, timestamps from fake clock, metadata copied unchanged, and `ScoringConfigReference` resolved through `IScoringConfigProvider`. |
+| `GenerateReportUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation | Fake report port verifies report generation is separate from analysis and can be triggered after review. |
+| `ExportResultUseCase.ExecuteAsync` | `ArgumentNullException` for null request; observes caller cancellation | Fake store port verifies export is explicit user-command flow and receives a masked export model. |
 | `ITargetDiscoveryPort.*Async` | Expected failures are statuses; caller cancellation propagates | Fakes return stable candidate ordering. |
 | `IUiTreeAcquisitionPort.AcquireAsync` | Expected Windows/access failures are statuses; caller cancellation propagates | Fakes can return `PartialResult`, `Timeout`, `PermissionDenied`, and a fixture `ScreenModel`. |
 | `IScreenCapturePort.CaptureAsync` | Capture failure returns status when recoverable | Fakes can omit ROI images without blocking scoring. |
 | `IReportGenerationPort.GenerateAsync` / `IResultStorePort.SaveRunAsync` | Expected output failures return `ReportResult`/`StoreResult` statuses | Unit tests verify partial-result aggregation and sanitized diagnostics. |
-| `IConfidentialityPolicy.Apply` | Pure policy application; invalid policy input is `ArgumentException` | Unit tests assert no raw label/text leaks into policy result. |
+| `IConfidentialityPolicy.Decide` / `Apply` / `CreateShareableExportModel` | Pure policy application; invalid policy input is `ArgumentException` | Unit tests assert the use cases call `Decide` before `Apply`/export model creation and no raw label/text leaks into policy result. |
+| `IStageTimeoutController.RunAsync` | Returns `CancelledByCaller` when caller cancellation wins; returns `TimedOut` when only stage budget fires | Fakes avoid real-time sleeps in timeout tests and exercise cancellation/timeout races deterministically. |
 | `IClock.UtcNow` | No throw expected | Fake clock controls run timestamps. |
 
 ## Diagnostics Model
@@ -476,8 +591,12 @@ Prohibited fields:
 ```mermaid
 sequenceDiagram
   participant UI as Presentation
-  participant UC as AnalyzeTargetUseCase
+  participant ST as SelectTargetUseCase
+  participant AS as AnalyzeScreenUseCase
+  participant GR as GenerateReportUseCase
+  participant EX as ExportResultUseCase
   participant D as DiscoveryPort
+  participant CFG as ScoringConfigProvider
   participant A as UiaAcquisitionPort
   participant S as DomainScorer
   participant C as CapturePort
@@ -485,23 +604,37 @@ sequenceDiagram
   participant R as ReportPort
   participant Store as ResultStorePort
 
-  UI->>UC: AnalysisRunRequest + CancellationToken
-  UC->>D: Resolve target
-  D-->>UC: TargetReference or status
-  UC->>A: Acquire tree
-  A-->>UC: AcquisitionResult
-  UC->>S: Score(ScreenModel, config, priority basis)
-  S-->>UC: ScoreResult
-  UC->>UC: Plan ROIs from findings
-  UC->>C: Capture requested ROIs
-  C-->>UC: CaptureResult
-  UC->>P: Apply confidentiality policy
-  P-->>UC: PolicyDecision
-  UC->>R: Generate report DTO/artifacts
-  R-->>UC: ReportResult
-  UC->>Store: Persist run
-  Store-->>UC: StoreResult
-  UC-->>UI: AnalysisRunResult
+  UI->>ST: DiscoveryQuery
+  ST->>D: ListTargetsAsync / ResolveAsync
+  D-->>ST: TargetCandidate / TargetReference
+  ST-->>UI: selection DTOs
+  UI->>AS: AnalysisRunRequest(selected TargetReference)
+  AS->>CFG: ResolveAsync(ScoringConfigReference)
+  CFG-->>AS: ScoringConfig
+  AS->>A: Acquire tree
+  A-->>AS: AcquisitionResult
+  AS->>S: Score(ScreenModel, config, priority basis)
+  S-->>AS: ScoreResult
+  AS->>AS: Plan ROIs from findings
+  AS->>C: Capture requested ROIs
+  C-->>AS: CaptureResult
+  AS->>P: Decide(ProtectedLocal)
+  P-->>AS: ConfidentialityDecision
+  AS->>P: Apply(policy decision + run result)
+  P-->>AS: ProtectedRunModel
+  AS->>Store: SaveRunAsync
+  Store-->>AS: StoreResult
+  AS-->>UI: AnalysisRunResult
+  UI->>GR: GenerateReportRequest(after review)
+  GR->>R: GenerateAsync
+  R-->>GR: ReportResult
+  UI->>EX: ExportRunRequest(explicit command)
+  EX->>P: Decide(MaskedShareableExport)
+  P-->>EX: ConfidentialityDecision
+  EX->>P: CreateShareableExportModel
+  P-->>EX: MaskedExportModel
+  EX->>Store: ExportAsync(masked model)
+  Store-->>EX: ExportResult
 ```
 
 ### Partial Results
@@ -511,14 +644,36 @@ The run returns `SucceededWithPartialResult` when:
 - acquisition hit `MaxElementCount` but returned a usable `ScreenModel`;
 - capture failed or timed out and `RequireCapture == false`;
 - one or more optional ROIs lack bounds;
-- store/export failed after a report DTO was generated;
+- store failed after a protected in-memory result was assembled;
 - adapter returned `Unavailable` for part of the tree.
 
 The run returns `FailedUnexpected` only for invariant breaches or unexpected exceptions that are not represented by the status model.
 
+Export is not part of `AnalyzeScreenUseCase`; `ExportResultUseCase` has its own result and expected failure status. `GenerateReportUseCase` is separate so the user can review analysis results before generating a report.
+
+### Stage Criticality
+
+Outcome derivation uses this table. New stages must be added here before implementation.
+
+| Stage | Owning use case | Criticality | Recoverable statuses |
+| -- | -- | -- | -- |
+| `TargetDiscovery` | `SelectTargetUseCase` | Required for selection flow | `NotFound`, `PermissionDenied`, `Timeout` return discovery/resolve status, not `AnalysisRunResult`. |
+| `TargetSelection` | Presentation + `SelectTargetUseCase` | Required before analysis | Missing selection prevents `AnalyzeScreenUseCase` call. |
+| `TreeAcquisition` | `AnalyzeScreenUseCase` | Required for scoring, but can be partial | `PartialResult` continues; `PermissionDenied`, `IntegrityMismatch`, `NotFound`, or full `Timeout` yields `FailedUnexpected` for analysis unless a partial `ScreenModel` is present. |
+| `Scoring` | `AnalyzeScreenUseCase` | Required | Unexpected scoring/config exception yields `FailedUnexpected`; unavailable axis data remains scoring data, not a stage failure. |
+| `RegionPlanning` | `AnalyzeScreenUseCase` | Optional/recoverable | Missing ROI bounds becomes diagnostic and partial result. |
+| `Capture` | `AnalyzeScreenUseCase` | Optional unless `RequireCapture == true` | `Unavailable`/`Timeout` yields partial when optional; required capture failure yields `FailedUnexpected`. |
+| `ConfidentialityPolicy` | `AnalyzeScreenUseCase`, `GenerateReportUseCase`, `ExportResultUseCase` | Required emission gate | Policy invariant failure yields `FailedUnexpected`; sanitizer recoveries are diagnostics. |
+| `ResultAssembly` | `AnalyzeScreenUseCase` | Required | Invariant failure yields `FailedUnexpected`. |
+| `ReportGeneration` | `GenerateReportUseCase` | Required for report command, not analysis | Expected `Timeout`/`IoError` returns `ReportResult` failure. |
+| `Store` | `AnalyzeScreenUseCase` | Recoverable after protected in-memory result exists | `Timeout`/`IoError` yields `SucceededWithPartialResult` with unsaved-result diagnostic. |
+| `Export` | `ExportResultUseCase` | Required for export command, not analysis | Expected `Timeout`/`IoError` returns `ExportResult` failure. |
+
 ### Timeout Handling
 
-Each port receives a linked cancellation token derived from the caller token plus the stage timeout. If the stage timeout fires, the port result status is `Timeout` when possible. If the caller token fires, cancellation wins and the public result is `Cancelled`.
+Each stage is executed through `IStageTimeoutController.RunAsync`. The controller receives the caller token and the stage timeout and returns explicit flags (`CancelledByCaller`, `TimedOut`) so unit tests do not depend on real-time sleeps.
+
+Race rule: caller cancellation wins. If both the caller token and the stage timeout are observed as canceled, `CancelledByCaller` is returned and the public analysis outcome is `Cancelled`. A stage is `Timeout` only when the caller token is not canceled and the stage budget fired.
 
 Timeout diagnostics include:
 
@@ -569,9 +724,9 @@ public interface IClock
 
 Usage:
 
-- `AnalyzeTargetUseCase` reads start and completion timestamps.
+- `AnalyzeScreenUseCase`, `GenerateReportUseCase`, and `ExportResultUseCase` read start/completion or decision timestamps that need to be persisted.
 - report/store DTOs receive those timestamps from the use case.
-- tests inject `FakeClock`.
+- tests inject `FakeClock` and a fake `IStageTimeoutController`.
 - adapters may measure elapsed time internally but do not feed timing into `M08`.
 
 Do not use `DateTime.Now`, `DateTimeOffset.Now`, or ambient local time in application code.
@@ -583,9 +738,15 @@ Do not use `DateTime.Now`, `DateTimeOffset.Now`, or ambient local time in applic
 | Test intent | Fake setup |
 | -- | -- |
 | Happy path | all ports return `Ok`; result is `Succeeded`, timestamps from fake clock, metadata copied unchanged. |
+| Use-case split | ViewModel-facing tests call `SelectTargetUseCase`, `AnalyzeScreenUseCase`, `GenerateReportUseCase`, and `ExportResultUseCase` separately; no test requires direct adapter-port access from presentation. |
+| Config resolution | request `ScoringConfigReference` is resolved through `IScoringConfigProvider`; scorer receives the resolved config. |
+| Confidentiality decision timing | `AnalyzeScreenUseCase` calls `Decide(ProtectedLocal)` before `Apply`; `ExportResultUseCase` calls `Decide(MaskedShareableExport)` before `CreateShareableExportModel`. |
 | Acquisition partial | fake acquisition hits cap; scoring still runs; outcome `SucceededWithPartialResult`. |
 | Capture timeout optional | fake capture returns `Timeout`; result remains partial when `RequireCapture=false`. |
 | Caller cancellation | token canceled during acquisition; public result `Cancelled`; later ports not called. |
+| Cancellation vs timeout race | fake `IStageTimeoutController` reports both timeout and caller cancellation; caller cancellation wins. |
+| Unexpected adapter exception | fake port throws; use case returns `FailedUnexpected` with sanitized diagnostic. |
+| Combined partial result | cap reached plus optional capture failure plus missing ROI bounds still yields one deterministic partial result. |
 | Expected permission denial | acquisition returns `PermissionDenied`; result has safe diagnostic and no raw exception text. |
 | No fabricated priority | absent `ScreenSelectionMetadata` remains absent through scorer and result. |
 | Diagnostic ordering | multiple fake stage diagnostics sort deterministically. |
@@ -599,7 +760,7 @@ Start implementation with:
 1. immutable DTO and enum definitions;
 2. `IClock` and `FakeClock`;
 3. port interfaces using DTOs and `CancellationToken`;
-4. `AnalyzeTargetUseCase` over fakes;
+4. `SelectTargetUseCase`, `AnalyzeScreenUseCase`, `GenerateReportUseCase`, and `ExportResultUseCase` over fakes;
 5. diagnostic builder and outcome derivation;
 6. timeout wrapper helper in `Surveyor.Application`.
 

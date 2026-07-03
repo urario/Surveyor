@@ -84,6 +84,7 @@ Required fields:
 | `AxisWeights` | map `ScoreAxis -> int` | Basis points. Sum over all seven axes must equal `10000`. |
 | `ClassThresholds` | immutable object | Thresholds in basis points for `ImmediatelyAutomatable`, `SmallImprovement`, `LimitedAutomation`, and `ImproveFirst`. |
 | `SignalThresholds` | immutable object | Coverage thresholds used by axis calculators. |
+| `SignalWeights` | immutable object | Per-axis signal formula coefficients in basis points. Every axis formula's coefficients must sum to `10000`. |
 | `Rounding` | enum | `BasisPointHalfAwayFromZero` for v1. |
 | `CandidateRulesVersion` | non-empty string | Version of candidate mapping rules, recorded separately from score weights. |
 
@@ -168,7 +169,7 @@ Candidate ordering is deterministic and non-priority: `Code` ordinal, `Scope`, `
 
 ## Class Design (UML)
 
-`M08` exposes one public scoring service plus immutable public result/config records. Axis calculators, de-duplication helpers, and candidate-rule tables are implementation-private so unit tests assert observable behavior through `TestabilityScorer` and `ScoreResult`, not private decomposition.
+`M08` exposes one public scoring service plus immutable public result/config records. Axis calculators, de-duplication helpers, and candidate-rule tables are implementation-private so unit tests assert observable behavior through `TestabilityScorer` and `ScoreResult`, not private decomposition. `UT-0002` should use test-project fixture builders to construct focused `ScreenModel` inputs; `InternalsVisibleTo` is not part of the v1 design contract.
 
 ```mermaid
 classDiagram
@@ -183,6 +184,7 @@ classDiagram
     +IReadOnlyDictionary~ScoreAxis,int~ AxisWeights
     +ClassThresholds ClassThresholds
     +SignalThresholds SignalThresholds
+    +SignalWeights SignalWeights
     +ScoringRounding Rounding
     +string CandidateRulesVersion
     +ScoringConfig DefaultV1()
@@ -273,6 +275,7 @@ public sealed record ScoringConfig(
     IReadOnlyDictionary<ScoreAxis, int> AxisWeights,
     ClassThresholds ClassThresholds,
     SignalThresholds SignalThresholds,
+    SignalWeights SignalWeights,
     ScoringRounding Rounding,
     string CandidateRulesVersion)
 {
@@ -287,10 +290,14 @@ public sealed record ClassThresholds(
     int ImproveFirstBelowBp,
     int MaxUnknownWeightForImmediateBp,
     int MaxUnknownWeightForSmallImprovementBp,
+    int MaxUnknownWeightBeforeImproveFirstBp,
     int MaxUnknownWeightBeforeNotEnoughEvidenceBp);
 
 public sealed record SignalThresholds(
     IReadOnlyDictionary<ScoreAxis, IReadOnlyDictionary<string, int>> BasisPointThresholds);
+
+public sealed record SignalWeights(
+    IReadOnlyDictionary<ScoreAxis, IReadOnlyDictionary<string, int>> BasisPointWeights);
 
 public sealed record ScoreResult(
     ScreenKey ScreenKey,
@@ -363,6 +370,55 @@ public enum FindingSeverity { Info, Warning, Blocking }
 public enum ScoringRounding { BasisPointHalfAwayFromZero }
 public enum CandidateScope { Element, Screen, Application }
 public enum ExpectedEffect { UnlockAutomation, ImproveReliability, ImproveObservability, ReduceMaintenanceCost, ReduceManualReview }
+
+public enum RootCauseCode
+{
+    MissingStableIdentity,
+    DuplicateIdentity,
+    NoSemanticActionPattern,
+    ResultNotObservable,
+    PreconditionNotControllable,
+    UnstableScreenStructure,
+    OpaqueCustomSurface,
+    CoordinateOnlyInteraction,
+    AcquisitionUnavailable
+}
+
+public enum FindingCode
+{
+    NoStableIdentity,
+    DuplicateIdentity,
+    FallbackOnlyIdentity,
+    MissingActionPattern,
+    NotKeyboardFocusable,
+    DisabledOnlyAction,
+    MissingObservableResult,
+    VolatileResultElement,
+    MissingPreconditionState,
+    MissingSettablePrecondition,
+    UnstableScreenKey,
+    UnstableElementSet,
+    UnrealizedSubtree,
+    OpaqueCustomControl,
+    LowAcquisitionConfidence,
+    CoordinateOnlyAction,
+    ImageOnlyVerification,
+    CaptureUnavailable,
+    NoScorableAxes
+}
+
+public enum CandidateCode
+{
+    AddStableAutomationIdOrPeerName,
+    MakeAutomationIdentityUnique,
+    ExposeActionPattern,
+    ExposeResultStatusOrReadableValue,
+    ExposeStateSetupOrResetHook,
+    StabilizeScreenIdentityAndChildOrder,
+    AddAccessiblePeerForCustomControl,
+    ReduceCoordinateOrImageDependency,
+    HandleUnavailableSurfaceManuallyOrByAdapter
+}
 ```
 
 Function rules:
@@ -371,7 +427,7 @@ Function rules:
 | -- | -- | -- |
 | `TestabilityScorer.Score` | `ArgumentNullException` for null model/config; `ArgumentException` for invalid config | Pure function. Same model/config/priority basis yields equal `ScoreResult`. No clock, file, culture, adapter, or randomness. |
 | `ScoringConfig.DefaultV1` | None | Returns immutable v1 config exactly matching this document. |
-| `ScoringConfig.Validate` | `ArgumentException` | Rejects empty version, duplicate/missing axes, weights not summing to `10000`, invalid thresholds, unsupported rounding, or empty candidate-rules version. |
+| `ScoringConfig.Validate` | `ArgumentException` | Rejects empty version, duplicate/missing axes, negative axis weights, axis weights not summing to `10000`, per-axis signal weights not summing to `10000`, invalid thresholds, unsupported rounding, or empty candidate-rules version. |
 
 ## Axis Signal Mapping
 
@@ -420,19 +476,34 @@ If `totalCount == 0` because the axis does not apply to the screen, emit `NotApp
 
 ### Step 3: Derive Axis Scores
 
-V1 axis formulas are intentionally simple and auditable. Every term is an integer basis-point value.
+V1 axis formulas are intentionally simple and auditable. Every signal score and every coefficient is an integer basis-point value. Coefficients are stored in `ScoringConfig.SignalWeights`, not in `SignalThresholds`, so future threshold maintenance cannot accidentally change formula weights unless the config version changes.
 
-| Axis | V1 formula |
+For a positive-weighted axis:
+
+```text
+axisScoreBp = (sum(signalScoreBp * signalWeightBp) + 5000) / 10000
+```
+
+For inverse risk axes:
+
+```text
+riskBp = (sum(riskSignalBp * signalWeightBp) + 5000) / 10000
+axisScoreBp = 10000 - riskBp
+```
+
+The `+ 5000` term is the only rounding point for the formula. Do not round each weighted term individually. Use integer types wide enough to hold `10000 * 10000 * signalCount`.
+
+| Axis | V1 signal weights |
 | -- | -- |
-| `Identifiability` | `stableIdentityCoverage * 0.70 + uniqueIdentityCoverage * 0.20 + nonFallbackCoverage * 0.10` |
-| `Operability` | `semanticActionCoverage * 0.55 + focusOrEnabledCoverage * 0.20 + actionBoundsCoverage * 0.15 + nonCustomActionCoverage * 0.10` |
-| `ResultDeterminability` | `observableResultCoverage * 0.50 + readableStateCoverage * 0.30 + stableResultIdentityCoverage * 0.20` |
-| `PreconditionControllability` | `readablePreconditionCoverage * 0.35 + settablePreconditionCoverage * 0.35 + stableStateMetadataCoverage * 0.30` |
-| `ScreenStability` | `screenIdentityStability * 0.35 + elementSetStability * 0.30 + boundedTreeCoverage * 0.20 + nonVolatileFallbackCoverage * 0.15` |
-| `CustomUiRisk` | `10000 - (customOpaqueCoverage * 0.70 + lowConfidenceCoverage * 0.30)` |
-| `CoordinateImageDependence` | `10000 - (coordinateOnlyCoverage * 0.50 + imageOnlyVerificationCoverage * 0.30 + captureUnavailableCoverage * 0.20)` |
+| `Identifiability` | `stableIdentityCoverage=7000`, `uniqueIdentityCoverage=2000`, `nonFallbackCoverage=1000` |
+| `Operability` | `semanticActionCoverage=5500`, `focusOrEnabledCoverage=2000`, `actionBoundsCoverage=1500`, `nonCustomActionCoverage=1000` |
+| `ResultDeterminability` | `observableResultCoverage=5000`, `readableStateCoverage=3000`, `stableResultIdentityCoverage=2000` |
+| `PreconditionControllability` | `readablePreconditionCoverage=3500`, `settablePreconditionCoverage=3500`, `stableStateMetadataCoverage=3000` |
+| `ScreenStability` | `screenIdentityStability=3500`, `elementSetStability=3000`, `boundedTreeCoverage=2000`, `nonVolatileFallbackCoverage=1500` |
+| `CustomUiRisk` | inverse risk: `customOpaqueCoverage=7000`, `lowConfidenceCoverage=3000` |
+| `CoordinateImageDependence` | inverse risk: `coordinateOnlyCoverage=5000`, `imageOnlyVerificationCoverage=3000`, `captureUnavailableCoverage=2000` |
 
-The coefficients are stored in `ScoringConfig.SignalThresholds` / v1 static rule data and surfaced by config version. A future change creates a new config version.
+`SignalThresholds` remains separate and contains only cutoffs used to convert observed counts into signal scores.
 
 ### Step 4: Aggregate
 
@@ -441,7 +512,7 @@ Only axes with `Applicability == Applicable` and a non-null `ScoreBp` participat
 ```text
 weightedSum = sum(axis.ScoreBp * axis.Weight)
 usedWeight = sum(axis.Weight)
-AggregateScoreBp = RoundHalfAwayFromZero(weightedSum / usedWeight)
+AggregateScoreBp = (weightedSum + usedWeight / 2) / usedWeight
 ```
 
 If `usedWeight == 0`, aggregate is null internally and the public result uses `AggregateScoreBp = 0`, `Confidence = Unknown`, and `TestabilityClass = NotEnoughEvidence` with a blocking `NoScorableAxes` finding. This case is distinct from a valid low score and must include the `Unavailable` reasons.
@@ -464,17 +535,24 @@ Non-primary findings are retained only as `RelatedFindingIds` on the primary fin
 
 ### Step 6: Classify
 
-Class thresholds use aggregate basis points plus confidence caps:
+Classification is an ordered decision list. The first matching row wins. This is part of the public behavior and is covered by `UT-0002` boundary tests.
 
-| Class | Required condition |
-| -- | -- |
-| `ImmediatelyAutomatable` | aggregate >= `8500`, no blocking findings, unknown-applicable-axis weight <= `500`, confidence not lower than `Medium` |
-| `SmallImprovement` | aggregate >= `7000`, blocking findings absent, unknown-applicable-axis weight <= `1500` |
-| `LimitedAutomation` | aggregate >= `5000`, or aggregate >= `7000` with unknown-applicable-axis weight > `1500` |
-| `ImproveFirst` | aggregate < `5000`, any blocking fixable root cause, or unknown-applicable-axis weight > `3000` |
-| `NotEnoughEvidence` | `usedWeight == 0`, acquisition prevented most scoring, or unknown-applicable-axis weight > `5000` |
+Definitions:
 
-Class names are stable enum values. User-facing localized labels belong to `DES-0012` / `DES-0016`.
+- `unknownWeightBp`: sum of configured axis weights for applicable axes whose score is `UnknownDueToUnavailable`.
+- `hasBlockingFinding`: any de-duplicated finding with `FindingSeverity.Blocking`.
+- `hasFixableBlockingRootCause`: any blocking finding whose root cause maps to a candidate code in Step 7. V1 treats all Step 7 root causes except `AcquisitionUnavailable` as fixable by target/application changes; `AcquisitionUnavailable` is fixable only when the finding status is `PartialResult`, not when it is `PermissionDenied` or `IntegrityMismatch`.
+
+| Priority | Class | Required condition |
+| --: | -- | -- |
+| 1 | `NotEnoughEvidence` | `usedWeight == 0` or `unknownWeightBp > 5000` |
+| 2 | `ImproveFirst` | `hasFixableBlockingRootCause` or `unknownWeightBp > 3000` or aggregate < `5000` |
+| 3 | `ImmediatelyAutomatable` | aggregate >= `8500`, `hasBlockingFinding == false`, `unknownWeightBp <= 500`, confidence not lower than `Medium` |
+| 4 | `SmallImprovement` | aggregate >= `7000`, `hasBlockingFinding == false`, `unknownWeightBp <= 1500` |
+| 5 | `LimitedAutomation` | aggregate >= `5000` |
+| 6 | `ImproveFirst` | fallback when no earlier row matched |
+
+This ordering intentionally lets evidence insufficiency and fixable blockers override a high aggregate score. Class names are stable enum values. User-facing localized labels belong to `DES-0012` / `DES-0016`.
 
 ### Step 7: Generate Improvement Candidates
 
@@ -493,6 +571,20 @@ Candidate mapping:
 | `AcquisitionUnavailable` | `HandleUnavailableSurfaceManuallyOrByAdapter` | `ReduceManualReview` |
 
 Candidates are not priorities. When upstream `ScreenSelectionMetadata` contains user-supplied priority context, candidates copy it into `UserSuppliedPriorityBasis`; otherwise this field is null.
+
+`FindingCode` is more granular than `RootCauseCode`: several finding codes can map to one root cause, but a finding has exactly one root cause. V1 mapping:
+
+| Root cause | Finding codes |
+| -- | -- |
+| `MissingStableIdentity` | `NoStableIdentity`, `FallbackOnlyIdentity` |
+| `DuplicateIdentity` | `DuplicateIdentity` |
+| `NoSemanticActionPattern` | `MissingActionPattern`, `NotKeyboardFocusable`, `DisabledOnlyAction` |
+| `ResultNotObservable` | `MissingObservableResult`, `VolatileResultElement` |
+| `PreconditionNotControllable` | `MissingPreconditionState`, `MissingSettablePrecondition` |
+| `UnstableScreenStructure` | `UnstableScreenKey`, `UnstableElementSet`, `UnrealizedSubtree` |
+| `OpaqueCustomSurface` | `OpaqueCustomControl`, `LowAcquisitionConfidence` |
+| `CoordinateOnlyInteraction` | `CoordinateOnlyAction`, `ImageOnlyVerification` |
+| `AcquisitionUnavailable` | `CaptureUnavailable`, `NoScorableAxes` |
 
 ## Mermaid Flow
 
@@ -546,7 +638,9 @@ flowchart TD
 | `Unavailable` is not low score | Pattern availability unknown yields `UnknownDueToUnavailable`, confidence cap, and no zero penalty. |
 | Root-cause de-duplication | One missing identity on a custom button emits one primary candidate. |
 | Rounding | Basis-point midpoint cases use half-away-from-zero. |
-| Config validation | invalid weight sum and unknown config version fail fast before scoring. |
+| Classification boundary order | Each class threshold has `-1`, exact, and `+1` cases; overlapping conditions prove the ordered decision list (`NotEnoughEvidence` before `ImproveFirst` before score-based classes). |
+| Config validation | invalid weight sum, negative axis weight, missing axis, missing/invalid signal weights, and unknown config version fail fast before scoring. |
+| Dictionary order independence | Reordered `AxisWeights`, `SignalThresholds`, and `SignalWeights` dictionaries produce equal results. |
 | No fabricated priority | no `ScreenSelectionMetadata` means no priority-like field on candidates; supplied metadata is copied as basis only. |
 
 `UT-0007` should assert that the report layer receives candidate codes, source finding ids, class enum, and config version without recomputing score math.
