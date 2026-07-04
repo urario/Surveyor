@@ -1,0 +1,5 @@
+{
+  "scope": "element-name",
+  "rawNameBefore": "  SENTINEL-CLIENT-SECRET\t1234  ",
+  "rawNameAfterWhitespaceCollapse": "SENTINEL-CLIENT-SECRET 1234"
+}

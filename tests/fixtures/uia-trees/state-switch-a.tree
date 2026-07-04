@@ -1,0 +1,17 @@
+{
+  "processImageName": "legacyapp.exe",
+  "windowClass": "AfxFrameOrView140u",
+  "screenAutomationId": "MainWindow",
+  "screenLabel": "Orders state A",
+  "stateAutomationId": "OrdersTab",
+  "stateLabel": "Orders",
+  "root": {
+    "source": "AutomationId",
+    "material": "RootWindow",
+    "label": "Orders state A",
+    "kind": "Window",
+    "availability": "Available",
+    "confidence": "High",
+    "children": []
+  }
+}
