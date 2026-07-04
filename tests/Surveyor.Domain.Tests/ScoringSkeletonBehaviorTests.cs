@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using Surveyor.Domain.Keys;
 using Surveyor.Domain.Model;
 using Surveyor.Domain.Scoring;
@@ -10,6 +12,9 @@ namespace Surveyor.Domain.Tests;
     Justification = "UT-0002 intentionally covers the scoring contract surface in one behavior suite.")]
 public sealed class ScoringSkeletonBehaviorTests
 {
+    private const string ScoringProbeVariable = "SURVEYOR_SCORING_PROBE";
+    private const string ScoringProbeOutputVariable = "SURVEYOR_SCORING_PROBE_OUTPUT";
+
     [Fact(DisplayName = "UT0002 deterministic aggregate class and candidate order ignore element order")]
     public void UT0002DeterministicAggregateClassAndCandidateOrderIgnoreElementOrder()
     {
@@ -31,6 +36,24 @@ public sealed class ScoringSkeletonBehaviorTests
         Assert.Equal(firstResult.ImprovementCandidates.Select(static candidate => candidate.Id), secondResult.ImprovementCandidates.Select(static candidate => candidate.Id));
     }
 
+    [Fact(DisplayName = "UT0002 scoring payload is stable across a fresh process")]
+    public void UT0002ScoringPayloadIsStableAcrossFreshProcess()
+    {
+        if (string.Equals(Environment.GetEnvironmentVariable(ScoringProbeVariable), "1", StringComparison.Ordinal))
+        {
+            WriteScoringProbePayload();
+            return;
+        }
+
+        string expected = StableScoringPayload();
+        string outputPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.scoring");
+        using Process process = StartScoringProbeProcess(outputPath);
+
+        Assert.True(process.WaitForExit(30000), "Fresh process scoring probe timed out.");
+        Assert.Equal(0, process.ExitCode);
+        Assert.Equal(expected, File.ReadAllText(outputPath));
+    }
+
     [Fact(DisplayName = "UT0002 axis mapping emits stable scores and evidence for every v1 axis")]
     public void UT0002AxisMappingEmitsStableScoresAndEvidenceForEveryV1Axis()
     {
@@ -42,13 +65,13 @@ public sealed class ScoringSkeletonBehaviorTests
 
         Assert.Collection(
             result.AxisScores,
-            axis => AssertAxis(axis, ScoreAxis.Identifiability),
-            axis => AssertAxis(axis, ScoreAxis.Operability),
-            axis => AssertAxis(axis, ScoreAxis.ResultDeterminability),
-            axis => AssertAxis(axis, ScoreAxis.PreconditionControllability),
-            axis => AssertAxis(axis, ScoreAxis.ScreenStability),
-            axis => AssertAxis(axis, ScoreAxis.CustomUiRisk),
-            axis => AssertAxis(axis, ScoreAxis.CoordinateImageDependence));
+            axis => AssertAxis(axis, ScoreAxis.Identifiability, ["nonFallbackCoverage", "stableIdentityCoverage", "uniqueIdentityCoverage"]),
+            axis => AssertAxis(axis, ScoreAxis.Operability, ["actionBoundsCoverage", "focusOrEnabledCoverage", "nonCustomActionCoverage", "semanticActionCoverage"]),
+            axis => AssertAxis(axis, ScoreAxis.ResultDeterminability, ["observableResultCoverage", "readableStateCoverage", "stableResultIdentityCoverage"]),
+            axis => AssertAxis(axis, ScoreAxis.PreconditionControllability, ["readablePreconditionCoverage", "settablePreconditionCoverage", "stableStateMetadataCoverage"]),
+            axis => AssertAxis(axis, ScoreAxis.ScreenStability, ["boundedTreeCoverage", "elementSetStability", "nonVolatileFallbackCoverage", "screenIdentityStability"]),
+            axis => AssertAxis(axis, ScoreAxis.CustomUiRisk, ["customOpaqueCoverage", "lowConfidenceCoverage"]),
+            axis => AssertAxis(axis, ScoreAxis.CoordinateImageDependence, ["captureUnavailableCoverage", "coordinateOnlyCoverage", "imageOnlyVerificationCoverage"]));
     }
 
     [Fact(DisplayName = "UT0002 unavailable does not become numeric zero")]
@@ -174,10 +197,87 @@ public sealed class ScoringSkeletonBehaviorTests
         Assert.All(withBasis.ImprovementCandidates, candidate => Assert.Equal(basis, candidate.UserSuppliedPriorityBasis));
     }
 
-    private static void AssertAxis(AxisScore axis, ScoreAxis expected)
+    private static Process StartScoringProbeProcess(string outputPath)
+    {
+        ProcessStartInfo startInfo = new("dotnet")
+        {
+            UseShellExecute = false,
+        };
+        startInfo.ArgumentList.Add("test");
+        startInfo.ArgumentList.Add(ProjectPath());
+        startInfo.ArgumentList.Add("--no-build");
+        startInfo.ArgumentList.Add("--no-restore");
+        startInfo.ArgumentList.Add("--filter");
+        startInfo.ArgumentList.Add("FullyQualifiedName~ScoringSkeletonBehaviorTests.UT0002ScoringPayloadIsStableAcrossFreshProcess");
+        startInfo.ArgumentList.Add("--logger");
+        startInfo.ArgumentList.Add("console;verbosity=minimal");
+        startInfo.ArgumentList.Add("/p:CollectCoverage=false");
+        startInfo.Environment[ScoringProbeVariable] = "1";
+        startInfo.Environment[ScoringProbeOutputVariable] = outputPath;
+        startInfo.Environment["DOTNET_SYSTEM_GLOBALIZATION_INVARIANT"] = "1";
+        startInfo.Environment["LANG"] = "tr-TR.UTF-8";
+
+        return Process.Start(startInfo) ?? throw new InvalidOperationException("Failed to start fresh process scoring probe.");
+    }
+
+    private static void WriteScoringProbePayload()
+    {
+        string? outputPath = Environment.GetEnvironmentVariable(ScoringProbeOutputVariable);
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            throw new InvalidOperationException("Scoring probe output path is not set.");
+        }
+
+        File.WriteAllText(outputPath, StableScoringPayload());
+    }
+
+    private static string StableScoringPayload()
+    {
+        ScoreResult result = new TestabilityScorer().Score(
+            ScoringFixture.Model(
+                ScoringFixture.Button("Save", patterns: SupportedPatterns.Invoke),
+                ScoringFixture.Button("Custom", kind: ControlKind.Custom),
+                ScoringFixture.Text("Result")),
+            ScoringConfig.DefaultV1());
+
+        return string.Join(
+            "\n",
+            [
+                result.AggregateScoreBp.ToString(CultureInfo.InvariantCulture),
+                result.AggregateScorePercent.ToString(CultureInfo.InvariantCulture),
+                result.TestabilityClass.ToString(),
+                result.Confidence.ToString(),
+                string.Join("|", result.AxisScores.Select(static axis => FormattableString.Invariant($"{axis.Axis}:{axis.Applicability}:{axis.ScoreBp}"))),
+                string.Join("|", result.Findings.Select(static finding => finding.Id)),
+                string.Join("|", result.ImprovementCandidates.Select(static candidate => candidate.Id)),
+            ]);
+    }
+
+    private static string ProjectPath()
+    {
+        return Path.Combine(FindRepositoryRoot(), "tests", "Surveyor.Domain.Tests", "Surveyor.Domain.Tests.csproj");
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "Surveyor.slnx")))
+            {
+                return directory.FullName;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new InvalidOperationException("Could not locate repository root.");
+    }
+
+    private static void AssertAxis(AxisScore axis, ScoreAxis expected, string[] evidenceCodes)
     {
         Assert.Equal(expected, axis.Axis);
-        Assert.NotEmpty(axis.EvidenceCodes);
+        Assert.Equal(evidenceCodes, axis.EvidenceCodes);
     }
 }
 

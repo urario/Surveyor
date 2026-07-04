@@ -55,10 +55,12 @@ public sealed class FallbackKeyDerivationContractTests
         startInfo.ArgumentList.Add("test");
         startInfo.ArgumentList.Add(FallbackFixture.ProjectPath());
         startInfo.ArgumentList.Add("--no-build");
+        startInfo.ArgumentList.Add("--no-restore");
         startInfo.ArgumentList.Add("--filter");
         startInfo.ArgumentList.Add("FullyQualifiedName~FallbackKeyDerivationContractTests.FallbackKeyIsNonReversibleAndStableAcrossFreshProcess");
         startInfo.ArgumentList.Add("--logger");
         startInfo.ArgumentList.Add("console;verbosity=minimal");
+        startInfo.ArgumentList.Add("/p:CollectCoverage=false");
         startInfo.Environment["SURVEYOR_POLICY_KEY_PROBE"] = "1";
         startInfo.Environment["SURVEYOR_POLICY_KEY_PROBE_OUTPUT"] = outputPath;
 
