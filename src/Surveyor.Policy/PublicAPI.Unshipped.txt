@@ -1,4 +1,72 @@
 #nullable enable
+const Surveyor.Policy.Confidentiality.ConfidentialityPolicy.PolicyVersionV1 = "confidentiality-v1" -> string!
+Surveyor.Policy.Confidentiality.ConfidentialityPolicy
+Surveyor.Policy.Confidentiality.ConfidentialityPolicy.ConfidentialityPolicy() -> void
+Surveyor.Policy.Confidentiality.ConfidentialityPolicy.Decide(Surveyor.Application.Ports.ConfidentialityRequest! request) -> Surveyor.Application.Ports.ConfidentialityDecision!
+Surveyor.Policy.Confidentiality.ConfidentialityPolicy.RequiresTextMasking(Surveyor.Application.Ports.ConfidentialityDecision! decision, Surveyor.Application.Ports.ConfidentialityTarget target) -> bool
+Surveyor.Policy.Confidentiality.ExceptionKind
+Surveyor.Policy.Confidentiality.ExceptionKind.Argument = 4 -> Surveyor.Policy.Confidentiality.ExceptionKind
+Surveyor.Policy.Confidentiality.ExceptionKind.ComError = 3 -> Surveyor.Policy.Confidentiality.ExceptionKind
+Surveyor.Policy.Confidentiality.ExceptionKind.InvalidOperation = 5 -> Surveyor.Policy.Confidentiality.ExceptionKind
+Surveyor.Policy.Confidentiality.ExceptionKind.Io = 2 -> Surveyor.Policy.Confidentiality.ExceptionKind
+Surveyor.Policy.Confidentiality.ExceptionKind.Timeout = 6 -> Surveyor.Policy.Confidentiality.ExceptionKind
+Surveyor.Policy.Confidentiality.ExceptionKind.UnauthorizedAccess = 1 -> Surveyor.Policy.Confidentiality.ExceptionKind
+Surveyor.Policy.Confidentiality.ExceptionKind.Unknown = 0 -> Surveyor.Policy.Confidentiality.ExceptionKind
+Surveyor.Policy.Confidentiality.ExportElementKey
+Surveyor.Policy.Confidentiality.ExportElementKey.ExportElementKey(string! ExportKey, bool IsFallback, bool StableAcrossExports) -> void
+Surveyor.Policy.Confidentiality.ExportElementKey.ExportKey.get -> string!
+Surveyor.Policy.Confidentiality.ExportElementKey.ExportKey.init -> void
+Surveyor.Policy.Confidentiality.ExportElementKey.IsFallback.get -> bool
+Surveyor.Policy.Confidentiality.ExportElementKey.IsFallback.init -> void
+Surveyor.Policy.Confidentiality.ExportElementKey.StableAcrossExports.get -> bool
+Surveyor.Policy.Confidentiality.ExportElementKey.StableAcrossExports.init -> void
+Surveyor.Policy.Confidentiality.ExportMappingContext
+Surveyor.Policy.Confidentiality.ExportMappingContext.ExportId.get -> string!
+Surveyor.Policy.Confidentiality.ExportMappingContext.ExportId.init -> void
+Surveyor.Policy.Confidentiality.ExportMappingContext.ExportMappingContext(string! ExportId, int Ordinal) -> void
+Surveyor.Policy.Confidentiality.ExportMappingContext.Ordinal.get -> int
+Surveyor.Policy.Confidentiality.ExportMappingContext.Ordinal.init -> void
+Surveyor.Policy.Confidentiality.FallbackKeyExportMapper
+Surveyor.Policy.Confidentiality.FallbackKeyExportMapper.FallbackKeyExportMapper() -> void
+Surveyor.Policy.Confidentiality.FallbackKeyExportMapper.Map(Surveyor.Domain.Keys.ElementKey elementKey, Surveyor.Policy.Confidentiality.FallbackKeyToken? fallbackToken, Surveyor.Policy.Confidentiality.ExportMappingContext! context) -> Surveyor.Policy.Confidentiality.ExportElementKey!
+Surveyor.Policy.Confidentiality.FallbackKeyToken
+Surveyor.Policy.Confidentiality.FallbackKeyToken.CanonicalToken.get -> string!
+Surveyor.Policy.Confidentiality.FallbackKeyToken.CanonicalToken.init -> void
+Surveyor.Policy.Confidentiality.FallbackKeyToken.FallbackKeyToken(string! CanonicalToken) -> void
+Surveyor.Policy.Confidentiality.IFallbackKeyExportMapper
+Surveyor.Policy.Confidentiality.IFallbackKeyExportMapper.Map(Surveyor.Domain.Keys.ElementKey elementKey, Surveyor.Policy.Confidentiality.FallbackKeyToken? fallbackToken, Surveyor.Policy.Confidentiality.ExportMappingContext! context) -> Surveyor.Policy.Confidentiality.ExportElementKey!
+Surveyor.Policy.Confidentiality.ISensitiveValueSanitizer
+Surveyor.Policy.Confidentiality.ISensitiveValueSanitizer.MaskText(Surveyor.Policy.Confidentiality.SensitiveText! value) -> Surveyor.Policy.Confidentiality.SanitizedText!
+Surveyor.Policy.Confidentiality.ISensitiveValueSanitizer.SanitizeException(System.Exception! exception) -> Surveyor.Policy.Confidentiality.SanitizedExceptionInfo!
+Surveyor.Policy.Confidentiality.SanitizedExceptionInfo
+Surveyor.Policy.Confidentiality.SanitizedExceptionInfo.HResult.get -> int?
+Surveyor.Policy.Confidentiality.SanitizedExceptionInfo.HResult.init -> void
+Surveyor.Policy.Confidentiality.SanitizedExceptionInfo.Kind.get -> Surveyor.Policy.Confidentiality.ExceptionKind
+Surveyor.Policy.Confidentiality.SanitizedExceptionInfo.Kind.init -> void
+Surveyor.Policy.Confidentiality.SanitizedExceptionInfo.SanitizedExceptionInfo(Surveyor.Policy.Confidentiality.ExceptionKind Kind, int? HResult) -> void
+Surveyor.Policy.Confidentiality.SanitizedText
+Surveyor.Policy.Confidentiality.SanitizedText.LengthBucket.get -> string!
+Surveyor.Policy.Confidentiality.SanitizedText.LengthBucket.init -> void
+Surveyor.Policy.Confidentiality.SanitizedText.Pseudonym.get -> string!
+Surveyor.Policy.Confidentiality.SanitizedText.Pseudonym.init -> void
+Surveyor.Policy.Confidentiality.SanitizedText.SanitizedText(string! Pseudonym, string! LengthBucket) -> void
+Surveyor.Policy.Confidentiality.SensitiveKind
+Surveyor.Policy.Confidentiality.SensitiveKind.DisplayText = 0 -> Surveyor.Policy.Confidentiality.SensitiveKind
+Surveyor.Policy.Confidentiality.SensitiveKind.ExceptionMessage = 5 -> Surveyor.Policy.Confidentiality.SensitiveKind
+Surveyor.Policy.Confidentiality.SensitiveKind.FallbackKeyToken = 4 -> Surveyor.Policy.Confidentiality.SensitiveKind
+Surveyor.Policy.Confidentiality.SensitiveKind.FilePath = 3 -> Surveyor.Policy.Confidentiality.SensitiveKind
+Surveyor.Policy.Confidentiality.SensitiveKind.ScreenshotPixels = 2 -> Surveyor.Policy.Confidentiality.SensitiveKind
+Surveyor.Policy.Confidentiality.SensitiveKind.WindowTitle = 1 -> Surveyor.Policy.Confidentiality.SensitiveKind
+Surveyor.Policy.Confidentiality.SensitiveText
+Surveyor.Policy.Confidentiality.SensitiveText.Kind.get -> Surveyor.Policy.Confidentiality.SensitiveKind
+Surveyor.Policy.Confidentiality.SensitiveText.Kind.init -> void
+Surveyor.Policy.Confidentiality.SensitiveText.SensitiveText(Surveyor.Policy.Confidentiality.SensitiveKind Kind, string! Value) -> void
+Surveyor.Policy.Confidentiality.SensitiveText.Value.get -> string!
+Surveyor.Policy.Confidentiality.SensitiveText.Value.init -> void
+Surveyor.Policy.Confidentiality.SensitiveValueSanitizer
+Surveyor.Policy.Confidentiality.SensitiveValueSanitizer.MaskText(Surveyor.Policy.Confidentiality.SensitiveText! value) -> Surveyor.Policy.Confidentiality.SanitizedText!
+Surveyor.Policy.Confidentiality.SensitiveValueSanitizer.SanitizeException(System.Exception! exception) -> Surveyor.Policy.Confidentiality.SanitizedExceptionInfo!
+Surveyor.Policy.Confidentiality.SensitiveValueSanitizer.SensitiveValueSanitizer() -> void
 Surveyor.Policy.Sha256FallbackKeyDerivation
 Surveyor.Policy.Sha256FallbackKeyDerivation.DeriveFallbackToken(string! scope, string! rawText) -> Surveyor.Domain.Model.IdentityMaterial!
 Surveyor.Policy.Sha256FallbackKeyDerivation.Sha256FallbackKeyDerivation() -> void

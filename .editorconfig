@@ -38,3 +38,9 @@ dotnet_diagnostic.CA1509.severity = warning
 
 dotnet_diagnostic.RS0016.severity = error
 dotnet_diagnostic.RS0030.severity = error
+
+# CS-05: xUnit discovers test classes only when they are public, so CA1515
+# ("make types internal") is a false positive for test assemblies. Scope the
+# exclusion to tests/** so production public-surface discipline stays intact.
+[tests/**/*.cs]
+dotnet_diagnostic.CA1515.severity = none
