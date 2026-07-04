@@ -4,6 +4,10 @@
     <SurveyorWindowsTargetFramework>net10.0-windows10.0.19041.0</SurveyorWindowsTargetFramework>
     <SurveyorIsSourceProject>false</SurveyorIsSourceProject>
     <SurveyorIsSourceProject Condition="'$(MSBuildProjectName)' == 'Surveyor.Domain' Or '$(MSBuildProjectName)' == 'Surveyor.Application' Or '$(MSBuildProjectName)' == 'Surveyor.Policy' Or '$(MSBuildProjectName)' == 'Surveyor.Reports' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Discovery' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Capture' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Store' Or '$(MSBuildProjectName)' == 'Surveyor.Presentation' Or '$(MSBuildProjectName)' == 'Surveyor.App'">true</SurveyorIsSourceProject>
+
+    <!-- CS-07: core-layer test projects fail below 80% line coverage; other layers only report. -->
+    <SurveyorIsCoreTestProject>false</SurveyorIsCoreTestProject>
+    <SurveyorIsCoreTestProject Condition="'$(MSBuildProjectName)' == 'Surveyor.Domain.Tests' Or '$(MSBuildProjectName)' == 'Surveyor.Application.Tests' Or '$(MSBuildProjectName)' == 'Surveyor.Policy.Tests' Or '$(MSBuildProjectName)' == 'Surveyor.Reports.Tests'">true</SurveyorIsCoreTestProject>
     <TargetFramework>$(SurveyorCoreTargetFramework)</TargetFramework>
     <TargetFramework Condition="'$(MSBuildProjectName)' == 'Surveyor.Adapters.Discovery' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Capture' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Store' Or '$(MSBuildProjectName)' == 'Surveyor.Presentation' Or '$(MSBuildProjectName)' == 'Surveyor.App'">$(SurveyorWindowsTargetFramework)</TargetFramework>
 
@@ -41,5 +45,21 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>Surveyor.TestSupport</_Parameter1>
     </AssemblyAttribute>
+  </ItemGroup>
+
+  <!-- CS-07: a plain `dotnet test` on a core-layer test project collects coverage via
+       coverlet.msbuild and fails the run when total line coverage drops below 80%, so the
+       threshold is enforced by the command itself rather than by a self-reported number. -->
+  <PropertyGroup Condition="'$(SurveyorIsCoreTestProject)' == 'true'">
+    <CollectCoverage>true</CollectCoverage>
+    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+    <CoverletOutput>$(MSBuildProjectDirectory)/../../artifacts/coverage/$(MSBuildProjectName)/</CoverletOutput>
+    <Threshold>80</Threshold>
+    <ThresholdType>line</ThresholdType>
+    <ThresholdStat>total</ThresholdStat>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(SurveyorIsCoreTestProject)' == 'true'">
+    <PackageReference Include="coverlet.msbuild" PrivateAssets="all" />
   </ItemGroup>
 </Project>
