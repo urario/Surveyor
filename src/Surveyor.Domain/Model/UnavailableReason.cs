@@ -3,7 +3,7 @@ namespace Surveyor.Domain.Model;
 /// <summary>
 /// UI 要素を取得できなかった理由を表します。
 /// </summary>
-internal enum UnavailableReason
+public enum UnavailableReason
 {
     /// <summary>
     /// 対象 API から公開されていない状態です。

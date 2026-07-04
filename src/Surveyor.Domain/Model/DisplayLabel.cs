@@ -6,7 +6,7 @@ namespace Surveyor.Domain.Model;
 /// <remarks>
 /// ラベル値はキー素材に含めません（RQ-052、RQ-053）。
 /// </remarks>
-internal readonly struct DisplayLabel : IEquatable<DisplayLabel>
+public readonly struct DisplayLabel : IEquatable<DisplayLabel>
 {
     /// <summary>
     /// 表示用ラベルを初期化します。
@@ -50,9 +50,31 @@ internal readonly struct DisplayLabel : IEquatable<DisplayLabel>
     }
 
     /// <summary>
+    /// 2つの表示ラベルが等しいかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の表示ラベル。</param>
+    /// <param name="right">右辺の表示ラベル。</param>
+    /// <returns>等しい場合は <see langword="true"/>。</returns>
+    public static bool operator ==(DisplayLabel left, DisplayLabel right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// 2つの表示ラベルが異なるかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の表示ラベル。</param>
+    /// <param name="right">右辺の表示ラベル。</param>
+    /// <returns>異なる場合は <see langword="true"/>。</returns>
+    public static bool operator !=(DisplayLabel left, DisplayLabel right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
     /// ハッシュコードを返します。
     /// </summary>
-    /// <returns>この値オブジェクトのハッシュコード。</returns>
+    /// <returns>この表示ラベルのハッシュコード。</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(Value, IsSensitive);

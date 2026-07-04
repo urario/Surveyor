@@ -3,7 +3,7 @@ namespace Surveyor.Domain.Model;
 /// <summary>
 /// 画面状態を区別する同一性素材を表します。
 /// </summary>
-internal readonly struct ScreenStateDiscriminator : IEquatable<ScreenStateDiscriminator>
+public readonly struct ScreenStateDiscriminator : IEquatable<ScreenStateDiscriminator>
 {
     /// <summary>
     /// 画面状態識別子を初期化します。
@@ -47,9 +47,31 @@ internal readonly struct ScreenStateDiscriminator : IEquatable<ScreenStateDiscri
     }
 
     /// <summary>
+    /// 2つの画面状態識別子が等しいかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の画面状態識別子。</param>
+    /// <param name="right">右辺の画面状態識別子。</param>
+    /// <returns>等しい場合は <see langword="true"/>。</returns>
+    public static bool operator ==(ScreenStateDiscriminator left, ScreenStateDiscriminator right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// 2つの画面状態識別子が異なるかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の画面状態識別子。</param>
+    /// <param name="right">右辺の画面状態識別子。</param>
+    /// <returns>異なる場合は <see langword="true"/>。</returns>
+    public static bool operator !=(ScreenStateDiscriminator left, ScreenStateDiscriminator right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
     /// ハッシュコードを返します。
     /// </summary>
-    /// <returns>この値オブジェクトのハッシュコード。</returns>
+    /// <returns>この画面状態識別子のハッシュコード。</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(StateMaterial, StateLabel);

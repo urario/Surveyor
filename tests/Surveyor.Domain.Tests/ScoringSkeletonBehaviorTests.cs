@@ -88,8 +88,8 @@ public sealed class ScoringSkeletonBehaviorTests
         Assert.Contains(result.Findings, static finding => finding.Availability.Equals(Availability.Unavailable(UnavailableReason.NotRealized)));
     }
 
-    [Fact(DisplayName = "UT0002 root cause de-duplication produces one primary candidate")]
-    public void UT0002RootCauseDeduplicationProducesOnePrimaryCandidate()
+    [Fact(DisplayName = "UT0002 root cause de-duplication keeps distinct improvement candidates")]
+    public void UT0002RootCauseDeduplicationKeepsDistinctImprovementCandidates()
     {
         UiElement custom = ScoringFixture.Button(
             "FallbackCustom",
@@ -99,9 +99,37 @@ public sealed class ScoringSkeletonBehaviorTests
 
         ScoreResult result = new TestabilityScorer().Score(ScoringFixture.Model(custom), ScoringConfig.DefaultV1());
 
-        ImprovementCandidate candidate = Assert.Single(result.ImprovementCandidates);
-        Assert.Equal(CandidateCode.AddStableAutomationIdOrPeerName, candidate.Code);
-        Assert.True(candidate.SourceFindingIds.Count >= 1);
+        Assert.Equal(
+            [
+                CandidateCode.AddStableAutomationIdOrPeerName,
+                CandidateCode.ExposeActionPattern,
+                CandidateCode.AddAccessiblePeerForCustomControl,
+                CandidateCode.ReduceCoordinateOrImageDependency,
+            ],
+            result.ImprovementCandidates.Select(static candidate => candidate.Code));
+        Assert.All(result.ImprovementCandidates, static candidate => Assert.True(candidate.SourceFindingIds.Count >= 1));
+    }
+
+    [Fact(DisplayName = "UT0002 precondition axis uses state metadata and emits improvement findings")]
+    public void UT0002PreconditionAxisUsesStateMetadataAndEmitsImprovementFindings()
+    {
+        TestabilityScorer scorer = new();
+        UiElement readableOnlyPrecondition = ScoringFixture.Text("Mode");
+
+        ScoreResult withoutState = scorer.Score(
+            ScoringFixture.Model(readableOnlyPrecondition),
+            ScoringConfig.DefaultV1());
+        ScoreResult withState = scorer.Score(
+            ScoringFixture.ModelWithState(readableOnlyPrecondition),
+            ScoringConfig.DefaultV1());
+
+        AxisScore withoutStatePrecondition = Assert.Single(withoutState.AxisScores, static axis => axis.Axis == ScoreAxis.PreconditionControllability);
+        AxisScore withStatePrecondition = Assert.Single(withState.AxisScores, static axis => axis.Axis == ScoreAxis.PreconditionControllability);
+
+        Assert.True(withStatePrecondition.ScoreBp > withoutStatePrecondition.ScoreBp);
+        Assert.Contains(withoutState.Findings, static finding => finding.Code == FindingCode.MissingPreconditionState);
+        Assert.Contains(withoutState.Findings, static finding => finding.Code == FindingCode.MissingSettablePrecondition);
+        Assert.Contains(withoutState.ImprovementCandidates, static candidate => candidate.Code == CandidateCode.ExposeStateSetupOrResetHook);
     }
 
     [Fact(DisplayName = "UT0002 basis point midpoint rounding is half away from zero")]
@@ -285,13 +313,27 @@ internal static class ScoringFixture
 {
     internal static ScreenModel Model(params UiElement[] children)
     {
+        return CreateModel(null, children);
+    }
+
+    internal static ScreenModel ModelWithState(params UiElement[] children)
+    {
+        ScreenStateDiscriminator state = new(
+            IdentityMaterial.StableIdentity("state-ready"),
+            new DisplayLabel("Ready", false));
+
+        return CreateModel(state, children);
+    }
+
+    private static ScreenModel CreateModel(ScreenStateDiscriminator? state, params UiElement[] children)
+    {
         ScreenIdentity identity = new(
             "survey.exe",
             "SurveyWindow",
             ScreenRole.TopLevel,
             IdentitySource.AutomationId,
             IdentityMaterial.StableIdentity("MainWindow"));
-        ScreenKey screenKey = ScreenKey.FromIdentity(identity, null);
+        ScreenKey screenKey = ScreenKey.FromIdentity(identity, state);
         UiElement root = new(
             ElementKey.FromPath(screenKey, [new ElementIdentity(IdentitySource.AutomationId, IdentityMaterial.StableIdentity("Root"))]),
             new ElementIdentity(IdentitySource.AutomationId, IdentityMaterial.StableIdentity("Root")),
@@ -303,7 +345,7 @@ internal static class ScoringFixture
             children,
             SupportedPatterns.None);
 
-        return new ScreenModel(screenKey, identity, null, new DisplayLabel("Root"), root);
+        return new ScreenModel(screenKey, identity, state, new DisplayLabel("Root"), root);
     }
 
     internal static UiElement Button(

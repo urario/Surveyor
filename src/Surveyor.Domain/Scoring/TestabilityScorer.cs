@@ -2,13 +2,31 @@ using Surveyor.Domain.Model;
 
 namespace Surveyor.Domain.Scoring;
 
-internal sealed class TestabilityScorer
+/// <summary>
+/// 画面モデルからテスト容易性スコアと改善候補を算出します。
+/// </summary>
+/// <remarks>
+/// この型は純粋なドメインロジックとして動作し、対象アプリケーションを操作しません（RQ-048）。
+/// 同一の入力に対して決定的な結果を返し（RQ-051）、表示ラベルや生テキストを Finding に含めません（RQ-052）。
+/// </remarks>
+public sealed class TestabilityScorer
 {
-    private readonly TestabilityScoringPipeline pipeline = new();
-
-    internal ScoreResult Score(ScreenModel model, ScoringConfig config, PriorityBasis? priorityBasis = null)
+    /// <summary>
+    /// 指定された画面モデルを採点します。
+    /// </summary>
+    /// <param name="model">採点対象の画面モデル。</param>
+    /// <param name="config">採点に使うバージョン付き設定。</param>
+    /// <param name="priorityBasis">利用者が入力した優先度根拠。採点では解釈せず結果へコピーします。</param>
+    /// <returns>軸別スコア、分類、Finding、改善候補を含む採点結果。</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="model"/> または <paramref name="config"/> が null の場合。</exception>
+    /// <exception cref="ArgumentException"><paramref name="config"/> が無効な場合。</exception>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Performance",
+        "CA1822:Mark members as static",
+        Justification = "DES-0010 defines TestabilityScorer as an instance service seam for M03 orchestration and future dependency injection.")]
+    public ScoreResult Score(ScreenModel model, ScoringConfig config, PriorityBasis? priorityBasis = null)
     {
-        return pipeline.Score(model, config, priorityBasis);
+        return TestabilityScoringPipeline.Score(model, config, priorityBasis);
     }
 }
 
@@ -16,17 +34,10 @@ internal sealed class TestabilityScorer
     "Maintainability",
     "CA1506:Avoid excessive class coupling",
     Justification = "IMP-0002 pipeline intentionally coordinates all scoring contract records while axis and candidate logic remain private deterministic methods.")]
-internal sealed class TestabilityScoringPipeline
+internal static class TestabilityScoringPipeline
 {
-    private readonly bool instanceContract = true;
-
-    internal ScoreResult Score(ScreenModel model, ScoringConfig config, PriorityBasis? priorityBasis)
+    internal static ScoreResult Score(ScreenModel model, ScoringConfig config, PriorityBasis? priorityBasis)
     {
-        if (!instanceContract)
-        {
-            throw new InvalidOperationException();
-        }
-
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(config);
         config.Validate();
@@ -38,7 +49,7 @@ internal sealed class TestabilityScoringPipeline
             ScoreIdentifiability(elements, config, rawFindings),
             ScoreOperability(elements, config, rawFindings),
             ScoreResultDeterminability(elements, config, rawFindings),
-            ScorePreconditionControllability(elements, config),
+            ScorePreconditionControllability(model, elements, config, rawFindings),
             ScoreScreenStability(model, elements, config, rawFindings),
             ScoreCustomUiRisk(elements, config, rawFindings),
             ScoreCoordinateImageDependence(elements, config, rawFindings),
@@ -174,7 +185,7 @@ internal sealed class TestabilityScoringPipeline
         return Axis(ScoreAxis.ResultDeterminability, WeightedScore(config, ScoreAxis.ResultDeterminability, signals), LowestConfidence(resultElements), [], signals.Keys);
     }
 
-    private static AxisScore ScorePreconditionControllability(UiElement[] elements, ScoringConfig config)
+    private static AxisScore ScorePreconditionControllability(ScreenModel model, UiElement[] elements, ScoringConfig config, List<Finding> findings)
     {
         UiElement[] controllable = NonRoot(elements).Where(static element => element.Patterns.Value != 0).ToArray();
         if (controllable.Length == 0)
@@ -182,11 +193,21 @@ internal sealed class TestabilityScoringPipeline
             return NotApplicable(ScoreAxis.PreconditionControllability, "noPreconditionControls");
         }
 
+        if (model.State is null)
+        {
+            findings.Add(CreateFinding(FindingCode.MissingPreconditionState, ScoreAxis.PreconditionControllability, RootCauseCode.PreconditionNotControllable, FindingSeverity.Warning, null, null, null));
+        }
+
+        foreach (UiElement element in controllable.Where(static element => !HasSettablePreconditionPattern(element)))
+        {
+            findings.Add(CreateFinding(FindingCode.MissingSettablePrecondition, ScoreAxis.PreconditionControllability, RootCauseCode.PreconditionNotControllable, FindingSeverity.Warning, element, null, element.Confidence));
+        }
+
         Dictionary<string, int> signals = new(StringComparer.Ordinal)
         {
-            ["readablePreconditionCoverage"] = Coverage(controllable.Count(static element => element.Availability.IsAvailable), controllable.Length),
-            ["settablePreconditionCoverage"] = Coverage(controllable.Count(static element => element.Patterns.Value != 0), controllable.Length),
-            ["stableStateMetadataCoverage"] = 10000,
+            ["readablePreconditionCoverage"] = Coverage(controllable.Count(HasReadablePreconditionPattern), controllable.Length),
+            ["settablePreconditionCoverage"] = Coverage(controllable.Count(HasSettablePreconditionPattern), controllable.Length),
+            ["stableStateMetadataCoverage"] = model.State is null ? 0 : 10000,
         };
 
         return Axis(ScoreAxis.PreconditionControllability, WeightedScore(config, ScoreAxis.PreconditionControllability, signals), LowestConfidence(controllable), [], signals.Keys);
@@ -319,7 +340,7 @@ internal sealed class TestabilityScoringPipeline
             .Where(static score => score.Applicability == AxisApplicability.Applicable && score.ScoreBp is not null)
             .Select(static score => score.Confidence)
             .DefaultIfEmpty(ScoreConfidence.Unknown)
-            .Max();
+            .Aggregate(ScoreConfidence.High, LowerConfidence);
 
         if (aggregate.UnknownWeightBp > config.ClassThresholds.MaxUnknownWeightBeforeImproveFirstBp)
         {
@@ -382,7 +403,7 @@ internal sealed class TestabilityScoringPipeline
         return aggregate.ScoreBp >= thresholds.ImmediatelyAutomatableBp
             && !blocking.HasBlocking
             && aggregate.UnknownWeightBp <= thresholds.MaxUnknownWeightForImmediateBp
-            && confidence <= ScoreConfidence.Medium;
+            && IsAtLeastConfidence(confidence, ScoreConfidence.Medium);
     }
 
     private static bool IsSmallImprovement(Aggregate aggregate, BlockingState blocking, ClassThresholds thresholds)
@@ -395,7 +416,7 @@ internal sealed class TestabilityScoringPipeline
     private static List<Finding> Deduplicate(IReadOnlyList<Finding> findings)
     {
         return findings
-            .GroupBy(static finding => $"{finding.RootCause}|{finding.ElementKey?.ToString() ?? "screen"}|{finding.Availability?.Reason?.ToString() ?? "none"}", StringComparer.Ordinal)
+            .GroupBy(static finding => $"{finding.RootCause}|{finding.Axis}|{finding.ElementKey?.ToString() ?? "screen"}|{finding.Availability?.Reason?.ToString() ?? "none"}", StringComparer.Ordinal)
             .Select(SelectPrimary)
             .OrderBy(static finding => finding.Id, StringComparer.Ordinal)
             .ToList();
@@ -419,8 +440,7 @@ internal sealed class TestabilityScoringPipeline
 
     private static ImprovementCandidate[] GenerateCandidates(IReadOnlyList<Finding> findings, PriorityBasis? priorityBasis)
     {
-        Finding[] candidateFindings = SuppressSecondaryElementFindings(findings);
-        return candidateFindings
+        return findings
             .Where(static finding => finding.Severity != FindingSeverity.Info)
             .GroupBy(static finding => (finding.RootCause, finding.ElementKey), new CandidateGroupingComparer())
             .Select((group, index) => CreateCandidate(group.Key.RootCause, group.Key.ElementKey, group.ToArray(), index + 1, priorityBasis))
@@ -428,20 +448,6 @@ internal sealed class TestabilityScoringPipeline
             .ThenBy(static candidate => candidate.Scope)
             .ThenBy(static candidate => candidate.TargetElementKey?.ToString() ?? "~", StringComparer.Ordinal)
             .ThenBy(static candidate => candidate.Id, StringComparer.Ordinal)
-            .ToArray();
-    }
-
-    private static Finding[] SuppressSecondaryElementFindings(IReadOnlyList<Finding> findings)
-    {
-        HashSet<string> missingIdentityTargets = findings
-            .Where(static finding => finding.RootCause == RootCauseCode.MissingStableIdentity && finding.ElementKey is not null)
-            .Select(static finding => finding.ElementKey!.Value.ToString())
-            .ToHashSet(StringComparer.Ordinal);
-
-        return findings
-            .Where(finding => finding.ElementKey is null
-                || !missingIdentityTargets.Contains(finding.ElementKey.Value.ToString())
-                || finding.RootCause == RootCauseCode.MissingStableIdentity)
             .ToArray();
     }
 
@@ -533,6 +539,16 @@ internal sealed class TestabilityScoringPipeline
         return element.Identity.Source is IdentitySource.AutomationId or IdentitySource.FrameworkStableId;
     }
 
+    private static bool HasReadablePreconditionPattern(UiElement element)
+    {
+        return element.Availability.IsAvailable && (element.Patterns.Value & SupportedPatterns.ReadableValue) != 0;
+    }
+
+    private static bool HasSettablePreconditionPattern(UiElement element)
+    {
+        return element.Availability.IsAvailable && (element.Patterns.Value & SupportedPatterns.Invoke) != 0;
+    }
+
     private static int UniqueKeyCount(IReadOnlyList<UiElement> elements)
     {
         return elements.Select(static element => element.Key.ToString()).Distinct(StringComparer.Ordinal).Count();
@@ -555,7 +571,28 @@ internal sealed class TestabilityScoringPipeline
             AcquisitionConfidence.High => ScoreConfidence.High,
             AcquisitionConfidence.Medium => ScoreConfidence.Medium,
             _ => ScoreConfidence.Low,
-        }).Max();
+        }).Aggregate(ScoreConfidence.High, LowerConfidence);
+    }
+
+    private static ScoreConfidence LowerConfidence(ScoreConfidence first, ScoreConfidence second)
+    {
+        return ConfidenceRank(first) <= ConfidenceRank(second) ? first : second;
+    }
+
+    private static bool IsAtLeastConfidence(ScoreConfidence actual, ScoreConfidence minimum)
+    {
+        return ConfidenceRank(actual) >= ConfidenceRank(minimum);
+    }
+
+    private static int ConfidenceRank(ScoreConfidence confidence)
+    {
+        return confidence switch
+        {
+            ScoreConfidence.High => 3,
+            ScoreConfidence.Medium => 2,
+            ScoreConfidence.Low => 1,
+            _ => 0,
+        };
     }
 
     private readonly record struct Aggregate(int ScoreBp, int UsedWeightBp, int UnknownWeightBp);

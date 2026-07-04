@@ -3,7 +3,7 @@ namespace Surveyor.Domain.Model;
 /// <summary>
 /// UI 要素の種類を表します。
 /// </summary>
-internal enum ControlKind
+public enum ControlKind
 {
     /// <summary>
     /// ウィンドウを表します。

@@ -3,7 +3,7 @@ namespace Surveyor.Domain.Model;
 /// <summary>
 /// UI 要素の同一性素材と出所を表します。
 /// </summary>
-internal readonly struct ElementIdentity : IEquatable<ElementIdentity>
+public readonly struct ElementIdentity : IEquatable<ElementIdentity>
 {
     /// <summary>
     /// UI 要素の同一性を初期化します。
@@ -54,9 +54,31 @@ internal readonly struct ElementIdentity : IEquatable<ElementIdentity>
     }
 
     /// <summary>
+    /// 2つの要素 identity が等しいかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の要素 identity。</param>
+    /// <param name="right">右辺の要素 identity。</param>
+    /// <returns>等しい場合は <see langword="true"/>。</returns>
+    public static bool operator ==(ElementIdentity left, ElementIdentity right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// 2つの要素 identity が異なるかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の要素 identity。</param>
+    /// <param name="right">右辺の要素 identity。</param>
+    /// <returns>異なる場合は <see langword="true"/>。</returns>
+    public static bool operator !=(ElementIdentity left, ElementIdentity right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
     /// ハッシュコードを返します。
     /// </summary>
-    /// <returns>この値オブジェクトのハッシュコード。</returns>
+    /// <returns>この要素 identity のハッシュコード。</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(Source, Material, SiblingOrdinal);

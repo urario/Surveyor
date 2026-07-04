@@ -3,7 +3,7 @@ namespace Surveyor.Domain.Model;
 /// <summary>
 /// 取得した UI 情報の信頼度を表します。
 /// </summary>
-internal enum AcquisitionConfidence
+public enum AcquisitionConfidence
 {
     /// <summary>
     /// 高い信頼度を表します。

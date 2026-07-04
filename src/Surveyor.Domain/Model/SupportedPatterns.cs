@@ -3,7 +3,7 @@ namespace Surveyor.Domain.Model;
 /// <summary>
 /// UI 要素が公開する読み取り用パターン集合を表します。
 /// </summary>
-internal readonly struct SupportedPatterns : IEquatable<SupportedPatterns>
+public readonly struct SupportedPatterns : IEquatable<SupportedPatterns>
 {
     /// <summary>
     /// UIA Invoke 相当の操作パターンを表します。
@@ -55,9 +55,31 @@ internal readonly struct SupportedPatterns : IEquatable<SupportedPatterns>
     }
 
     /// <summary>
+    /// 2つのパターン集合が等しいかを判定します。
+    /// </summary>
+    /// <param name="left">左辺のパターン集合。</param>
+    /// <param name="right">右辺のパターン集合。</param>
+    /// <returns>等しい場合は <see langword="true"/>。</returns>
+    public static bool operator ==(SupportedPatterns left, SupportedPatterns right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// 2つのパターン集合が異なるかを判定します。
+    /// </summary>
+    /// <param name="left">左辺のパターン集合。</param>
+    /// <param name="right">右辺のパターン集合。</param>
+    /// <returns>異なる場合は <see langword="true"/>。</returns>
+    public static bool operator !=(SupportedPatterns left, SupportedPatterns right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
     /// ハッシュコードを返します。
     /// </summary>
-    /// <returns>この値オブジェクトのハッシュコード。</returns>
+    /// <returns>このパターン集合のハッシュコード。</returns>
     public override int GetHashCode()
     {
         return Value.GetHashCode();

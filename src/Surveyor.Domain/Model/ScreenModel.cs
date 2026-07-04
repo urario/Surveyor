@@ -8,7 +8,7 @@ namespace Surveyor.Domain.Model;
 /// <remarks>
 /// 画面キーと要素キーは構築時に確定し、表示ラベル変更では変化しません（RQ-051、RQ-052、RQ-053）。
 /// </remarks>
-internal sealed class ScreenModel
+public sealed class ScreenModel
 {
     /// <summary>
     /// 画面モデルを初期化します。
