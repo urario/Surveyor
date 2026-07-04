@@ -12,6 +12,7 @@ public sealed class ArchitectureProjectGraphTests
             ["Surveyor.Domain"] = [],
             ["Surveyor.Application"] = ["Surveyor.Domain"],
             ["Surveyor.Policy"] = ["Surveyor.Application", "Surveyor.Domain"],
+            ["Surveyor.Policy.Tests"] = ["Surveyor.Application", "Surveyor.Domain", "Surveyor.Policy"],
             ["Surveyor.Reports"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Adapters.Discovery"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Adapters.Uia"] = ["Surveyor.Application", "Surveyor.Domain"],
@@ -32,6 +33,7 @@ public sealed class ArchitectureProjectGraphTests
             ],
             ["Surveyor.TestSupport"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Architecture.Tests"] = [],
+            ["Surveyor.Domain.Tests"] = ["Surveyor.Domain"],
         };
 
     private static readonly IReadOnlyDictionary<string, string> ExpectedRootNamespaces =
@@ -84,6 +86,8 @@ public sealed class ArchitectureProjectGraphTests
         "src/Surveyor.Reports/Surveyor.Reports.csproj",
         "tests/Surveyor.TestSupport/Surveyor.TestSupport.csproj",
         "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj",
+        "tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj",
+        "tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj",
     ];
 
     private static readonly string[] ForbiddenCoreFrameworkMarkers =

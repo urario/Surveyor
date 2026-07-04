@@ -1,1 +1,4 @@
-
+#nullable enable
+Surveyor.Policy.Sha256FallbackKeyDerivation
+Surveyor.Policy.Sha256FallbackKeyDerivation.DeriveFallbackToken(string! scope, string! rawText) -> Surveyor.Domain.Model.IdentityMaterial!
+Surveyor.Policy.Sha256FallbackKeyDerivation.Sha256FallbackKeyDerivation() -> void

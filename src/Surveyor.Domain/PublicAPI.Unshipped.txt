@@ -1,1 +1,10 @@
-
+#nullable enable
+Surveyor.Domain.Model.IdentityMaterial
+Surveyor.Domain.Model.IdentityMaterial.AlgorithmVersion.get -> string!
+Surveyor.Domain.Model.IdentityMaterial.FallbackHash.get -> string!
+Surveyor.Domain.Model.IdentityMaterial.IsFallback.get -> bool
+Surveyor.Domain.Model.IdentityMaterial.StableValue.get -> string!
+Surveyor.Domain.Model.IdentityMaterial.StructuralOrdinal.get -> int?
+static Surveyor.Domain.Model.IdentityMaterial.FallbackKeyToken(string! hashHex, string! algorithmVersion) -> Surveyor.Domain.Model.IdentityMaterial!
+static Surveyor.Domain.Model.IdentityMaterial.StableIdentity(string! value) -> Surveyor.Domain.Model.IdentityMaterial!
+static Surveyor.Domain.Model.IdentityMaterial.StructuralOrdinalMaterial(int ordinal) -> Surveyor.Domain.Model.IdentityMaterial!

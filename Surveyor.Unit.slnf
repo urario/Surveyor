@@ -7,7 +7,9 @@
       "src/Surveyor.Policy/Surveyor.Policy.csproj",
       "src/Surveyor.Reports/Surveyor.Reports.csproj",
       "tests/Surveyor.TestSupport/Surveyor.TestSupport.csproj",
-      "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj"
+      "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj",
+      "tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj",
+      "tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj"
     ]
   }
 }

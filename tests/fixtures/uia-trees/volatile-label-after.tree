@@ -1,0 +1,35 @@
+{
+  "processImageName": "legacyapp.exe",
+  "windowClass": "AfxFrameOrView140u",
+  "screenAutomationId": "MainWindow",
+  "screenLabel": "Orders - draft after",
+  "root": {
+    "source": "AutomationId",
+    "material": "RootWindow",
+    "label": "Orders - draft after",
+    "kind": "Window",
+    "availability": "Available",
+    "confidence": "High",
+    "children": [
+      {
+        "source": "AutomationId",
+        "material": "SaveButton",
+        "label": "Save draft 999",
+        "kind": "Button",
+        "availability": "Available",
+        "confidence": "High",
+        "children": []
+      },
+      {
+        "source": "FrameworkStableId",
+        "material": "1002",
+        "label": "Customer total after",
+        "kind": "Text",
+        "availability": "Unavailable",
+        "unavailableReason": "PermissionDenied",
+        "confidence": "Low",
+        "children": []
+      }
+    ]
+  }
+}

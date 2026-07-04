@@ -1,1 +1,3 @@
-
+#nullable enable
+Surveyor.Application.Ports.IFallbackKeyDerivation
+Surveyor.Application.Ports.IFallbackKeyDerivation.DeriveFallbackToken(string! scope, string! rawText) -> Surveyor.Domain.Model.IdentityMaterial!

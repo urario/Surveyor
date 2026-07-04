@@ -13,6 +13,8 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj" />
+    <Project Path="tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj" />
+    <Project Path="tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj" />
     <Project Path="tests/Surveyor.TestSupport/Surveyor.TestSupport.csproj" />
   </Folder>
 </Solution>
