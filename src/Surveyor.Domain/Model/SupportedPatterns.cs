@@ -6,6 +6,16 @@ namespace Surveyor.Domain.Model;
 internal readonly struct SupportedPatterns : IEquatable<SupportedPatterns>
 {
     /// <summary>
+    /// UIA Invoke 相当の操作パターンを表します。
+    /// </summary>
+    public const long Invoke = 1;
+
+    /// <summary>
+    /// UIA Value 相当の読み取りパターンを表します。
+    /// </summary>
+    public const long ReadableValue = 2;
+
+    /// <summary>
     /// パターンなしを表します。
     /// </summary>
     public static SupportedPatterns None { get; } = new(0);

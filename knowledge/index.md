@@ -50,6 +50,8 @@ This bundle keeps project knowledge close to the source code so agents and human
 
 * [Trace Evidence](traces/index.md) - Implementation, unit test, and integration test evidence notes.
 * [TRC-0001 ADR-0002 Spike Measurement Evidence](traces/trc-0001-adr-0002-spike-measurements.md) - Per-axis spike measurements (real MFC target, large Chromium tree, WGC failure modes) backing the ADR-0002 recommendation.
+* [IMP-0002 Scoring Skeleton Implementation](traces/imp-0002-scoring-skeleton-implementation.md) - M08 scoring skeleton implementation evidence for deterministic axis scoring, classification, root-cause de-duplication, and improvement candidate generation.
+* [UT-0002 Scoring Determinism Evidence](traces/ut-0002-scoring-determinism-evidence.md) - Unit-test evidence for scoring determinism, unavailable semantics, classification boundaries, config validation, and no fabricated priority.
 
 # Process
 
