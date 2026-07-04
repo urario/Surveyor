@@ -8,7 +8,7 @@ namespace Surveyor.Domain.Keys;
 /// <remarks>
 /// キー素材は画面キーと構造パスから決定的に作られ、表示名を含みません（RQ-051、RQ-052、RQ-053）。
 /// </remarks>
-internal readonly struct ElementKey : IEquatable<ElementKey>
+public readonly struct ElementKey : IEquatable<ElementKey>
 {
     /// <summary>
     /// キーアルゴリズムのバージョンを表します。
@@ -96,9 +96,31 @@ internal readonly struct ElementKey : IEquatable<ElementKey>
     }
 
     /// <summary>
+    /// 2つの要素キーが等しいかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の要素キー。</param>
+    /// <param name="right">右辺の要素キー。</param>
+    /// <returns>等しい場合は <see langword="true"/>。</returns>
+    public static bool operator ==(ElementKey left, ElementKey right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// 2つの要素キーが異なるかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の要素キー。</param>
+    /// <param name="right">右辺の要素キー。</param>
+    /// <returns>異なる場合は <see langword="true"/>。</returns>
+    public static bool operator !=(ElementKey left, ElementKey right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
     /// ハッシュコードを返します。
     /// </summary>
-    /// <returns>この値オブジェクトのハッシュコード。</returns>
+    /// <returns>この要素キーのハッシュコード。</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(Digest, IsFallback, Version);

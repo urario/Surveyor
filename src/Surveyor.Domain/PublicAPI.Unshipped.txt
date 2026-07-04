@@ -1,4 +1,102 @@
 #nullable enable
+const Surveyor.Domain.Keys.ElementKey.CurrentVersion = "1" -> string!
+const Surveyor.Domain.Keys.ScreenKey.CurrentVersion = "1" -> string!
+const Surveyor.Domain.Model.SupportedPatterns.Invoke = 1 -> long
+const Surveyor.Domain.Model.SupportedPatterns.ReadableValue = 2 -> long
+override Surveyor.Domain.Keys.ElementKey.Equals(object? obj) -> bool
+override Surveyor.Domain.Keys.ElementKey.GetHashCode() -> int
+override Surveyor.Domain.Keys.ElementKey.ToString() -> string!
+override Surveyor.Domain.Keys.ScreenKey.Equals(object? obj) -> bool
+override Surveyor.Domain.Keys.ScreenKey.GetHashCode() -> int
+override Surveyor.Domain.Keys.ScreenKey.ToString() -> string!
+override Surveyor.Domain.Model.Availability.Equals(object? obj) -> bool
+override Surveyor.Domain.Model.Availability.GetHashCode() -> int
+override Surveyor.Domain.Model.BoundingRect.Equals(object? obj) -> bool
+override Surveyor.Domain.Model.BoundingRect.GetHashCode() -> int
+override Surveyor.Domain.Model.DisplayLabel.Equals(object? obj) -> bool
+override Surveyor.Domain.Model.DisplayLabel.GetHashCode() -> int
+override Surveyor.Domain.Model.ElementIdentity.Equals(object? obj) -> bool
+override Surveyor.Domain.Model.ElementIdentity.GetHashCode() -> int
+override Surveyor.Domain.Model.ScreenIdentity.Equals(object? obj) -> bool
+override Surveyor.Domain.Model.ScreenIdentity.GetHashCode() -> int
+override Surveyor.Domain.Model.ScreenStateDiscriminator.Equals(object? obj) -> bool
+override Surveyor.Domain.Model.ScreenStateDiscriminator.GetHashCode() -> int
+override Surveyor.Domain.Model.SupportedPatterns.Equals(object? obj) -> bool
+override Surveyor.Domain.Model.SupportedPatterns.GetHashCode() -> int
+static Surveyor.Domain.Keys.ElementKey.FromPath(Surveyor.Domain.Keys.ScreenKey screenKey, System.Collections.Generic.IReadOnlyList<Surveyor.Domain.Model.ElementIdentity>! path) -> Surveyor.Domain.Keys.ElementKey
+static Surveyor.Domain.Keys.ElementKey.operator !=(Surveyor.Domain.Keys.ElementKey left, Surveyor.Domain.Keys.ElementKey right) -> bool
+static Surveyor.Domain.Keys.ElementKey.operator ==(Surveyor.Domain.Keys.ElementKey left, Surveyor.Domain.Keys.ElementKey right) -> bool
+static Surveyor.Domain.Keys.ScreenKey.FromIdentity(Surveyor.Domain.Model.ScreenIdentity identity, Surveyor.Domain.Model.ScreenStateDiscriminator? state) -> Surveyor.Domain.Keys.ScreenKey
+static Surveyor.Domain.Keys.ScreenKey.operator !=(Surveyor.Domain.Keys.ScreenKey left, Surveyor.Domain.Keys.ScreenKey right) -> bool
+static Surveyor.Domain.Keys.ScreenKey.operator ==(Surveyor.Domain.Keys.ScreenKey left, Surveyor.Domain.Keys.ScreenKey right) -> bool
+static Surveyor.Domain.Model.Availability.Available.get -> Surveyor.Domain.Model.Availability
+static Surveyor.Domain.Model.Availability.operator !=(Surveyor.Domain.Model.Availability left, Surveyor.Domain.Model.Availability right) -> bool
+static Surveyor.Domain.Model.Availability.operator ==(Surveyor.Domain.Model.Availability left, Surveyor.Domain.Model.Availability right) -> bool
+static Surveyor.Domain.Model.Availability.Unavailable(Surveyor.Domain.Model.UnavailableReason reason) -> Surveyor.Domain.Model.Availability
+static Surveyor.Domain.Model.BoundingRect.operator !=(Surveyor.Domain.Model.BoundingRect left, Surveyor.Domain.Model.BoundingRect right) -> bool
+static Surveyor.Domain.Model.BoundingRect.operator ==(Surveyor.Domain.Model.BoundingRect left, Surveyor.Domain.Model.BoundingRect right) -> bool
+static Surveyor.Domain.Model.DisplayLabel.operator !=(Surveyor.Domain.Model.DisplayLabel left, Surveyor.Domain.Model.DisplayLabel right) -> bool
+static Surveyor.Domain.Model.DisplayLabel.operator ==(Surveyor.Domain.Model.DisplayLabel left, Surveyor.Domain.Model.DisplayLabel right) -> bool
+static Surveyor.Domain.Model.ElementIdentity.operator !=(Surveyor.Domain.Model.ElementIdentity left, Surveyor.Domain.Model.ElementIdentity right) -> bool
+static Surveyor.Domain.Model.ElementIdentity.operator ==(Surveyor.Domain.Model.ElementIdentity left, Surveyor.Domain.Model.ElementIdentity right) -> bool
+static Surveyor.Domain.Model.ScreenIdentity.operator !=(Surveyor.Domain.Model.ScreenIdentity left, Surveyor.Domain.Model.ScreenIdentity right) -> bool
+static Surveyor.Domain.Model.ScreenIdentity.operator ==(Surveyor.Domain.Model.ScreenIdentity left, Surveyor.Domain.Model.ScreenIdentity right) -> bool
+static Surveyor.Domain.Model.ScreenStateDiscriminator.operator !=(Surveyor.Domain.Model.ScreenStateDiscriminator left, Surveyor.Domain.Model.ScreenStateDiscriminator right) -> bool
+static Surveyor.Domain.Model.ScreenStateDiscriminator.operator ==(Surveyor.Domain.Model.ScreenStateDiscriminator left, Surveyor.Domain.Model.ScreenStateDiscriminator right) -> bool
+static Surveyor.Domain.Model.SupportedPatterns.None.get -> Surveyor.Domain.Model.SupportedPatterns
+static Surveyor.Domain.Model.SupportedPatterns.operator !=(Surveyor.Domain.Model.SupportedPatterns left, Surveyor.Domain.Model.SupportedPatterns right) -> bool
+static Surveyor.Domain.Model.SupportedPatterns.operator ==(Surveyor.Domain.Model.SupportedPatterns left, Surveyor.Domain.Model.SupportedPatterns right) -> bool
+static Surveyor.Domain.Scoring.ScoringConfig.DefaultV1() -> Surveyor.Domain.Scoring.ScoringConfig!
+Surveyor.Domain.Keys.ElementKey
+Surveyor.Domain.Keys.ElementKey.Digest.get -> string!
+Surveyor.Domain.Keys.ElementKey.ElementKey() -> void
+Surveyor.Domain.Keys.ElementKey.ElementKey(string! digest, bool isFallback, string! version) -> void
+Surveyor.Domain.Keys.ElementKey.Equals(Surveyor.Domain.Keys.ElementKey other) -> bool
+Surveyor.Domain.Keys.ElementKey.IsFallback.get -> bool
+Surveyor.Domain.Keys.ElementKey.Version.get -> string!
+Surveyor.Domain.Keys.ScreenKey
+Surveyor.Domain.Keys.ScreenKey.Digest.get -> string!
+Surveyor.Domain.Keys.ScreenKey.Equals(Surveyor.Domain.Keys.ScreenKey other) -> bool
+Surveyor.Domain.Keys.ScreenKey.IsFallback.get -> bool
+Surveyor.Domain.Keys.ScreenKey.ScreenKey() -> void
+Surveyor.Domain.Keys.ScreenKey.ScreenKey(string! digest, bool isFallback, string! version) -> void
+Surveyor.Domain.Keys.ScreenKey.Version.get -> string!
+Surveyor.Domain.Model.AcquisitionConfidence
+Surveyor.Domain.Model.AcquisitionConfidence.High = 0 -> Surveyor.Domain.Model.AcquisitionConfidence
+Surveyor.Domain.Model.AcquisitionConfidence.Low = 2 -> Surveyor.Domain.Model.AcquisitionConfidence
+Surveyor.Domain.Model.AcquisitionConfidence.Medium = 1 -> Surveyor.Domain.Model.AcquisitionConfidence
+Surveyor.Domain.Model.Availability
+Surveyor.Domain.Model.Availability.Availability() -> void
+Surveyor.Domain.Model.Availability.Equals(Surveyor.Domain.Model.Availability other) -> bool
+Surveyor.Domain.Model.Availability.IsAvailable.get -> bool
+Surveyor.Domain.Model.Availability.Reason.get -> Surveyor.Domain.Model.UnavailableReason?
+Surveyor.Domain.Model.BoundingRect
+Surveyor.Domain.Model.BoundingRect.BoundingRect() -> void
+Surveyor.Domain.Model.BoundingRect.BoundingRect(int x, int y, int width, int height) -> void
+Surveyor.Domain.Model.BoundingRect.Equals(Surveyor.Domain.Model.BoundingRect other) -> bool
+Surveyor.Domain.Model.BoundingRect.Height.get -> int
+Surveyor.Domain.Model.BoundingRect.Width.get -> int
+Surveyor.Domain.Model.BoundingRect.X.get -> int
+Surveyor.Domain.Model.BoundingRect.Y.get -> int
+Surveyor.Domain.Model.ControlKind
+Surveyor.Domain.Model.ControlKind.Button = 1 -> Surveyor.Domain.Model.ControlKind
+Surveyor.Domain.Model.ControlKind.Custom = 3 -> Surveyor.Domain.Model.ControlKind
+Surveyor.Domain.Model.ControlKind.Text = 2 -> Surveyor.Domain.Model.ControlKind
+Surveyor.Domain.Model.ControlKind.Unknown = 4 -> Surveyor.Domain.Model.ControlKind
+Surveyor.Domain.Model.ControlKind.Window = 0 -> Surveyor.Domain.Model.ControlKind
+Surveyor.Domain.Model.DisplayLabel
+Surveyor.Domain.Model.DisplayLabel.DisplayLabel() -> void
+Surveyor.Domain.Model.DisplayLabel.DisplayLabel(string! value, bool isSensitive = true) -> void
+Surveyor.Domain.Model.DisplayLabel.Equals(Surveyor.Domain.Model.DisplayLabel other) -> bool
+Surveyor.Domain.Model.DisplayLabel.IsSensitive.get -> bool
+Surveyor.Domain.Model.DisplayLabel.Value.get -> string!
+Surveyor.Domain.Model.ElementIdentity
+Surveyor.Domain.Model.ElementIdentity.ElementIdentity() -> void
+Surveyor.Domain.Model.ElementIdentity.ElementIdentity(Surveyor.Domain.Model.IdentitySource source, Surveyor.Domain.Model.IdentityMaterial! material, int? siblingOrdinal = null) -> void
+Surveyor.Domain.Model.ElementIdentity.Equals(Surveyor.Domain.Model.ElementIdentity other) -> bool
+Surveyor.Domain.Model.ElementIdentity.Material.get -> Surveyor.Domain.Model.IdentityMaterial!
+Surveyor.Domain.Model.ElementIdentity.SiblingOrdinal.get -> int?
+Surveyor.Domain.Model.ElementIdentity.Source.get -> Surveyor.Domain.Model.IdentitySource
 Surveyor.Domain.Model.IdentityMaterial
 Surveyor.Domain.Model.IdentityMaterial.AlgorithmVersion.get -> string!
 Surveyor.Domain.Model.IdentityMaterial.FallbackHash.get -> string!
@@ -8,3 +106,291 @@ Surveyor.Domain.Model.IdentityMaterial.StructuralOrdinal.get -> int?
 static Surveyor.Domain.Model.IdentityMaterial.FallbackKeyToken(string! hashHex, string! algorithmVersion) -> Surveyor.Domain.Model.IdentityMaterial!
 static Surveyor.Domain.Model.IdentityMaterial.StableIdentity(string! value) -> Surveyor.Domain.Model.IdentityMaterial!
 static Surveyor.Domain.Model.IdentityMaterial.StructuralOrdinalMaterial(int ordinal) -> Surveyor.Domain.Model.IdentityMaterial!
+Surveyor.Domain.Model.IdentitySource
+Surveyor.Domain.Model.IdentitySource.AutomationId = 0 -> Surveyor.Domain.Model.IdentitySource
+Surveyor.Domain.Model.IdentitySource.FallbackHash = 2 -> Surveyor.Domain.Model.IdentitySource
+Surveyor.Domain.Model.IdentitySource.FrameworkStableId = 1 -> Surveyor.Domain.Model.IdentitySource
+Surveyor.Domain.Model.IdentitySource.StructuralOrdinal = 3 -> Surveyor.Domain.Model.IdentitySource
+Surveyor.Domain.Model.ScreenIdentity
+Surveyor.Domain.Model.ScreenIdentity.Equals(Surveyor.Domain.Model.ScreenIdentity other) -> bool
+Surveyor.Domain.Model.ScreenIdentity.Material.get -> Surveyor.Domain.Model.IdentityMaterial!
+Surveyor.Domain.Model.ScreenIdentity.NormalizedWindowClass.get -> string!
+Surveyor.Domain.Model.ScreenIdentity.ProcessImageName.get -> string!
+Surveyor.Domain.Model.ScreenIdentity.Role.get -> Surveyor.Domain.Model.ScreenRole
+Surveyor.Domain.Model.ScreenIdentity.ScreenIdentity() -> void
+Surveyor.Domain.Model.ScreenIdentity.ScreenIdentity(string! processImageName, string! normalizedWindowClass, Surveyor.Domain.Model.ScreenRole role, Surveyor.Domain.Model.IdentitySource source, Surveyor.Domain.Model.IdentityMaterial! material) -> void
+Surveyor.Domain.Model.ScreenIdentity.Source.get -> Surveyor.Domain.Model.IdentitySource
+Surveyor.Domain.Model.ScreenModel
+Surveyor.Domain.Model.ScreenModel.ElementsInStableOrder.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Domain.Model.UiElement!>!
+Surveyor.Domain.Model.ScreenModel.Identity.get -> Surveyor.Domain.Model.ScreenIdentity
+Surveyor.Domain.Model.ScreenModel.Key.get -> Surveyor.Domain.Keys.ScreenKey
+Surveyor.Domain.Model.ScreenModel.Label.get -> Surveyor.Domain.Model.DisplayLabel
+Surveyor.Domain.Model.ScreenModel.Root.get -> Surveyor.Domain.Model.UiElement!
+Surveyor.Domain.Model.ScreenModel.ScreenModel(Surveyor.Domain.Keys.ScreenKey key, Surveyor.Domain.Model.ScreenIdentity identity, Surveyor.Domain.Model.ScreenStateDiscriminator? state, Surveyor.Domain.Model.DisplayLabel label, Surveyor.Domain.Model.UiElement! root) -> void
+Surveyor.Domain.Model.ScreenModel.State.get -> Surveyor.Domain.Model.ScreenStateDiscriminator?
+Surveyor.Domain.Model.ScreenRole
+Surveyor.Domain.Model.ScreenRole.Dialog = 1 -> Surveyor.Domain.Model.ScreenRole
+Surveyor.Domain.Model.ScreenRole.MdiChild = 2 -> Surveyor.Domain.Model.ScreenRole
+Surveyor.Domain.Model.ScreenRole.Pane = 4 -> Surveyor.Domain.Model.ScreenRole
+Surveyor.Domain.Model.ScreenRole.Tab = 3 -> Surveyor.Domain.Model.ScreenRole
+Surveyor.Domain.Model.ScreenRole.TopLevel = 0 -> Surveyor.Domain.Model.ScreenRole
+Surveyor.Domain.Model.ScreenStateDiscriminator
+Surveyor.Domain.Model.ScreenStateDiscriminator.Equals(Surveyor.Domain.Model.ScreenStateDiscriminator other) -> bool
+Surveyor.Domain.Model.ScreenStateDiscriminator.ScreenStateDiscriminator() -> void
+Surveyor.Domain.Model.ScreenStateDiscriminator.ScreenStateDiscriminator(Surveyor.Domain.Model.IdentityMaterial! stateMaterial, Surveyor.Domain.Model.DisplayLabel stateLabel) -> void
+Surveyor.Domain.Model.ScreenStateDiscriminator.StateLabel.get -> Surveyor.Domain.Model.DisplayLabel
+Surveyor.Domain.Model.ScreenStateDiscriminator.StateMaterial.get -> Surveyor.Domain.Model.IdentityMaterial!
+Surveyor.Domain.Model.SupportedPatterns
+Surveyor.Domain.Model.SupportedPatterns.Equals(Surveyor.Domain.Model.SupportedPatterns other) -> bool
+Surveyor.Domain.Model.SupportedPatterns.SupportedPatterns() -> void
+Surveyor.Domain.Model.SupportedPatterns.SupportedPatterns(long value) -> void
+Surveyor.Domain.Model.SupportedPatterns.Value.get -> long
+Surveyor.Domain.Model.UiElement
+Surveyor.Domain.Model.UiElement.Availability.get -> Surveyor.Domain.Model.Availability
+Surveyor.Domain.Model.UiElement.Bounds.get -> Surveyor.Domain.Model.BoundingRect?
+Surveyor.Domain.Model.UiElement.Children.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Domain.Model.UiElement!>!
+Surveyor.Domain.Model.UiElement.Confidence.get -> Surveyor.Domain.Model.AcquisitionConfidence
+Surveyor.Domain.Model.UiElement.Identity.get -> Surveyor.Domain.Model.ElementIdentity
+Surveyor.Domain.Model.UiElement.Key.get -> Surveyor.Domain.Keys.ElementKey
+Surveyor.Domain.Model.UiElement.Kind.get -> Surveyor.Domain.Model.ControlKind
+Surveyor.Domain.Model.UiElement.Label.get -> Surveyor.Domain.Model.DisplayLabel
+Surveyor.Domain.Model.UiElement.Patterns.get -> Surveyor.Domain.Model.SupportedPatterns
+Surveyor.Domain.Model.UiElement.UiElement(Surveyor.Domain.Keys.ElementKey key, Surveyor.Domain.Model.ElementIdentity identity, Surveyor.Domain.Model.DisplayLabel label, Surveyor.Domain.Model.ControlKind kind, Surveyor.Domain.Model.BoundingRect? bounds, Surveyor.Domain.Model.Availability availability, Surveyor.Domain.Model.AcquisitionConfidence confidence, System.Collections.Generic.IEnumerable<Surveyor.Domain.Model.UiElement!>! children, Surveyor.Domain.Model.SupportedPatterns patterns) -> void
+Surveyor.Domain.Model.UnavailableReason
+Surveyor.Domain.Model.UnavailableReason.NotExposed = 0 -> Surveyor.Domain.Model.UnavailableReason
+Surveyor.Domain.Model.UnavailableReason.NotRealized = 3 -> Surveyor.Domain.Model.UnavailableReason
+Surveyor.Domain.Model.UnavailableReason.Offscreen = 4 -> Surveyor.Domain.Model.UnavailableReason
+Surveyor.Domain.Model.UnavailableReason.PermissionDenied = 1 -> Surveyor.Domain.Model.UnavailableReason
+Surveyor.Domain.Model.UnavailableReason.Timeout = 2 -> Surveyor.Domain.Model.UnavailableReason
+Surveyor.Domain.Model.UnavailableReason.Unknown = 5 -> Surveyor.Domain.Model.UnavailableReason
+Surveyor.Domain.Scoring.AxisApplicability
+Surveyor.Domain.Scoring.AxisApplicability.Applicable = 0 -> Surveyor.Domain.Scoring.AxisApplicability
+Surveyor.Domain.Scoring.AxisApplicability.NotApplicable = 1 -> Surveyor.Domain.Scoring.AxisApplicability
+Surveyor.Domain.Scoring.AxisApplicability.UnknownDueToUnavailable = 2 -> Surveyor.Domain.Scoring.AxisApplicability
+Surveyor.Domain.Scoring.AxisScore
+Surveyor.Domain.Scoring.AxisScore.Applicability.get -> Surveyor.Domain.Scoring.AxisApplicability
+Surveyor.Domain.Scoring.AxisScore.Applicability.init -> void
+Surveyor.Domain.Scoring.AxisScore.Axis.get -> Surveyor.Domain.Scoring.ScoreAxis
+Surveyor.Domain.Scoring.AxisScore.Axis.init -> void
+Surveyor.Domain.Scoring.AxisScore.AxisScore(Surveyor.Domain.Scoring.ScoreAxis Axis, Surveyor.Domain.Scoring.AxisApplicability Applicability, int? ScoreBp, Surveyor.Domain.Scoring.ScoreConfidence Confidence, System.Collections.Generic.IReadOnlyList<string!>! FindingIds, System.Collections.Generic.IReadOnlyList<string!>! EvidenceCodes) -> void
+Surveyor.Domain.Scoring.AxisScore.Confidence.get -> Surveyor.Domain.Scoring.ScoreConfidence
+Surveyor.Domain.Scoring.AxisScore.Confidence.init -> void
+Surveyor.Domain.Scoring.AxisScore.EvidenceCodes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Surveyor.Domain.Scoring.AxisScore.EvidenceCodes.init -> void
+Surveyor.Domain.Scoring.AxisScore.FindingIds.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Surveyor.Domain.Scoring.AxisScore.FindingIds.init -> void
+Surveyor.Domain.Scoring.AxisScore.ScoreBp.get -> int?
+Surveyor.Domain.Scoring.AxisScore.ScoreBp.init -> void
+Surveyor.Domain.Scoring.CandidateCode
+Surveyor.Domain.Scoring.CandidateCode.AddAccessiblePeerForCustomControl = 6 -> Surveyor.Domain.Scoring.CandidateCode
+Surveyor.Domain.Scoring.CandidateCode.AddStableAutomationIdOrPeerName = 0 -> Surveyor.Domain.Scoring.CandidateCode
+Surveyor.Domain.Scoring.CandidateCode.ExposeActionPattern = 2 -> Surveyor.Domain.Scoring.CandidateCode
+Surveyor.Domain.Scoring.CandidateCode.ExposeResultStatusOrReadableValue = 3 -> Surveyor.Domain.Scoring.CandidateCode
+Surveyor.Domain.Scoring.CandidateCode.ExposeStateSetupOrResetHook = 4 -> Surveyor.Domain.Scoring.CandidateCode
+Surveyor.Domain.Scoring.CandidateCode.HandleUnavailableSurfaceManuallyOrByAdapter = 8 -> Surveyor.Domain.Scoring.CandidateCode
+Surveyor.Domain.Scoring.CandidateCode.MakeAutomationIdentityUnique = 1 -> Surveyor.Domain.Scoring.CandidateCode
+Surveyor.Domain.Scoring.CandidateCode.ReduceCoordinateOrImageDependency = 7 -> Surveyor.Domain.Scoring.CandidateCode
+Surveyor.Domain.Scoring.CandidateCode.StabilizeScreenIdentityAndChildOrder = 5 -> Surveyor.Domain.Scoring.CandidateCode
+Surveyor.Domain.Scoring.CandidateScope
+Surveyor.Domain.Scoring.CandidateScope.Application = 2 -> Surveyor.Domain.Scoring.CandidateScope
+Surveyor.Domain.Scoring.CandidateScope.Element = 0 -> Surveyor.Domain.Scoring.CandidateScope
+Surveyor.Domain.Scoring.CandidateScope.Screen = 1 -> Surveyor.Domain.Scoring.CandidateScope
+Surveyor.Domain.Scoring.ClassThresholds
+Surveyor.Domain.Scoring.ClassThresholds.ClassThresholds(int ImmediatelyAutomatableBp, int SmallImprovementBp, int LimitedAutomationBp, int ImproveFirstBelowBp, int MaxUnknownWeightForImmediateBp, int MaxUnknownWeightForSmallImprovementBp, int MaxUnknownWeightBeforeImproveFirstBp, int MaxUnknownWeightBeforeNotEnoughEvidenceBp) -> void
+Surveyor.Domain.Scoring.ClassThresholds.ImmediatelyAutomatableBp.get -> int
+Surveyor.Domain.Scoring.ClassThresholds.ImmediatelyAutomatableBp.init -> void
+Surveyor.Domain.Scoring.ClassThresholds.ImproveFirstBelowBp.get -> int
+Surveyor.Domain.Scoring.ClassThresholds.ImproveFirstBelowBp.init -> void
+Surveyor.Domain.Scoring.ClassThresholds.LimitedAutomationBp.get -> int
+Surveyor.Domain.Scoring.ClassThresholds.LimitedAutomationBp.init -> void
+Surveyor.Domain.Scoring.ClassThresholds.MaxUnknownWeightBeforeImproveFirstBp.get -> int
+Surveyor.Domain.Scoring.ClassThresholds.MaxUnknownWeightBeforeImproveFirstBp.init -> void
+Surveyor.Domain.Scoring.ClassThresholds.MaxUnknownWeightBeforeNotEnoughEvidenceBp.get -> int
+Surveyor.Domain.Scoring.ClassThresholds.MaxUnknownWeightBeforeNotEnoughEvidenceBp.init -> void
+Surveyor.Domain.Scoring.ClassThresholds.MaxUnknownWeightForImmediateBp.get -> int
+Surveyor.Domain.Scoring.ClassThresholds.MaxUnknownWeightForImmediateBp.init -> void
+Surveyor.Domain.Scoring.ClassThresholds.MaxUnknownWeightForSmallImprovementBp.get -> int
+Surveyor.Domain.Scoring.ClassThresholds.MaxUnknownWeightForSmallImprovementBp.init -> void
+Surveyor.Domain.Scoring.ClassThresholds.SmallImprovementBp.get -> int
+Surveyor.Domain.Scoring.ClassThresholds.SmallImprovementBp.init -> void
+Surveyor.Domain.Scoring.ExpectedEffect
+Surveyor.Domain.Scoring.ExpectedEffect.ImproveObservability = 2 -> Surveyor.Domain.Scoring.ExpectedEffect
+Surveyor.Domain.Scoring.ExpectedEffect.ImproveReliability = 1 -> Surveyor.Domain.Scoring.ExpectedEffect
+Surveyor.Domain.Scoring.ExpectedEffect.ReduceMaintenanceCost = 3 -> Surveyor.Domain.Scoring.ExpectedEffect
+Surveyor.Domain.Scoring.ExpectedEffect.ReduceManualReview = 4 -> Surveyor.Domain.Scoring.ExpectedEffect
+Surveyor.Domain.Scoring.ExpectedEffect.UnlockAutomation = 0 -> Surveyor.Domain.Scoring.ExpectedEffect
+Surveyor.Domain.Scoring.Finding
+Surveyor.Domain.Scoring.Finding.AcquisitionConfidence.get -> Surveyor.Domain.Model.AcquisitionConfidence?
+Surveyor.Domain.Scoring.Finding.AcquisitionConfidence.init -> void
+Surveyor.Domain.Scoring.Finding.Availability.get -> Surveyor.Domain.Model.Availability?
+Surveyor.Domain.Scoring.Finding.Availability.init -> void
+Surveyor.Domain.Scoring.Finding.Axis.get -> Surveyor.Domain.Scoring.ScoreAxis
+Surveyor.Domain.Scoring.Finding.Axis.init -> void
+Surveyor.Domain.Scoring.Finding.Code.get -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.Finding.Code.init -> void
+Surveyor.Domain.Scoring.Finding.ElementKey.get -> Surveyor.Domain.Keys.ElementKey?
+Surveyor.Domain.Scoring.Finding.ElementKey.init -> void
+Surveyor.Domain.Scoring.Finding.Finding(string! Id, Surveyor.Domain.Scoring.FindingCode Code, Surveyor.Domain.Scoring.ScoreAxis Axis, Surveyor.Domain.Scoring.RootCauseCode RootCause, Surveyor.Domain.Scoring.FindingSeverity Severity, Surveyor.Domain.Keys.ElementKey? ElementKey, Surveyor.Domain.Model.Availability? Availability, Surveyor.Domain.Model.AcquisitionConfidence? AcquisitionConfidence, System.Collections.Generic.IReadOnlyList<string!>! RelatedFindingIds, string! RecommendationCode) -> void
+Surveyor.Domain.Scoring.Finding.Id.get -> string!
+Surveyor.Domain.Scoring.Finding.Id.init -> void
+Surveyor.Domain.Scoring.Finding.RecommendationCode.get -> string!
+Surveyor.Domain.Scoring.Finding.RecommendationCode.init -> void
+Surveyor.Domain.Scoring.Finding.RelatedFindingIds.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Surveyor.Domain.Scoring.Finding.RelatedFindingIds.init -> void
+Surveyor.Domain.Scoring.Finding.RootCause.get -> Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.Finding.RootCause.init -> void
+Surveyor.Domain.Scoring.Finding.Severity.get -> Surveyor.Domain.Scoring.FindingSeverity
+Surveyor.Domain.Scoring.Finding.Severity.init -> void
+Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.CaptureUnavailable = 17 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.CoordinateOnlyAction = 15 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.DisabledOnlyAction = 5 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.DuplicateIdentity = 1 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.FallbackOnlyIdentity = 2 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.ImageOnlyVerification = 16 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.LowAcquisitionConfidence = 14 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.MissingActionPattern = 3 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.MissingObservableResult = 6 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.MissingPreconditionState = 8 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.MissingSettablePrecondition = 9 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.NoScorableAxes = 18 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.NoStableIdentity = 0 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.NotKeyboardFocusable = 4 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.OpaqueCustomControl = 13 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.UnrealizedSubtree = 12 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.UnstableElementSet = 11 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.UnstableScreenKey = 10 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingCode.VolatileResultElement = 7 -> Surveyor.Domain.Scoring.FindingCode
+Surveyor.Domain.Scoring.FindingSeverity
+Surveyor.Domain.Scoring.FindingSeverity.Blocking = 2 -> Surveyor.Domain.Scoring.FindingSeverity
+Surveyor.Domain.Scoring.FindingSeverity.Info = 0 -> Surveyor.Domain.Scoring.FindingSeverity
+Surveyor.Domain.Scoring.FindingSeverity.Warning = 1 -> Surveyor.Domain.Scoring.FindingSeverity
+Surveyor.Domain.Scoring.ImprovementCandidate
+Surveyor.Domain.Scoring.ImprovementCandidate.AffectedElementCount.get -> int
+Surveyor.Domain.Scoring.ImprovementCandidate.AffectedElementCount.init -> void
+Surveyor.Domain.Scoring.ImprovementCandidate.Code.get -> Surveyor.Domain.Scoring.CandidateCode
+Surveyor.Domain.Scoring.ImprovementCandidate.Code.init -> void
+Surveyor.Domain.Scoring.ImprovementCandidate.ExpectedEffect.get -> Surveyor.Domain.Scoring.ExpectedEffect
+Surveyor.Domain.Scoring.ImprovementCandidate.ExpectedEffect.init -> void
+Surveyor.Domain.Scoring.ImprovementCandidate.Id.get -> string!
+Surveyor.Domain.Scoring.ImprovementCandidate.Id.init -> void
+Surveyor.Domain.Scoring.ImprovementCandidate.ImprovementCandidate(string! Id, Surveyor.Domain.Scoring.CandidateCode Code, Surveyor.Domain.Scoring.RootCauseCode RootCause, Surveyor.Domain.Scoring.ScoreAxis PrimaryAxis, Surveyor.Domain.Keys.ElementKey? TargetElementKey, int AffectedElementCount, Surveyor.Domain.Scoring.ExpectedEffect ExpectedEffect, System.Collections.Generic.IReadOnlyList<string!>! SourceFindingIds, Surveyor.Domain.Scoring.CandidateScope Scope, Surveyor.Domain.Scoring.PriorityBasis? UserSuppliedPriorityBasis) -> void
+Surveyor.Domain.Scoring.ImprovementCandidate.PrimaryAxis.get -> Surveyor.Domain.Scoring.ScoreAxis
+Surveyor.Domain.Scoring.ImprovementCandidate.PrimaryAxis.init -> void
+Surveyor.Domain.Scoring.ImprovementCandidate.RootCause.get -> Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.ImprovementCandidate.RootCause.init -> void
+Surveyor.Domain.Scoring.ImprovementCandidate.Scope.get -> Surveyor.Domain.Scoring.CandidateScope
+Surveyor.Domain.Scoring.ImprovementCandidate.Scope.init -> void
+Surveyor.Domain.Scoring.ImprovementCandidate.SourceFindingIds.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Surveyor.Domain.Scoring.ImprovementCandidate.SourceFindingIds.init -> void
+Surveyor.Domain.Scoring.ImprovementCandidate.TargetElementKey.get -> Surveyor.Domain.Keys.ElementKey?
+Surveyor.Domain.Scoring.ImprovementCandidate.TargetElementKey.init -> void
+Surveyor.Domain.Scoring.ImprovementCandidate.UserSuppliedPriorityBasis.get -> Surveyor.Domain.Scoring.PriorityBasis?
+Surveyor.Domain.Scoring.ImprovementCandidate.UserSuppliedPriorityBasis.init -> void
+Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Domain.Scoring.PriorityBand.High = 2 -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Domain.Scoring.PriorityBand.Low = 0 -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Domain.Scoring.PriorityBand.Medium = 1 -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Domain.Scoring.PriorityBand.Unspecified = 3 -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Domain.Scoring.PriorityBasis
+Surveyor.Domain.Scoring.PriorityBasis.ChangeFrequency.get -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Domain.Scoring.PriorityBasis.ChangeFrequency.init -> void
+Surveyor.Domain.Scoring.PriorityBasis.ExecutionFrequency.get -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Domain.Scoring.PriorityBasis.ExecutionFrequency.init -> void
+Surveyor.Domain.Scoring.PriorityBasis.HasJudgmentSplit.get -> bool
+Surveyor.Domain.Scoring.PriorityBasis.HasJudgmentSplit.init -> void
+Surveyor.Domain.Scoring.PriorityBasis.HasSelectionRationale.get -> bool
+Surveyor.Domain.Scoring.PriorityBasis.HasSelectionRationale.init -> void
+Surveyor.Domain.Scoring.PriorityBasis.PriorityBasis(Surveyor.Domain.Scoring.PriorityBasisSource Source, Surveyor.Domain.Scoring.PriorityBand RegressionTestCost, Surveyor.Domain.Scoring.PriorityBand ChangeFrequency, Surveyor.Domain.Scoring.PriorityBand ExecutionFrequency, Surveyor.Domain.Scoring.PriorityBand UiPatternRepresentativeness, bool HasJudgmentSplit, bool HasSelectionRationale) -> void
+Surveyor.Domain.Scoring.PriorityBasis.RegressionTestCost.get -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Domain.Scoring.PriorityBasis.RegressionTestCost.init -> void
+Surveyor.Domain.Scoring.PriorityBasis.Source.get -> Surveyor.Domain.Scoring.PriorityBasisSource
+Surveyor.Domain.Scoring.PriorityBasis.Source.init -> void
+Surveyor.Domain.Scoring.PriorityBasis.UiPatternRepresentativeness.get -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Domain.Scoring.PriorityBasis.UiPatternRepresentativeness.init -> void
+Surveyor.Domain.Scoring.PriorityBasisSource
+Surveyor.Domain.Scoring.PriorityBasisSource.AcceptedRecordedDefaults = 1 -> Surveyor.Domain.Scoring.PriorityBasisSource
+Surveyor.Domain.Scoring.PriorityBasisSource.EnteredByUser = 0 -> Surveyor.Domain.Scoring.PriorityBasisSource
+Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.RootCauseCode.AcquisitionUnavailable = 8 -> Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.RootCauseCode.CoordinateOnlyInteraction = 7 -> Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.RootCauseCode.DuplicateIdentity = 1 -> Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.RootCauseCode.MissingStableIdentity = 0 -> Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.RootCauseCode.NoSemanticActionPattern = 2 -> Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.RootCauseCode.OpaqueCustomSurface = 6 -> Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.RootCauseCode.PreconditionNotControllable = 4 -> Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.RootCauseCode.ResultNotObservable = 3 -> Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.RootCauseCode.UnstableScreenStructure = 5 -> Surveyor.Domain.Scoring.RootCauseCode
+Surveyor.Domain.Scoring.ScoreAxis
+Surveyor.Domain.Scoring.ScoreAxis.CoordinateImageDependence = 6 -> Surveyor.Domain.Scoring.ScoreAxis
+Surveyor.Domain.Scoring.ScoreAxis.CustomUiRisk = 5 -> Surveyor.Domain.Scoring.ScoreAxis
+Surveyor.Domain.Scoring.ScoreAxis.Identifiability = 0 -> Surveyor.Domain.Scoring.ScoreAxis
+Surveyor.Domain.Scoring.ScoreAxis.Operability = 1 -> Surveyor.Domain.Scoring.ScoreAxis
+Surveyor.Domain.Scoring.ScoreAxis.PreconditionControllability = 3 -> Surveyor.Domain.Scoring.ScoreAxis
+Surveyor.Domain.Scoring.ScoreAxis.ResultDeterminability = 2 -> Surveyor.Domain.Scoring.ScoreAxis
+Surveyor.Domain.Scoring.ScoreAxis.ScreenStability = 4 -> Surveyor.Domain.Scoring.ScoreAxis
+Surveyor.Domain.Scoring.ScoreConfidence
+Surveyor.Domain.Scoring.ScoreConfidence.High = 0 -> Surveyor.Domain.Scoring.ScoreConfidence
+Surveyor.Domain.Scoring.ScoreConfidence.Low = 2 -> Surveyor.Domain.Scoring.ScoreConfidence
+Surveyor.Domain.Scoring.ScoreConfidence.Medium = 1 -> Surveyor.Domain.Scoring.ScoreConfidence
+Surveyor.Domain.Scoring.ScoreConfidence.Unknown = 3 -> Surveyor.Domain.Scoring.ScoreConfidence
+Surveyor.Domain.Scoring.ScoreResult
+Surveyor.Domain.Scoring.ScoreResult.AggregateScoreBp.get -> int
+Surveyor.Domain.Scoring.ScoreResult.AggregateScoreBp.init -> void
+Surveyor.Domain.Scoring.ScoreResult.AggregateScorePercent.get -> decimal
+Surveyor.Domain.Scoring.ScoreResult.AggregateScorePercent.init -> void
+Surveyor.Domain.Scoring.ScoreResult.AxisScores.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Domain.Scoring.AxisScore!>!
+Surveyor.Domain.Scoring.ScoreResult.AxisScores.init -> void
+Surveyor.Domain.Scoring.ScoreResult.CandidateRulesVersion.get -> string!
+Surveyor.Domain.Scoring.ScoreResult.CandidateRulesVersion.init -> void
+Surveyor.Domain.Scoring.ScoreResult.Confidence.get -> Surveyor.Domain.Scoring.ScoreConfidence
+Surveyor.Domain.Scoring.ScoreResult.Confidence.init -> void
+Surveyor.Domain.Scoring.ScoreResult.ConfigVersion.get -> string!
+Surveyor.Domain.Scoring.ScoreResult.ConfigVersion.init -> void
+Surveyor.Domain.Scoring.ScoreResult.Findings.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Domain.Scoring.Finding!>!
+Surveyor.Domain.Scoring.ScoreResult.Findings.init -> void
+Surveyor.Domain.Scoring.ScoreResult.ImprovementCandidates.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Domain.Scoring.ImprovementCandidate!>!
+Surveyor.Domain.Scoring.ScoreResult.ImprovementCandidates.init -> void
+Surveyor.Domain.Scoring.ScoreResult.PriorityBasis.get -> Surveyor.Domain.Scoring.PriorityBasis?
+Surveyor.Domain.Scoring.ScoreResult.PriorityBasis.init -> void
+Surveyor.Domain.Scoring.ScoreResult.ScoreResult(Surveyor.Domain.Keys.ScreenKey ScreenKey, string! ConfigVersion, string! CandidateRulesVersion, System.Collections.Generic.IReadOnlyList<Surveyor.Domain.Scoring.AxisScore!>! AxisScores, int AggregateScoreBp, decimal AggregateScorePercent, Surveyor.Domain.Scoring.TestabilityClass TestabilityClass, Surveyor.Domain.Scoring.ScoreConfidence Confidence, System.Collections.Generic.IReadOnlyList<Surveyor.Domain.Scoring.Finding!>! Findings, System.Collections.Generic.IReadOnlyList<Surveyor.Domain.Scoring.ImprovementCandidate!>! ImprovementCandidates, Surveyor.Domain.Scoring.PriorityBasis? PriorityBasis) -> void
+Surveyor.Domain.Scoring.ScoreResult.ScreenKey.get -> Surveyor.Domain.Keys.ScreenKey
+Surveyor.Domain.Scoring.ScoreResult.ScreenKey.init -> void
+Surveyor.Domain.Scoring.ScoreResult.TestabilityClass.get -> Surveyor.Domain.Scoring.TestabilityClass
+Surveyor.Domain.Scoring.ScoreResult.TestabilityClass.init -> void
+Surveyor.Domain.Scoring.ScoringConfig
+Surveyor.Domain.Scoring.ScoringConfig.AxisWeights.get -> System.Collections.Generic.IReadOnlyDictionary<Surveyor.Domain.Scoring.ScoreAxis, int>!
+Surveyor.Domain.Scoring.ScoringConfig.AxisWeights.init -> void
+Surveyor.Domain.Scoring.ScoringConfig.CandidateRulesVersion.get -> string!
+Surveyor.Domain.Scoring.ScoringConfig.CandidateRulesVersion.init -> void
+Surveyor.Domain.Scoring.ScoringConfig.ClassThresholds.get -> Surveyor.Domain.Scoring.ClassThresholds!
+Surveyor.Domain.Scoring.ScoringConfig.ClassThresholds.init -> void
+Surveyor.Domain.Scoring.ScoringConfig.Rounding.get -> Surveyor.Domain.Scoring.ScoringRounding
+Surveyor.Domain.Scoring.ScoringConfig.Rounding.init -> void
+Surveyor.Domain.Scoring.ScoringConfig.ScoringConfig(string! Version, System.Collections.Generic.IReadOnlyDictionary<Surveyor.Domain.Scoring.ScoreAxis, int>! AxisWeights, Surveyor.Domain.Scoring.ClassThresholds! ClassThresholds, Surveyor.Domain.Scoring.SignalThresholds! SignalThresholds, Surveyor.Domain.Scoring.SignalWeights! SignalWeights, Surveyor.Domain.Scoring.ScoringRounding Rounding, string! CandidateRulesVersion) -> void
+Surveyor.Domain.Scoring.ScoringConfig.SignalThresholds.get -> Surveyor.Domain.Scoring.SignalThresholds!
+Surveyor.Domain.Scoring.ScoringConfig.SignalThresholds.init -> void
+Surveyor.Domain.Scoring.ScoringConfig.SignalWeights.get -> Surveyor.Domain.Scoring.SignalWeights!
+Surveyor.Domain.Scoring.ScoringConfig.SignalWeights.init -> void
+Surveyor.Domain.Scoring.ScoringConfig.Validate() -> void
+Surveyor.Domain.Scoring.ScoringConfig.Version.get -> string!
+Surveyor.Domain.Scoring.ScoringConfig.Version.init -> void
+Surveyor.Domain.Scoring.ScoringRounding
+Surveyor.Domain.Scoring.ScoringRounding.BasisPointHalfAwayFromZero = 0 -> Surveyor.Domain.Scoring.ScoringRounding
+Surveyor.Domain.Scoring.SignalThresholds
+Surveyor.Domain.Scoring.SignalThresholds.BasisPointThresholds.get -> System.Collections.Generic.IReadOnlyDictionary<Surveyor.Domain.Scoring.ScoreAxis, System.Collections.Generic.IReadOnlyDictionary<string!, int>!>!
+Surveyor.Domain.Scoring.SignalThresholds.BasisPointThresholds.init -> void
+Surveyor.Domain.Scoring.SignalThresholds.SignalThresholds(System.Collections.Generic.IReadOnlyDictionary<Surveyor.Domain.Scoring.ScoreAxis, System.Collections.Generic.IReadOnlyDictionary<string!, int>!>! BasisPointThresholds) -> void
+Surveyor.Domain.Scoring.SignalWeights
+Surveyor.Domain.Scoring.SignalWeights.BasisPointWeights.get -> System.Collections.Generic.IReadOnlyDictionary<Surveyor.Domain.Scoring.ScoreAxis, System.Collections.Generic.IReadOnlyDictionary<string!, int>!>!
+Surveyor.Domain.Scoring.SignalWeights.BasisPointWeights.init -> void
+Surveyor.Domain.Scoring.SignalWeights.SignalWeights(System.Collections.Generic.IReadOnlyDictionary<Surveyor.Domain.Scoring.ScoreAxis, System.Collections.Generic.IReadOnlyDictionary<string!, int>!>! BasisPointWeights) -> void
+Surveyor.Domain.Scoring.TestabilityClass
+Surveyor.Domain.Scoring.TestabilityClass.ImmediatelyAutomatable = 0 -> Surveyor.Domain.Scoring.TestabilityClass
+Surveyor.Domain.Scoring.TestabilityClass.ImproveFirst = 3 -> Surveyor.Domain.Scoring.TestabilityClass
+Surveyor.Domain.Scoring.TestabilityClass.LimitedAutomation = 2 -> Surveyor.Domain.Scoring.TestabilityClass
+Surveyor.Domain.Scoring.TestabilityClass.NotEnoughEvidence = 4 -> Surveyor.Domain.Scoring.TestabilityClass
+Surveyor.Domain.Scoring.TestabilityClass.SmallImprovement = 1 -> Surveyor.Domain.Scoring.TestabilityClass
+Surveyor.Domain.Scoring.TestabilityScorer
+Surveyor.Domain.Scoring.TestabilityScorer.Score(Surveyor.Domain.Model.ScreenModel! model, Surveyor.Domain.Scoring.ScoringConfig! config, Surveyor.Domain.Scoring.PriorityBasis? priorityBasis = null) -> Surveyor.Domain.Scoring.ScoreResult!
+Surveyor.Domain.Scoring.TestabilityScorer.TestabilityScorer() -> void

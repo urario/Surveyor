@@ -3,7 +3,7 @@ namespace Surveyor.Domain.Model;
 /// <summary>
 /// UI 要素の取得可否を表します。
 /// </summary>
-internal readonly struct Availability : IEquatable<Availability>
+public readonly struct Availability : IEquatable<Availability>
 {
     private Availability(bool isAvailable, UnavailableReason? reason)
     {
@@ -57,9 +57,31 @@ internal readonly struct Availability : IEquatable<Availability>
     }
 
     /// <summary>
+    /// 2つの取得可否値が等しいかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の取得可否値。</param>
+    /// <param name="right">右辺の取得可否値。</param>
+    /// <returns>等しい場合は <see langword="true"/>。</returns>
+    public static bool operator ==(Availability left, Availability right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// 2つの取得可否値が異なるかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の取得可否値。</param>
+    /// <param name="right">右辺の取得可否値。</param>
+    /// <returns>異なる場合は <see langword="true"/>。</returns>
+    public static bool operator !=(Availability left, Availability right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
     /// ハッシュコードを返します。
     /// </summary>
-    /// <returns>この値オブジェクトのハッシュコード。</returns>
+    /// <returns>この取得可否値のハッシュコード。</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(IsAvailable, Reason);

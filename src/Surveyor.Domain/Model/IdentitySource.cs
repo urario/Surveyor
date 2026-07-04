@@ -3,7 +3,7 @@ namespace Surveyor.Domain.Model;
 /// <summary>
 /// UI 要素または画面の同一性素材の出所を表します。
 /// </summary>
-internal enum IdentitySource
+public enum IdentitySource
 {
     /// <summary>
     /// UIA AutomationId に由来する同一性です。

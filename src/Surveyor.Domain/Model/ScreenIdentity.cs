@@ -3,7 +3,7 @@ namespace Surveyor.Domain.Model;
 /// <summary>
 /// 画面の同一性素材を表します。
 /// </summary>
-internal readonly struct ScreenIdentity : IEquatable<ScreenIdentity>
+public readonly struct ScreenIdentity : IEquatable<ScreenIdentity>
 {
     /// <summary>
     /// 画面同一性を初期化します。
@@ -84,9 +84,31 @@ internal readonly struct ScreenIdentity : IEquatable<ScreenIdentity>
     }
 
     /// <summary>
+    /// 2つの画面 identity が等しいかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の画面 identity。</param>
+    /// <param name="right">右辺の画面 identity。</param>
+    /// <returns>等しい場合は <see langword="true"/>。</returns>
+    public static bool operator ==(ScreenIdentity left, ScreenIdentity right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// 2つの画面 identity が異なるかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の画面 identity。</param>
+    /// <param name="right">右辺の画面 identity。</param>
+    /// <returns>異なる場合は <see langword="true"/>。</returns>
+    public static bool operator !=(ScreenIdentity left, ScreenIdentity right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
     /// ハッシュコードを返します。
     /// </summary>
-    /// <returns>この値オブジェクトのハッシュコード。</returns>
+    /// <returns>この画面 identity のハッシュコード。</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(ProcessImageName, NormalizedWindowClass, Role, Source, Material);

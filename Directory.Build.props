@@ -54,6 +54,11 @@
     <CollectCoverage>true</CollectCoverage>
     <CoverletOutputFormat>cobertura</CoverletOutputFormat>
     <CoverletOutput>$(MSBuildProjectDirectory)/../../artifacts/coverage/$(MSBuildProjectName)/</CoverletOutput>
+    <CoverletIncludeFilter Condition="'$(MSBuildProjectName)' == 'Surveyor.Domain.Tests'">[Surveyor.Domain]*</CoverletIncludeFilter>
+    <CoverletIncludeFilter Condition="'$(MSBuildProjectName)' == 'Surveyor.Application.Tests'">[Surveyor.Application]*</CoverletIncludeFilter>
+    <CoverletIncludeFilter Condition="'$(MSBuildProjectName)' == 'Surveyor.Policy.Tests'">[Surveyor.Policy]*</CoverletIncludeFilter>
+    <CoverletIncludeFilter Condition="'$(MSBuildProjectName)' == 'Surveyor.Reports.Tests'">[Surveyor.Reports]*</CoverletIncludeFilter>
+    <Include>$(CoverletIncludeFilter)</Include>
     <Threshold>80</Threshold>
     <ThresholdType>line</ThresholdType>
     <ThresholdStat>total</ThresholdStat>

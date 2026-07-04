@@ -8,7 +8,7 @@ namespace Surveyor.Domain.Keys;
 /// <remarks>
 /// キー素材は決定的に SHA-256 で要約され、表示名を含みません（RQ-051、RQ-052、RQ-053）。
 /// </remarks>
-internal readonly struct ScreenKey : IEquatable<ScreenKey>
+public readonly struct ScreenKey : IEquatable<ScreenKey>
 {
     /// <summary>
     /// キーアルゴリズムのバージョンを表します。
@@ -90,9 +90,31 @@ internal readonly struct ScreenKey : IEquatable<ScreenKey>
     }
 
     /// <summary>
+    /// 2つの画面キーが等しいかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の画面キー。</param>
+    /// <param name="right">右辺の画面キー。</param>
+    /// <returns>等しい場合は <see langword="true"/>。</returns>
+    public static bool operator ==(ScreenKey left, ScreenKey right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// 2つの画面キーが異なるかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の画面キー。</param>
+    /// <param name="right">右辺の画面キー。</param>
+    /// <returns>異なる場合は <see langword="true"/>。</returns>
+    public static bool operator !=(ScreenKey left, ScreenKey right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
     /// ハッシュコードを返します。
     /// </summary>
-    /// <returns>この値オブジェクトのハッシュコード。</returns>
+    /// <returns>この画面キーのハッシュコード。</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(Digest, IsFallback, Version);

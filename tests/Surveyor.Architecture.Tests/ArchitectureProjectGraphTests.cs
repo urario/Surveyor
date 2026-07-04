@@ -206,6 +206,11 @@ public sealed class ArchitectureProjectGraphTests
         Assert.Contains("<_Parameter1>Surveyor.TestSupport</_Parameter1>", propsText, StringComparison.Ordinal);
         Assert.Contains("Microsoft.CodeAnalysis.PublicApiAnalyzers", propsText, StringComparison.Ordinal);
         Assert.Contains("Microsoft.CodeAnalysis.PublicApiAnalyzers", packagesText, StringComparison.Ordinal);
+        Assert.Contains("CoverletIncludeFilter", propsText, StringComparison.Ordinal);
+        Assert.Contains("[Surveyor.Domain]*", propsText, StringComparison.Ordinal);
+        Assert.Contains("[Surveyor.Application]*", propsText, StringComparison.Ordinal);
+        Assert.Contains("[Surveyor.Policy]*", propsText, StringComparison.Ordinal);
+        Assert.Contains("[Surveyor.Reports]*", propsText, StringComparison.Ordinal);
 
         Assert.Contains("dotnet_diagnostic.CA1501.severity = error", editorConfigText, StringComparison.Ordinal);
         Assert.Contains("dotnet_diagnostic.CA1502.severity = error", editorConfigText, StringComparison.Ordinal);
@@ -268,9 +273,9 @@ public sealed class ArchitectureProjectGraphTests
     [Fact]
     public void UnitSolutionFilterContainsOnlyCoreLaneProjects()
     {
-        string filterText = File.ReadAllText(Path.Combine(RepositoryRoot, "Surveyor.Unit.slnf"));
+        string filterText = File.ReadAllText(Path.Combine(RepositoryRoot, "eng", "Surveyor.Unit.slnf"));
 
-        Assert.Contains("\"path\": \"Surveyor.slnx\"", filterText, StringComparison.Ordinal);
+        Assert.Contains("\"path\": \"../Surveyor.slnx\"", filterText, StringComparison.Ordinal);
         foreach (string project in UnitSolutionFilterProjects)
         {
             Assert.Contains(project, filterText, StringComparison.Ordinal);

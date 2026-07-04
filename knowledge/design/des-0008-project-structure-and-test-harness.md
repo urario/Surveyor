@@ -74,6 +74,8 @@ Directory.Build.props           # central determinism/quality MSBuild settings (
 Directory.Packages.props        # central package versions (ManagePackageVersionsCentrally)
 .editorconfig                   # analyzer severities + code style (EnforceCodeStyleInBuild)
 .gitattributes                  # newline normalization; golden/fixture files pinned to LF
+eng/
+  Surveyor.Unit.slnf            # unit-lane solution filter kept below root so root dotnet format selects Surveyor.slnx
 src/
   Surveyor.Domain/              # M04 model + keys, M08 scoring, M11 deterministic helpers (pure)
   Surveyor.Application/         # M03 use cases, all ports incl. IClock (M11 abstraction, application-owned), request/result DTOs
@@ -218,7 +220,7 @@ Set once in `Directory.Build.props` and inherited by every project, so no projec
 | `InternalsVisibleTo` | each `src` project → `$(AssemblyName).Tests` + `Surveyor.TestSupport`, granted centrally | Internal-default accessibility policy (`CS-02` in [Coding Standards](../process/coding-standards.md)): only assembly-boundary contracts are `public`, tests reach `internal` members without visibility promotion |
 | `CodeMetricsConfig.txt` (`AdditionalFiles`) + `CA1501`/`CA1502`/`CA1505`/`CA1506` as errors | cyclomatic complexity ≤ 10, inheritance depth ≤ 5, maintainability index ≥ 20, class coupling ≤ 30 | Code-metrics thresholds enforced at build (`CS-06`); same metrics as the VS "Calculate Code Metrics" window; these rules are off by default and are enabled in `.editorconfig` |
 | `Microsoft.CodeAnalysis.PublicApiAnalyzers` + `PublicAPI.Shipped.txt`/`PublicAPI.Unshipped.txt` per `src` project | undeclared public API additions/changes are build errors | Public-surface tracking (`CS-08`) — mechanizes the internal-default policy: every `public` decision appears as a reviewable diff |
-| coverlet threshold gate (core test projects: Domain/Application/Policy/Reports) | line coverage ≥ 80% or the test run fails | Quantitative unit-test gate (`CS-07`); adapters/Presentation/App are report-only (thin real-API wrappers belong to the IT lane) |
+| coverlet threshold gate (core test projects: Domain/Application/Policy/Reports) | line coverage ≥ 80% or the test run fails; each test project filters coverage to its matching core assembly (`Surveyor.Domain.Tests` -> `Surveyor.Domain`, etc.) | Quantitative unit-test gate (`CS-07`); explicit include filters keep shared dependencies and helper assemblies from diluting a project's threshold while preserving the core-layer gate intent. Adapters/Presentation/App are report-only (thin real-API wrappers belong to the IT lane) |
 
 Supporting control files:
 
@@ -243,10 +245,10 @@ flowchart LR
   end
 ```
 
-- **Unit lane (unattended):** builds `src/**` and the `*.Tests` + `Surveyor.Architecture.Tests` projects only. It **excludes** `tests/it-fixtures/**` (especially the C++ MFC project, which needs the C++ workload) and `tests/integration/**`. All `UT` and architecture/banned-API checks are deterministic and headless. The lane also runs `dotnet format --verify-no-changes` (`CS-09`) and the coverlet core-layer coverage gate (`CS-07`). This keeps the pure-core lane green on a machine without the C++ workload or a live desktop.
+- **Unit lane (unattended):** builds `src/**` and the `*.Tests` + `Surveyor.Architecture.Tests` projects only through `eng/Surveyor.Unit.slnf`. It **excludes** `tests/it-fixtures/**` (especially the C++ MFC project, which needs the C++ workload) and `tests/integration/**`. All `UT` and architecture/banned-API checks are deterministic and headless. The lane also runs `dotnet format --verify-no-changes` (`CS-09`) from the repository root and the coverlet core-layer coverage gate (`CS-07`). Keeping the solution filter below `eng/` leaves `Surveyor.slnx` as the only root workspace, so the plain format gate is unambiguous while the pure-core lane stays available on a machine without the C++ workload or a live desktop.
 - **Integration lane (manual gate now):** builds the mixed fixture apps and `Surveyor.IntegrationTests`, run manually on the developer's local Windows 11 machine with the DPI/monitor/integrity assumptions each `IT` states. Self-hosted interactive-runner automation of the automatable subset (e.g. read-only invariants `IT-0001`, capture `IT-0003`) is revisited once the fixture app and adapters exist.
 
-Solution-folder grouping keeps `it-fixtures` and `integration` visible in `Surveyor.slnx` but a `Directory.Build.props`/solution-filter (`.slnf`) split lets the unattended lane build the unit subset without the native/interactive projects.
+Solution-folder grouping keeps `it-fixtures` and `integration` visible in `Surveyor.slnx`, while the `eng/Surveyor.Unit.slnf` solution filter lets the unattended lane build the unit subset without the native/interactive projects.
 
 ## Test Harness: Unit Fixtures And Mixed Integration Fixture App
 

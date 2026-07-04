@@ -8,7 +8,7 @@ namespace Surveyor.Domain.Model;
 /// <remarks>
 /// キーは構築時に確定し、表示名や raw text から再計算されません（RQ-051、RQ-052、RQ-053）。
 /// </remarks>
-internal sealed class UiElement
+public sealed class UiElement
 {
     /// <summary>
     /// UI 要素を初期化します。

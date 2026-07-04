@@ -1,6 +1,6 @@
 {
   "solution": {
-    "path": "Surveyor.slnx",
+    "path": "../Surveyor.slnx",
     "projects": [
       "src/Surveyor.Domain/Surveyor.Domain.csproj",
       "src/Surveyor.Application/Surveyor.Application.csproj",

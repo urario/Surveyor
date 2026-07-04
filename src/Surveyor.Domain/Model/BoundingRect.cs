@@ -3,7 +3,7 @@ namespace Surveyor.Domain.Model;
 /// <summary>
 /// DPI 正規化済みの矩形を表します。
 /// </summary>
-internal readonly struct BoundingRect : IEquatable<BoundingRect>
+public readonly struct BoundingRect : IEquatable<BoundingRect>
 {
     /// <summary>
     /// 矩形を初期化します。
@@ -61,9 +61,31 @@ internal readonly struct BoundingRect : IEquatable<BoundingRect>
     }
 
     /// <summary>
+    /// 2つの矩形が等しいかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の矩形。</param>
+    /// <param name="right">右辺の矩形。</param>
+    /// <returns>等しい場合は <see langword="true"/>。</returns>
+    public static bool operator ==(BoundingRect left, BoundingRect right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// 2つの矩形が異なるかを判定します。
+    /// </summary>
+    /// <param name="left">左辺の矩形。</param>
+    /// <param name="right">右辺の矩形。</param>
+    /// <returns>異なる場合は <see langword="true"/>。</returns>
+    public static bool operator !=(BoundingRect left, BoundingRect right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
     /// ハッシュコードを返します。
     /// </summary>
-    /// <returns>この値オブジェクトのハッシュコード。</returns>
+    /// <returns>この矩形のハッシュコード。</returns>
     public override int GetHashCode()
     {
         return HashCode.Combine(X, Y, Width, Height);

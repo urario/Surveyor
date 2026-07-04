@@ -47,6 +47,44 @@ public sealed class DomainValueObjectContractTests
         Assert.False(elementIdentity.Equals(new object()));
     }
 
+    [Fact(DisplayName = "公開値オブジェクトの等価演算子は Equals と一致する (RQ-051/RQ-053)")]
+    public void PublicValueObjectOperatorsMatchEquals()
+    {
+        DisplayLabel label = new("Orders", false);
+        BoundingRect bounds = new(1, 2, 30, 40);
+        SupportedPatterns patterns = new(SupportedPatterns.Invoke);
+        Availability availability = Availability.Available;
+        IdentityMaterial stateMaterial = IdentityMaterial.StableIdentity("state-a");
+        ScreenStateDiscriminator state = new(
+            stateMaterial,
+            new DisplayLabel("State A", false));
+        IdentityMaterial screenMaterial = IdentityMaterial.StableIdentity("screen-a");
+        ScreenIdentity screenIdentity = NewScreenIdentity("Target.exe", "MainWindow", ScreenRole.TopLevel, screenMaterial);
+        ScreenKey screenKey = ScreenKey.FromIdentity(screenIdentity, state);
+        IdentityMaterial elementMaterial = IdentityMaterial.StableIdentity("button-a");
+        ElementIdentity elementIdentity = new(IdentitySource.AutomationId, elementMaterial);
+        ElementKey elementKey = ElementKey.FromPath(screenKey, [elementIdentity]);
+
+        Assert.True(label == new DisplayLabel("Orders", false));
+        Assert.True(label != new DisplayLabel("Other", false));
+        Assert.True(bounds == new BoundingRect(1, 2, 30, 40));
+        Assert.True(bounds != new BoundingRect(1, 2, 30, 41));
+        Assert.True(patterns == new SupportedPatterns(SupportedPatterns.Invoke));
+        Assert.True(patterns != SupportedPatterns.None);
+        Assert.True(availability == Availability.Available);
+        Assert.True(availability != Availability.Unavailable(UnavailableReason.Timeout));
+        Assert.True(state == new ScreenStateDiscriminator(stateMaterial, new DisplayLabel("State A", false)));
+        Assert.True(state != new ScreenStateDiscriminator(IdentityMaterial.StableIdentity("state-b"), new DisplayLabel("State B", false)));
+        Assert.True(screenIdentity == NewScreenIdentity("Target.exe", "MainWindow", ScreenRole.TopLevel, screenMaterial));
+        Assert.True(screenIdentity != NewScreenIdentity("Other.exe", "MainWindow", ScreenRole.TopLevel));
+        Assert.True(screenKey == ScreenKey.FromIdentity(screenIdentity, state));
+        Assert.True(screenKey != ScreenKey.FromIdentity(screenIdentity, null));
+        Assert.True(elementIdentity == new ElementIdentity(IdentitySource.AutomationId, elementMaterial));
+        Assert.True(elementIdentity != new ElementIdentity(IdentitySource.AutomationId, IdentityMaterial.StableIdentity("button-b")));
+        Assert.True(elementKey == ElementKey.FromPath(screenKey, [elementIdentity]));
+        Assert.True(elementKey != ElementKey.FromPath(screenKey, [new ElementIdentity(IdentitySource.AutomationId, IdentityMaterial.StableIdentity("button-b"))]));
+    }
+
     [Fact(DisplayName = "IdentityMaterial は安定ID・fallback・構造順序のguardを保持する (RQ-051/RQ-052)")]
     public void IdentityMaterialFactoriesNormalizeAndValidateContracts()
     {

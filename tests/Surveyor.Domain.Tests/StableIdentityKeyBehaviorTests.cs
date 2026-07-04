@@ -73,10 +73,12 @@ public sealed class StableIdentityKeyBehaviorTests
         startInfo.ArgumentList.Add("test");
         startInfo.ArgumentList.Add(DomainModelFixture.ProjectPath());
         startInfo.ArgumentList.Add("--no-build");
+        startInfo.ArgumentList.Add("--no-restore");
         startInfo.ArgumentList.Add("--filter");
         startInfo.ArgumentList.Add("FullyQualifiedName~StableIdentityKeyBehaviorTests.StableInputKeysAreEqualAcrossFreshProcess");
         startInfo.ArgumentList.Add("--logger");
         startInfo.ArgumentList.Add("console;verbosity=minimal");
+        startInfo.ArgumentList.Add("/p:CollectCoverage=false");
         startInfo.Environment["SURVEYOR_DOMAIN_KEY_PROBE"] = "1";
         startInfo.Environment["SURVEYOR_DOMAIN_KEY_PROBE_OUTPUT"] = outputPath;
 
