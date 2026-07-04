@@ -23,10 +23,10 @@ internal readonly struct ElementKey : IEquatable<ElementKey>
     /// <param name="version">キーアルゴリズムのバージョン。</param>
     public ElementKey(string digest, bool isFallback, string version)
     {
-        ScreenKey screenKey = new(digest, isFallback, version);
-        Digest = screenKey.Digest;
-        IsFallback = screenKey.IsFallback;
-        Version = screenKey.Version;
+        KeyDigest.Validate(digest);
+        Digest = digest;
+        IsFallback = isFallback;
+        Version = version;
     }
 
     /// <summary>

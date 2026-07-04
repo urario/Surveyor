@@ -9,7 +9,7 @@ namespace Surveyor.Policy.Tests;
 public sealed class FallbackKeyDerivationContractTests
 {
     [Fact(DisplayName = "fallback-key は非可逆で fresh process でも同値になる (RQ-051/RQ-052)")]
-    public void FallbackKeyIsNonReversibleAndEqualAcrossFreshProcess()
+    public void FallbackKeyIsNonReversibleAndStableAcrossFreshProcess()
     {
         const string probeVariable = "SURVEYOR_POLICY_KEY_PROBE";
         if (string.Equals(Environment.GetEnvironmentVariable(probeVariable), "1", StringComparison.Ordinal))
@@ -22,17 +22,28 @@ public sealed class FallbackKeyDerivationContractTests
         Sha256FallbackKeyDerivation derivation = new();
         Assert.IsAssignableFrom<IFallbackKeyDerivation>(derivation);
         IdentityMaterial token = derivation.DeriveFallbackToken(fixture.Scope, fixture.RawNameBefore);
-        IdentityMaterial whitespaceEquivalent = derivation.DeriveFallbackToken(fixture.Scope, fixture.RawNameAfterWhitespaceCollapse);
         string outputPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.fallback");
         using Process process = StartProbeProcess(outputPath);
 
         Assert.True(token.IsFallback);
-        Assert.Equal(token.FallbackHash, whitespaceEquivalent.FallbackHash);
         Assert.DoesNotContain("SENTINEL", token.FallbackHash, StringComparison.Ordinal);
         Assert.DoesNotContain("CLIENT", token.FallbackHash, StringComparison.Ordinal);
         Assert.True(process.WaitForExit(30000), "Fresh process fallback probe timed out.");
         Assert.Equal(0, process.ExitCode);
         Assert.Equal(token.FallbackHash, File.ReadAllText(outputPath));
+    }
+
+    [Fact(DisplayName = "fallback-key は v1 で空白を畳み込み scope の差分を保持する (RQ-051/RQ-052)")]
+    public void FallbackKeyCollapsesWhitespaceAndKeepsScopeBoundary()
+    {
+        FallbackFixture fixture = FallbackFixture.Load();
+        Sha256FallbackKeyDerivation derivation = new();
+        IdentityMaterial token = derivation.DeriveFallbackToken(fixture.Scope, fixture.RawNameBefore);
+        IdentityMaterial whitespaceEquivalent = derivation.DeriveFallbackToken(fixture.Scope, fixture.RawNameAfterWhitespaceCollapse);
+        IdentityMaterial differentScope = derivation.DeriveFallbackToken(fixture.Scope + "-alternate", fixture.RawNameAfterWhitespaceCollapse);
+
+        Assert.Equal(token.FallbackHash, whitespaceEquivalent.FallbackHash);
+        Assert.NotEqual(token.FallbackHash, differentScope.FallbackHash);
     }
 
     private static Process StartProbeProcess(string outputPath)
@@ -45,7 +56,7 @@ public sealed class FallbackKeyDerivationContractTests
         startInfo.ArgumentList.Add(FallbackFixture.ProjectPath());
         startInfo.ArgumentList.Add("--no-build");
         startInfo.ArgumentList.Add("--filter");
-        startInfo.ArgumentList.Add("FullyQualifiedName~FallbackKeyDerivationContractTests.FallbackKeyIsNonReversibleAndEqualAcrossFreshProcess");
+        startInfo.ArgumentList.Add("FullyQualifiedName~FallbackKeyDerivationContractTests.FallbackKeyIsNonReversibleAndStableAcrossFreshProcess");
         startInfo.ArgumentList.Add("--logger");
         startInfo.ArgumentList.Add("console;verbosity=minimal");
         startInfo.Environment["SURVEYOR_POLICY_KEY_PROBE"] = "1";

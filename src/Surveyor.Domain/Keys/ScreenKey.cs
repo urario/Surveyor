@@ -23,7 +23,7 @@ internal readonly struct ScreenKey : IEquatable<ScreenKey>
     /// <param name="version">キーアルゴリズムのバージョン。</param>
     public ScreenKey(string digest, bool isFallback, string version)
     {
-        ValidateDigest(digest);
+        KeyDigest.Validate(digest);
         Digest = digest;
         IsFallback = isFallback;
         Version = version;
@@ -96,14 +96,5 @@ internal readonly struct ScreenKey : IEquatable<ScreenKey>
     public override int GetHashCode()
     {
         return HashCode.Combine(Digest, IsFallback, Version);
-    }
-
-    private static void ValidateDigest(string digest)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(digest);
-        if (digest.Length != 32 || digest.Any(static character => !Uri.IsHexDigit(character) || char.IsUpper(character)))
-        {
-            throw new ArgumentException(null, nameof(digest));
-        }
     }
 }
