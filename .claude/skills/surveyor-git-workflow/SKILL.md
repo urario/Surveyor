@@ -20,6 +20,7 @@ Use this skill for branch creation, staging, commit message proposals, PR prepar
 - Write PR descriptions in Japanese, following `.github/pull_request_template.md`; fill every section and mark non-applicable ones as `N/A`. Keep identifiers (`RQ-xxx`, `DES-xxxx`, ...), Project field names, commands, and code in their original form.
 - Crystallize a self-review in the "自己レビュー" section: record concerns found and how they were resolved or left, plus deliberate trade-offs — not just checkboxes. Confirm requirement/design alignment, layer boundaries, read-only (`RQ-048`), determinism (`RQ-051`), and confidentiality (`RQ-052`).
 - For implementation PRs (`feat` / `fix` / `refactor`), include quantitative quality-gate evidence per `CS-01`–`CS-10` and DES-0008: build (warnings-as-errors), unit test counts/results with core-layer coverage (`CS-07` ≥ 80%), architecture tests, and `dotnet format --verify-no-changes` (`CS-09`).
+- When `CS-10` is in scope, use `knowledge/process/stryker-workflow.md` as the canonical restore/run/evidence flow. Include the exact Stryker command, the target layers, the recorded score, and the trace link in the PR. Scores below 80% are non-blocking baseline evidence unless the governing Issue says otherwise, but the PR must still name the surviving-mutant concentration and improvement candidates or follow-up Issue.
 
 ## Workflow
 
@@ -34,4 +35,3 @@ See [Git Policy — PR 本文の記載ルール](../../../knowledge/process/git-
 ## Local Guardrails
 
 Use `tools/git/Install-GitHooks.ps1` to configure `.githooks/` locally. Hooks block commits and pushes on `main`, but GitHub branch protection should also be configured.
-
