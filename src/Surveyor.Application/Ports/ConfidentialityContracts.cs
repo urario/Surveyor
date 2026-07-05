@@ -51,7 +51,7 @@ public sealed record OptOutRequest(string ReasonCode);
 /// <summary>
 /// 機密ポリシーの判定要求を表します。
 /// </summary>
-/// <param name="RequestedAtUtc">要求時刻（UTC）。判定は決定的で、この値を判定時刻に用います（RQ-051）。</param>
+/// <param name="RequestedAtUtc">要求時刻。判定は決定的で、この値を判定時刻に用います。実装は UTC へ正規化して <see cref="ConfidentialityDecision.DecidedAtUtc"/> に記録します（RQ-051）。</param>
 /// <param name="RequestedMode">要求する機密モード。</param>
 /// <param name="DecisionSource">判定ソース（<c>Default</c> / <c>UserConfirmed</c> / <c>TestFixture</c>）。空にはできません。</param>
 /// <param name="OptOut">明示 opt-out 要求。<see cref="ConfidentialityMode.ExplicitLocalOptOut"/> のときは必須です。</param>

@@ -131,6 +131,20 @@ public sealed class ConfidentialityPolicyDecisionTests
         Assert.True(policy.RequiresTextMasking(protectedLocal, ConfidentialityTarget.Diagnostics));
     }
 
+    [Fact(DisplayName = "RequestedAtUtc はオフセット付きでも UTC へ正規化される (RQ-051 契約整合)")]
+    public void RequestedTimestampIsNormalizedToUtc()
+    {
+        ConfidentialityPolicy policy = new();
+        DateTimeOffset offsetInput = new(2026, 7, 4, 21, 0, 0, TimeSpan.FromHours(9));
+
+        ConfidentialityDecision decision = policy.Decide(
+            new ConfidentialityRequest(offsetInput, ConfidentialityMode.ProtectedLocal, "Default", OptOut: null));
+
+        Assert.Equal(TimeSpan.Zero, decision.DecidedAtUtc.Offset);
+        Assert.Equal(offsetInput.ToUniversalTime(), decision.DecidedAtUtc);
+        Assert.Equal(offsetInput, decision.DecidedAtUtc); // 同一瞬間であることも保つ。
+    }
+
     [Fact(DisplayName = "エクスポート既定 (MaskedShareableExport) はマスクする")]
     public void MaskedShareableExportModeMasks()
     {

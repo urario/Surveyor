@@ -7,7 +7,15 @@ namespace Surveyor.Policy.Confidentiality;
 /// 機密テキストと例外を allowlist ベースでサニタイズします（M09 補助）。
 /// </summary>
 /// <remarks>
-/// 実行（run）ごとに 1 インスタンスを用います。マスク辞書はインスタンス内に保持し、first-seen 順で決定的に擬名を割り当てます（RQ-051、RQ-052）。
+/// <para>
+/// マスク辞書はインスタンス内に保持され、first-seen 順で決定的に擬名を割り当てます（RQ-051、RQ-052）。
+/// </para>
+/// <para>
+/// このインスタンスは実行（run）スコープでライフタイムを持ちます。<b>実行ごとに新しいインスタンスを生成すること</b>。
+/// 複数実行で共有（例: DI の singleton 登録）すると、実行間で擬名連番と辞書が持ち越され、決定性（RQ-051）と
+/// 実行間の非相関（RQ-052）が静かに壊れます。IMP-0010 で DI 配線する際は <c>Transient</c> / per-run <c>Scoped</c>
+/// として登録し、ライフタイムを保証するテストを設けること。スレッドセーフではありません。
+/// </para>
 /// </remarks>
 public sealed class SensitiveValueSanitizer : ISensitiveValueSanitizer
 {

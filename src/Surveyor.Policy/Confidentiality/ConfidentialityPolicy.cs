@@ -33,11 +33,15 @@ public sealed class ConfidentialityPolicy : IConfidentialityPolicy
             throw new ArgumentException(null, nameof(request));
         }
 
+        // RequestedAtUtc は名前どおり UTC に正規化してから記録する。オフセット付き入力でも
+        // DecidedAtUtc は常に UTC となり、決定的なままである（RQ-051）。
+        DateTimeOffset decidedAtUtc = request.RequestedAtUtc.ToUniversalTime();
+
         return request.RequestedMode switch
         {
-            ConfidentialityMode.ExplicitLocalOptOut => DecideOptOut(request),
-            ConfidentialityMode.MaskedShareableExport => DecideProtected(request, ConfidentialityMode.MaskedShareableExport),
-            ConfidentialityMode.ProtectedLocal => DecideProtected(request, ConfidentialityMode.ProtectedLocal),
+            ConfidentialityMode.ExplicitLocalOptOut => DecideOptOut(request, decidedAtUtc),
+            ConfidentialityMode.MaskedShareableExport => DecideProtected(request, ConfidentialityMode.MaskedShareableExport, decidedAtUtc),
+            ConfidentialityMode.ProtectedLocal => DecideProtected(request, ConfidentialityMode.ProtectedLocal, decidedAtUtc),
             _ => throw new ArgumentException(null, nameof(request)),
         };
     }
@@ -57,7 +61,7 @@ public sealed class ConfidentialityPolicy : IConfidentialityPolicy
         };
     }
 
-    private static ConfidentialityDecision DecideOptOut(ConfidentialityRequest request)
+    private static ConfidentialityDecision DecideOptOut(ConfidentialityRequest request, DateTimeOffset decidedAtUtc)
     {
         // opt-out は明示要求 + 理由 + 非既定ソースがそろって初めて成立する。
         if (request.OptOut is null)
@@ -74,13 +78,13 @@ public sealed class ConfidentialityPolicy : IConfidentialityPolicy
         return new ConfidentialityDecision(
             ConfidentialityMode.ExplicitLocalOptOut,
             PolicyVersionV1,
-            request.RequestedAtUtc,
+            decidedAtUtc,
             request.DecisionSource,
             request.OptOut.ReasonCode,
             OptOutTransforms);
     }
 
-    private static ConfidentialityDecision DecideProtected(ConfidentialityRequest request, ConfidentialityMode mode)
+    private static ConfidentialityDecision DecideProtected(ConfidentialityRequest request, ConfidentialityMode mode, DateTimeOffset decidedAtUtc)
     {
         // 保護系モードでは opt-out 記録を持ってはならない。
         if (request.OptOut is not null)
@@ -91,7 +95,7 @@ public sealed class ConfidentialityPolicy : IConfidentialityPolicy
         return new ConfidentialityDecision(
             mode,
             PolicyVersionV1,
-            request.RequestedAtUtc,
+            decidedAtUtc,
             request.DecisionSource,
             OptOutReasonCode: null,
             MaskAndSanitizeTransforms);

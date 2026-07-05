@@ -135,6 +135,13 @@ public interface ISensitiveValueSanitizer
     /// </summary>
     /// <param name="value">マスク対象の機密テキスト。</param>
     /// <returns>擬名と長さバケットのみを含むマスク済みテキスト。</returns>
+    /// <remarks>
+    /// 現状のテキストマスク対象は <see cref="SensitiveKind.DisplayText"/> と <see cref="SensitiveKind.WindowTitle"/> のみです。
+    /// <see cref="SensitiveKind.FallbackKeyToken"/> は <see cref="IFallbackKeyExportMapper"/>、
+    /// <see cref="SensitiveKind.ExceptionMessage"/> は <see cref="SanitizeException"/> が担い、
+    /// <see cref="SensitiveKind.FilePath"/> / <see cref="SensitiveKind.ScreenshotPixels"/> は store/export スライス（IMP-0010）の担当です。
+    /// これら未対応の種別を渡すと <see cref="ArgumentException"/> になります。
+    /// </remarks>
     /// <exception cref="ArgumentException"><see cref="SensitiveText.Kind"/> がテキストマスク対象外のときにスローされます。</exception>
     SanitizedText MaskText(SensitiveText value);
 
