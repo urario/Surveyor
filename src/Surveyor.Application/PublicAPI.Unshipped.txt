@@ -1,3 +1,42 @@
 #nullable enable
+Surveyor.Application.Ports.ConfidentialityDecision
+Surveyor.Application.Ports.ConfidentialityDecision.AppliedTransforms.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Surveyor.Application.Ports.ConfidentialityDecision.AppliedTransforms.init -> void
+Surveyor.Application.Ports.ConfidentialityDecision.ConfidentialityDecision(Surveyor.Application.Ports.ConfidentialityMode Mode, string! PolicyVersion, System.DateTimeOffset DecidedAtUtc, string! DecisionSource, string? OptOutReasonCode, System.Collections.Generic.IReadOnlyList<string!>! AppliedTransforms) -> void
+Surveyor.Application.Ports.ConfidentialityDecision.DecidedAtUtc.get -> System.DateTimeOffset
+Surveyor.Application.Ports.ConfidentialityDecision.DecidedAtUtc.init -> void
+Surveyor.Application.Ports.ConfidentialityDecision.DecisionSource.get -> string!
+Surveyor.Application.Ports.ConfidentialityDecision.DecisionSource.init -> void
+Surveyor.Application.Ports.ConfidentialityDecision.Mode.get -> Surveyor.Application.Ports.ConfidentialityMode
+Surveyor.Application.Ports.ConfidentialityDecision.Mode.init -> void
+Surveyor.Application.Ports.ConfidentialityDecision.OptOutReasonCode.get -> string?
+Surveyor.Application.Ports.ConfidentialityDecision.OptOutReasonCode.init -> void
+Surveyor.Application.Ports.ConfidentialityDecision.PolicyVersion.get -> string!
+Surveyor.Application.Ports.ConfidentialityDecision.PolicyVersion.init -> void
+Surveyor.Application.Ports.ConfidentialityMode
+Surveyor.Application.Ports.ConfidentialityMode.ExplicitLocalOptOut = 2 -> Surveyor.Application.Ports.ConfidentialityMode
+Surveyor.Application.Ports.ConfidentialityMode.MaskedShareableExport = 1 -> Surveyor.Application.Ports.ConfidentialityMode
+Surveyor.Application.Ports.ConfidentialityMode.ProtectedLocal = 0 -> Surveyor.Application.Ports.ConfidentialityMode
+Surveyor.Application.Ports.ConfidentialityRequest
+Surveyor.Application.Ports.ConfidentialityRequest.ConfidentialityRequest(System.DateTimeOffset RequestedAtUtc, Surveyor.Application.Ports.ConfidentialityMode RequestedMode, string! DecisionSource, Surveyor.Application.Ports.OptOutRequest? OptOut) -> void
+Surveyor.Application.Ports.ConfidentialityRequest.DecisionSource.get -> string!
+Surveyor.Application.Ports.ConfidentialityRequest.DecisionSource.init -> void
+Surveyor.Application.Ports.ConfidentialityRequest.OptOut.get -> Surveyor.Application.Ports.OptOutRequest?
+Surveyor.Application.Ports.ConfidentialityRequest.OptOut.init -> void
+Surveyor.Application.Ports.ConfidentialityRequest.RequestedAtUtc.get -> System.DateTimeOffset
+Surveyor.Application.Ports.ConfidentialityRequest.RequestedAtUtc.init -> void
+Surveyor.Application.Ports.ConfidentialityRequest.RequestedMode.get -> Surveyor.Application.Ports.ConfidentialityMode
+Surveyor.Application.Ports.ConfidentialityRequest.RequestedMode.init -> void
+Surveyor.Application.Ports.ConfidentialityTarget
+Surveyor.Application.Ports.ConfidentialityTarget.Diagnostics = 2 -> Surveyor.Application.Ports.ConfidentialityTarget
+Surveyor.Application.Ports.ConfidentialityTarget.LocalArtifact = 0 -> Surveyor.Application.Ports.ConfidentialityTarget
+Surveyor.Application.Ports.ConfidentialityTarget.ShareableExport = 1 -> Surveyor.Application.Ports.ConfidentialityTarget
+Surveyor.Application.Ports.IConfidentialityPolicy
+Surveyor.Application.Ports.IConfidentialityPolicy.Decide(Surveyor.Application.Ports.ConfidentialityRequest! request) -> Surveyor.Application.Ports.ConfidentialityDecision!
+Surveyor.Application.Ports.IConfidentialityPolicy.RequiresTextMasking(Surveyor.Application.Ports.ConfidentialityDecision! decision, Surveyor.Application.Ports.ConfidentialityTarget target) -> bool
 Surveyor.Application.Ports.IFallbackKeyDerivation
 Surveyor.Application.Ports.IFallbackKeyDerivation.DeriveFallbackToken(string! scope, string! rawText) -> Surveyor.Domain.Model.IdentityMaterial!
+Surveyor.Application.Ports.OptOutRequest
+Surveyor.Application.Ports.OptOutRequest.OptOutRequest(string! ReasonCode) -> void
+Surveyor.Application.Ports.OptOutRequest.ReasonCode.get -> string!
+Surveyor.Application.Ports.OptOutRequest.ReasonCode.init -> void

@@ -52,6 +52,8 @@ This bundle keeps project knowledge close to the source code so agents and human
 * [TRC-0001 ADR-0002 Spike Measurement Evidence](traces/trc-0001-adr-0002-spike-measurements.md) - Per-axis spike measurements (real MFC target, large Chromium tree, WGC failure modes) backing the ADR-0002 recommendation.
 * [IMP-0002 Scoring Skeleton Implementation](traces/imp-0002-scoring-skeleton-implementation.md) - M08 scoring skeleton implementation evidence for deterministic axis scoring, classification, root-cause de-duplication, and improvement candidate generation.
 * [UT-0002 Scoring Determinism Evidence](traces/ut-0002-scoring-determinism-evidence.md) - Unit-test evidence for scoring determinism, unavailable semantics, classification boundaries, config validation, and no fabricated priority.
+* [UT-0008 Confidentiality Policy Behavior Evidence](traces/ut-0008-confidentiality-policy-evidence.md) - Behavior-test evidence for secure-by-default confidentiality decisions, both policy branches, sanitization, and fallback-key export pseudonyms under `DES-0013`.
+* [IMP-0003 Confidentiality Policy Implementation](traces/imp-0003-confidentiality-policy-implementation.md) - M09 confidentiality policy, sensitive-value sanitizer, and fallback-key export mapper implementation evidence that turns `UT-0008` green.
 
 # Process
 

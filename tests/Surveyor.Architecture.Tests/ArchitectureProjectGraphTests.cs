@@ -310,7 +310,8 @@ public sealed class ArchitectureProjectGraphTests
             .Descendants("ProjectReference")
             .Select(reference => reference.Attribute("Include")?.Value)
             .Where(include => !string.IsNullOrWhiteSpace(include))
-            .Select(include => Path.GetFullPath(Path.Combine(projectDirectory, include!)))
+            .Select(include => include!.Replace('\\', Path.DirectorySeparatorChar))
+            .Select(include => Path.GetFullPath(Path.Combine(projectDirectory, include)))
             .Select(Path.GetFileNameWithoutExtension)
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Select(name => name!);

@@ -12,3 +12,6 @@
 bin/
 obj/
 TestResults/
+
+# Generated coverage output (coverlet, CS-07 gate)
+artifacts/
