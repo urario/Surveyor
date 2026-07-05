@@ -3,7 +3,7 @@
     <SurveyorCoreTargetFramework>net10.0</SurveyorCoreTargetFramework>
     <SurveyorWindowsTargetFramework>net10.0-windows10.0.19041.0</SurveyorWindowsTargetFramework>
     <SurveyorIsSourceProject>false</SurveyorIsSourceProject>
-    <SurveyorIsSourceProject Condition="'$(MSBuildProjectName)' == 'Surveyor.Domain' Or '$(MSBuildProjectName)' == 'Surveyor.Application' Or '$(MSBuildProjectName)' == 'Surveyor.Policy' Or '$(MSBuildProjectName)' == 'Surveyor.Reports' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Discovery' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Capture' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Store' Or '$(MSBuildProjectName)' == 'Surveyor.Presentation' Or '$(MSBuildProjectName)' == 'Surveyor.App'">true</SurveyorIsSourceProject>
+    <SurveyorIsSourceProject Condition="'$(MSBuildProjectName)' == 'Surveyor.Domain' Or '$(MSBuildProjectName)' == 'Surveyor.Application' Or '$(MSBuildProjectName)' == 'Surveyor.Policy' Or '$(MSBuildProjectName)' == 'Surveyor.Reports' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Discovery' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia.Audit' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Capture' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Store' Or '$(MSBuildProjectName)' == 'Surveyor.Presentation' Or '$(MSBuildProjectName)' == 'Surveyor.App'">true</SurveyorIsSourceProject>
 
     <!-- CS-07: core-layer test projects fail below 80% line coverage; other layers only report. -->
     <SurveyorIsCoreTestProject>false</SurveyorIsCoreTestProject>

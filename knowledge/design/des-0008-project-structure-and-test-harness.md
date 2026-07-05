@@ -82,7 +82,8 @@ src/
   Surveyor.Policy/              # M09 IConfidentialityPolicy implementation
   Surveyor.Reports/             # M10 HTML + JSON report writers
   Surveyor.Adapters.Discovery/  # M05 ITargetDiscoveryPort adapter
-  Surveyor.Adapters.Uia/        # M06 IUiTreeAcquisitionPort adapter (+ read-only spy)
+  Surveyor.Adapters.Uia.Audit/  # M06 read-only invocation audit policy (portable)
+  Surveyor.Adapters.Uia/        # M06 IUiTreeAcquisitionPort adapter (Windows raw-COM wiring)
   Surveyor.Adapters.Capture/    # M07 IScreenCapturePort adapter
   Surveyor.Adapters.Store/      # M12 IResultStore adapter
   Surveyor.Presentation/        # M02 ViewModels + presentation ports (INavigationService, IDialogService, IUiDispatcher)
@@ -123,6 +124,7 @@ Notes:
 | `Surveyor.Policy` | Interface Adapters | `M09` | `Surveyor.Policy` | `Surveyor.Application`, `Surveyor.Domain` |
 | `Surveyor.Reports` | Interface Adapters | `M10` | `Surveyor.Reports` | `Surveyor.Application`, `Surveyor.Domain` |
 | `Surveyor.Adapters.Discovery` | Interface Adapters | `M05` | `Surveyor.Adapters.Discovery` | `Surveyor.Application`, `Surveyor.Domain` |
+| `Surveyor.Adapters.Uia.Audit` | Interface Adapters | `M06` read-only audit policy | `Surveyor.Adapters.Uia.Audit` | **none** |
 | `Surveyor.Adapters.Uia` | Interface Adapters | `M06` | `Surveyor.Adapters.Uia` | `Surveyor.Application`, `Surveyor.Domain` |
 | `Surveyor.Adapters.Capture` | Interface Adapters | `M07` | `Surveyor.Adapters.Capture` | `Surveyor.Application`, `Surveyor.Domain` |
 | `Surveyor.Adapters.Store` | Interface Adapters | `M12` | `Surveyor.Adapters.Store` | `Surveyor.Application`, `Surveyor.Domain` |
@@ -141,6 +143,7 @@ flowchart TB
   Pres[Surveyor.Presentation<br/>M02 ViewModels]
   subgraph adapters[Interface Adapters]
     Disc[Surveyor.Adapters.Discovery M05]
+    UiaAudit[Surveyor.Adapters.Uia.Audit M06 audit]
     Uia[Surveyor.Adapters.Uia M06]
     Cap[Surveyor.Adapters.Capture M07]
     Store[Surveyor.Adapters.Store M12]

@@ -30,7 +30,7 @@ Canonical requirements stay in [gui-testability-analyzer-requirements.md](../../
 Primary modules ([DES-0002](des-0002-module-responsibility-basic-design.md)):
 
 - **`M05` Target Discovery** — read-only enumeration of candidate windows/processes, `HWND` resolution, permission/integrity classification, within-session stable ordering. Home: `Surveyor.Adapters.Discovery` (adapter) implementing the application-owned `ITargetDiscoveryPort`.
-- **`M06` UIA/MSAA Acquisition** — reads the target tree into the `DES-0009` model with confidence/availability markers, owns the strongest `RQ-048` read-only guarantee, populates `IdentitySource` (including rung-1 detection), and calls the `M09` `IFallbackKeyDerivation` seam when no non-sensitive identity exists. Home: `Surveyor.Adapters.Uia` implementing `IUiTreeAcquisitionPort`.
+- **`M06` UIA/MSAA Acquisition** — reads the target tree into the `DES-0009` model with confidence/availability markers, owns the strongest `RQ-048` read-only guarantee, populates `IdentitySource` (including rung-1 detection), and calls the `M09` `IFallbackKeyDerivation` seam when no non-sensitive identity exists. Home: `Surveyor.Adapters.Uia` implementing `IUiTreeAcquisitionPort`; the OS-independent invocation audit policy lives in portable `Surveyor.Adapters.Uia.Audit` so `UT-0005` remains in the fast unit lane.
 
 Not covered here: capture/DPI (`M07` → `DES-0015`); scoring of the acquired model (`M08` → `DES-0010`); confidentiality masking/storage of extracted text (`M09`/`M12` → `DES-0013`); concrete DI wiring of these adapters (`M13` → `DES-0018`). The `IClock` and DTO/diagnostics shapes are consumed as fixed by `DES-0009`/`DES-0011`.
 
