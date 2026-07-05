@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Surveyor.Adapters.Uia.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!--
+    UT-0005 (#44) は IMP-0007 (#65) 読み取り専用監査の failing-first スペックです。
+    監査ポリシー本体（許可リスト subset 判定）は OS 非依存の純ロジックなので、この
+    テストプロジェクトは portable な net10.0 として fast unit lane で実行できます。
+    実 COM spy を Windows アダプタへ結線するのは IMP-0013 / IT-0001 のスコープです。
+
+    実装ハンドオフ: IMP-0007 実装者が Surveyor.Adapters.Uia.Audit の監査型
+    (ReadOnlyAcquisitionSpy / ReadOnlyAcquisitionAudit / ReadOnlyAuditResult) を
+    portable なプロジェクトに実装し、その ProjectReference を下へ追加すると green 化します。
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

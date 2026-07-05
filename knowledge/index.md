@@ -54,6 +54,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 * [UT-0002 Scoring Determinism Evidence](traces/ut-0002-scoring-determinism-evidence.md) - Unit-test evidence for scoring determinism, unavailable semantics, classification boundaries, config validation, and no fabricated priority.
 * [UT-0008 Confidentiality Policy Behavior Evidence](traces/ut-0008-confidentiality-policy-evidence.md) - Behavior-test evidence for secure-by-default confidentiality decisions, both policy branches, sanitization, and fallback-key export pseudonyms under `DES-0013`.
 * [IMP-0003 Confidentiality Policy Implementation](traces/imp-0003-confidentiality-policy-implementation.md) - M09 confidentiality policy, sensitive-value sanitizer, and fallback-key export mapper implementation evidence that turns `UT-0008` green.
+* [UT-0005 Read-Only Acquisition Audit Behavior Evidence](traces/ut-0005-read-only-audit-evidence.md) - Failing-first behavior tests for the read-only audit spy under `DES-0014` (`RQ-048`); tests only, `IMP-0007` handed off.
 
 # Process
 
