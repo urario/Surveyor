@@ -12,6 +12,7 @@
     <Project Path="src/Surveyor.Reports/Surveyor.Reports.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Surveyor.Adapters.Uia.Tests/Surveyor.Adapters.Uia.Tests.csproj" />
     <Project Path="tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj" />
     <Project Path="tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj" />
     <Project Path="tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj" />
