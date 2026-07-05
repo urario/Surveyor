@@ -56,6 +56,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 * [IMP-0003 Confidentiality Policy Implementation](traces/imp-0003-confidentiality-policy-implementation.md) - M09 confidentiality policy, sensitive-value sanitizer, and fallback-key export mapper implementation evidence that turns `UT-0008` green.
 * [UT-0005 Read-Only Acquisition Audit Behavior Evidence](traces/ut-0005-read-only-audit-evidence.md) - Behavior tests for the read-only audit spy under `DES-0014` (`RQ-048`), with failing-first RED evidence closed by `IMP-0007`.
 * [IMP-0007 Read-Only Acquisition Audit Implementation](traces/imp-0007-read-only-audit-implementation.md) - Portable read-only acquisition audit implementation evidence that turns `UT-0005` green.
+* [IMP-0016 Stryker.NET Baseline Implementation](traces/imp-0016-stryker-baseline.md) - CS-10 implementation evidence for the pinned Stryker.NET local tool, Domain/Policy mutation baseline scores, and below-80% improvement candidates.
 
 # Process
 
@@ -68,4 +69,5 @@ This bundle keeps project knowledge close to the source code so agents and human
 * [Lifecycle Traceability](process/lifecycle-traceability.md) - Phase artifact, ID, and trace block rules.
 * [OKF Policy](process/okf-policy.md) - Local rules for OKF scope, frontmatter, and canonical sources.
 * [Quality Review Policy](process/quality-review-policy.md) - ISO/IEC 25010-oriented quality review gates for lifecycle artifacts and agents.
+* [Stryker Mutation Workflow](process/stryker-workflow.md) - Canonical restore/run/evidence flow for CS-10 mutation-score recording across local environments and agent models.
 * [TDD and Traceability](process/tdd-and-traceability.md) - Development workflow and evidence expectations.

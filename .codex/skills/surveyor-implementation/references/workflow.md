@@ -27,6 +27,9 @@
 - Confirm every new public API is genuinely boundary-crossing, carries a Japanese doc comment whose `<remarks>` names the applicable guardrail contracts, and has its `PublicAPI.Unshipped.txt` entry (`CS-08`).
 - List every new analyzer/metrics suppression added in this slice with its justification; zero suppressions is the expected default.
 - On slice completion (or per the agreed cadence), run Stryker.NET on the core layers and record the mutation score in the trace evidence (`CS-10`, target ≥ 80%).
+  Use the canonical playbook in `knowledge/process/stryker-workflow.md`.
+  Default commands: `dotnet tool restore`, then `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\stryker\Run-StrykerBaseline.ps1 -SkipVersionCheck`.
+  If the score is below 80%, treat it as non-blocking baseline evidence unless the governing Issue says otherwise, and record surviving-mutant concentration plus improvement candidates.
 - State which RQ IDs were touched.
 - State lifecycle phase and artifact IDs, or explain why PR evidence is enough.
 - State which validations were not possible locally.

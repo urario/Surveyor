@@ -12,11 +12,13 @@ Use this skill when creating or updating project knowledge in `knowledge/`.
 1. Read `knowledge/index.md` to understand the bundle structure.
 2. Read only the relevant concept files for the task.
 3. Read `knowledge/process/lifecycle-traceability.md` when the task touches requirements, design, implementation, unit tests, or integration tests.
-4. For new concept files, add YAML frontmatter with at least `type`.
-5. Prefer `title`, `description`, `resource`, `tags`, and `timestamp` when they improve retrieval.
-6. Link concepts with bundle-relative markdown links where possible.
-7. Update `knowledge/log.md` for meaningful additions or changes.
-8. Run `tools/okf/Validate-Okf.ps1`.
+4. Read `knowledge/process/github-issue-project-workflow.md` when the task touches GitHub Issue / Project workflow or task handoff rules.
+5. Read `knowledge/process/stryker-workflow.md` when the task touches `CS-10`, Stryker.NET, or mutation-score evidence.
+6. For new concept files, add YAML frontmatter with at least `type`.
+7. Prefer `title`, `description`, `resource`, `tags`, and `timestamp` when they improve retrieval.
+8. Link concepts with bundle-relative markdown links where possible.
+9. Update `knowledge/log.md` for meaningful additions or changes.
+10. Run `tools/okf/Validate-Okf.ps1`.
 
 ## Local Conventions
 
