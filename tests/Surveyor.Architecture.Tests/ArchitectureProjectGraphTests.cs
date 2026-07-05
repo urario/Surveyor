@@ -15,6 +15,7 @@ public sealed class ArchitectureProjectGraphTests
             ["Surveyor.Policy.Tests"] = ["Surveyor.Application", "Surveyor.Domain", "Surveyor.Policy"],
             ["Surveyor.Reports"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Adapters.Discovery"] = ["Surveyor.Application", "Surveyor.Domain"],
+            ["Surveyor.Adapters.Uia.Audit"] = [],
             ["Surveyor.Adapters.Uia"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Adapters.Capture"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Adapters.Store"] = ["Surveyor.Application", "Surveyor.Domain"],
@@ -34,6 +35,7 @@ public sealed class ArchitectureProjectGraphTests
             ["Surveyor.TestSupport"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Architecture.Tests"] = [],
             ["Surveyor.Domain.Tests"] = ["Surveyor.Domain"],
+            ["Surveyor.Adapters.Uia.Tests"] = ["Surveyor.Adapters.Uia.Audit"],
         };
 
     private static readonly IReadOnlyDictionary<string, string> ExpectedRootNamespaces =
@@ -61,6 +63,7 @@ public sealed class ArchitectureProjectGraphTests
         "Surveyor.Policy",
         "Surveyor.Reports",
         "Surveyor.Adapters.Discovery",
+        "Surveyor.Adapters.Uia.Audit",
         "Surveyor.Adapters.Uia",
         "Surveyor.Adapters.Capture",
         "Surveyor.Adapters.Store",
@@ -84,10 +87,12 @@ public sealed class ArchitectureProjectGraphTests
         "src/Surveyor.Application/Surveyor.Application.csproj",
         "src/Surveyor.Policy/Surveyor.Policy.csproj",
         "src/Surveyor.Reports/Surveyor.Reports.csproj",
+        "src/Surveyor.Adapters.Uia.Audit/Surveyor.Adapters.Uia.Audit.csproj",
         "tests/Surveyor.TestSupport/Surveyor.TestSupport.csproj",
         "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj",
         "tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj",
         "tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj",
+        "tests/Surveyor.Adapters.Uia.Tests/Surveyor.Adapters.Uia.Tests.csproj",
     ];
 
     private static readonly string[] ForbiddenCoreFrameworkMarkers =

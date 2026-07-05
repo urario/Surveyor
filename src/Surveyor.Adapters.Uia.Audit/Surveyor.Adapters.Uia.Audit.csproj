@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Surveyor.Adapters.Uia.Audit</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Surveyor.Adapters.Uia.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

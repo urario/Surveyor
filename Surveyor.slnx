@@ -4,6 +4,7 @@
     <Project Path="src/Surveyor.Adapters.Discovery/Surveyor.Adapters.Discovery.csproj" />
     <Project Path="src/Surveyor.Adapters.Store/Surveyor.Adapters.Store.csproj" />
     <Project Path="src/Surveyor.Adapters.Uia/Surveyor.Adapters.Uia.csproj" />
+    <Project Path="src/Surveyor.Adapters.Uia.Audit/Surveyor.Adapters.Uia.Audit.csproj" />
     <Project Path="src/Surveyor.App/Surveyor.App.csproj" />
     <Project Path="src/Surveyor.Application/Surveyor.Application.csproj" />
     <Project Path="src/Surveyor.Domain/Surveyor.Domain.csproj" />

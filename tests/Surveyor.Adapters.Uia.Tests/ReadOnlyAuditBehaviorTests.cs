@@ -71,7 +71,7 @@ public sealed class ReadOnlyAuditBehaviorTests
         "SendMessageTimeout.WM_GETTEXT",
     ];
 
-    public static TheoryData<string> ProhibitedMembers() =>
+    private static readonly string[] ProhibitedMemberIds =
     [
         "IUIAutomationInvokePattern.Invoke",
         "IUIAutomationValuePattern.SetValue",
@@ -95,10 +95,14 @@ public sealed class ReadOnlyAuditBehaviorTests
         "IUIAutomationWindowPattern.SetWindowVisualState",
     ];
 
-    public static TheoryData<string> DocumentedReadOnlyMembers()
+    public static TheoryData<string> ProhibitedMembers() => CreateTheoryData(ProhibitedMemberIds);
+
+    public static TheoryData<string> DocumentedReadOnlyMembers() => CreateTheoryData(DocumentedReadOnlyMemberIds);
+
+    private static TheoryData<string> CreateTheoryData(IEnumerable<string> memberIds)
     {
-        TheoryData<string> data = [];
-        foreach (string memberId in DocumentedReadOnlyMemberIds)
+        TheoryData<string> data = new();
+        foreach (string memberId in memberIds)
         {
             data.Add(memberId);
         }
@@ -110,7 +114,7 @@ public sealed class ReadOnlyAuditBehaviorTests
     public void ReadOnlyAcquisitionPassesAudit()
     {
         ReadOnlyAcquisitionSpy spy = new();
-        IFakeAcquisitionProvider provider = new ReadOnlyFakeAcquisitionProvider();
+        ReadOnlyFakeAcquisitionProvider provider = new();
         provider.Acquire(spy);
 
         ReadOnlyAuditResult result = new ReadOnlyAcquisitionAudit().Evaluate(spy);
