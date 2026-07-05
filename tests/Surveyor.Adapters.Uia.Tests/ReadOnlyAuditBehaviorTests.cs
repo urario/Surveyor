@@ -55,6 +55,7 @@ public sealed class ReadOnlyAuditBehaviorTests
         "IUIAutomationTreeWalker.GetFirstChildElement",
         "IUIAutomationTreeWalker.GetNextSiblingElement",
         "IUIAutomationTreeWalker.GetParentElement",
+        "IUIAutomationTreeWalker.Normalize",
         "IUIAutomationCacheRequest.AddProperty",
         "IUIAutomationCacheRequest.AddPattern",
         "IUIAutomationCacheRequest.Push",

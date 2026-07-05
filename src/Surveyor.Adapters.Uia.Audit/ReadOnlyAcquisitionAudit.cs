@@ -16,6 +16,7 @@ internal sealed class ReadOnlyAcquisitionAudit
         "IUIAutomationTreeWalker.GetFirstChildElement",
         "IUIAutomationTreeWalker.GetNextSiblingElement",
         "IUIAutomationTreeWalker.GetParentElement",
+        "IUIAutomationTreeWalker.Normalize",
         "IUIAutomationCacheRequest.AddProperty",
         "IUIAutomationCacheRequest.AddPattern",
         "IUIAutomationCacheRequest.Push",
@@ -33,18 +34,13 @@ internal sealed class ReadOnlyAcquisitionAudit
     ];
 
     private static readonly HashSet<string> ReadOnlyMemberSet = new(ReadOnlyMembers, StringComparer.Ordinal);
-    private readonly ISet<string> allowedMembers;
+    private readonly HashSet<string> allowedMembers;
 
     internal static IReadOnlyCollection<string> ReadOnlyAllowList { get; } = Array.AsReadOnly(ReadOnlyMembers);
 
     internal ReadOnlyAcquisitionAudit()
-        : this(ReadOnlyMemberSet)
     {
-    }
-
-    private ReadOnlyAcquisitionAudit(ISet<string> allowedMembers)
-    {
-        this.allowedMembers = allowedMembers;
+        allowedMembers = ReadOnlyMemberSet;
     }
 
     internal ReadOnlyAuditResult Evaluate(ReadOnlyAcquisitionSpy spy)
