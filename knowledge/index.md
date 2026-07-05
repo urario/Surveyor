@@ -56,6 +56,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 * [IMP-0003 Confidentiality Policy Implementation](traces/imp-0003-confidentiality-policy-implementation.md) - M09 confidentiality policy, sensitive-value sanitizer, and fallback-key export mapper implementation evidence that turns `UT-0008` green.
 * [UT-0005 Read-Only Acquisition Audit Behavior Evidence](traces/ut-0005-read-only-audit-evidence.md) - Behavior tests for the read-only audit spy under `DES-0014` (`RQ-048`), with failing-first RED evidence closed by `IMP-0007`.
 * [IMP-0007 Read-Only Acquisition Audit Implementation](traces/imp-0007-read-only-audit-implementation.md) - Portable read-only acquisition audit implementation evidence that turns `UT-0005` green.
+* [UT-0014 Domain / Policy Mutation-Focused Coverage Evidence](traces/ut-0014-domain-policy-mutation-coverage-evidence.md) - Focused mutation-killer behavior tests for the Domain scoring config-validation / classification branches and the Policy confidentiality, sanitizer, fallback-key export, and derivation invariants under `CS-10`.
 
 # Process
 
