@@ -179,6 +179,149 @@ public sealed class DomainValueObjectContractTests
                 null!));
     }
 
+    [Fact(DisplayName = "UT0014 stable digest has known SHA-256 first-128-bit hex output")]
+    public void UT0014StableDigestHasKnownSha256First128BitHexOutput()
+    {
+        Assert.Equal("ba7816bf8f01cfea414140de5dae2223", StableDigest.FromMaterial("abc"));
+    }
+
+    [Fact(DisplayName = "UT0014 key equality includes digest fallback flag and version")]
+    public void UT0014KeyEqualityIncludesDigestFallbackFlagAndVersion()
+    {
+        ScreenKey screen = new(ValidDigest, isFallback: false, ScreenKey.CurrentVersion);
+        ElementKey element = new(ValidDigest, isFallback: false, ElementKey.CurrentVersion);
+
+        Assert.NotEqual(new ScreenKey(OtherDigest, isFallback: false, ScreenKey.CurrentVersion), screen);
+        Assert.NotEqual(new ScreenKey(ValidDigest, isFallback: true, ScreenKey.CurrentVersion), screen);
+        Assert.NotEqual(new ScreenKey(ValidDigest, isFallback: false, "2"), screen);
+        Assert.NotEqual(new ElementKey(OtherDigest, isFallback: false, ElementKey.CurrentVersion), element);
+        Assert.NotEqual(new ElementKey(ValidDigest, isFallback: true, ElementKey.CurrentVersion), element);
+        Assert.NotEqual(new ElementKey(ValidDigest, isFallback: false, "2"), element);
+        Assert.Equal(screen.GetHashCode(), new ScreenKey(ValidDigest, isFallback: false, ScreenKey.CurrentVersion).GetHashCode());
+        Assert.Equal(element.GetHashCode(), new ElementKey(ValidDigest, isFallback: false, ElementKey.CurrentVersion).GetHashCode());
+    }
+
+    [Fact(DisplayName = "UT0014 key material escapes path and ordinal separators")]
+    public void UT0014KeyMaterialEscapesPathAndOrdinalSeparators()
+    {
+        ScreenKey screenKey = new(ValidDigest, isFallback: false, ScreenKey.CurrentVersion);
+        ElementIdentity combinedPathText = new(IdentitySource.AutomationId, IdentityMaterial.StableIdentity("a/b"));
+        ElementIdentity firstPathStep = new(IdentitySource.AutomationId, IdentityMaterial.StableIdentity("a"));
+        ElementIdentity secondPathStep = new(IdentitySource.AutomationId, IdentityMaterial.StableIdentity("b"));
+        ElementIdentity literalOrdinalText = new(IdentitySource.AutomationId, IdentityMaterial.StableIdentity("item#2"));
+        ElementIdentity ordinalStep = new(IdentitySource.AutomationId, IdentityMaterial.StableIdentity("item"), siblingOrdinal: 2);
+
+        Assert.NotEqual(
+            ElementKey.FromPath(screenKey, [combinedPathText]),
+            ElementKey.FromPath(screenKey, [firstPathStep, secondPathStep]));
+        Assert.NotEqual(
+            ElementKey.FromPath(screenKey, [literalOrdinalText]),
+            ElementKey.FromPath(screenKey, [ordinalStep]));
+    }
+
+    [Fact(DisplayName = "UT0014 screen fallback flag follows identity or state fallback material")]
+    public void UT0014ScreenFallbackFlagFollowsIdentityOrStateFallbackMaterial()
+    {
+        ScreenIdentity stableIdentity = NewScreenIdentity("Target.exe", "MainWindow", ScreenRole.TopLevel);
+        ScreenIdentity fallbackIdentity = NewScreenIdentity(
+            "Target.exe",
+            "MainWindow",
+            ScreenRole.TopLevel,
+            IdentityMaterial.FallbackKeyToken(ValidDigest, "1"));
+        ScreenStateDiscriminator fallbackState = new(
+            IdentityMaterial.FallbackKeyToken(OtherDigest, "1"),
+            new DisplayLabel("fallback-state", false));
+
+        Assert.False(ScreenKey.FromIdentity(stableIdentity, null).IsFallback);
+        Assert.True(ScreenKey.FromIdentity(fallbackIdentity, null).IsFallback);
+        Assert.True(ScreenKey.FromIdentity(stableIdentity, fallbackState).IsFallback);
+    }
+
+    [Fact(DisplayName = "UT0014 value equality rejects single-field differences")]
+    public void UT0014ValueEqualityRejectsSingleFieldDifferences()
+    {
+        BoundingRect rect = new(1, 2, 30, 40);
+        Availability unavailable = Availability.Unavailable(UnavailableReason.NotRealized);
+        ScreenStateDiscriminator state = new(
+            IdentityMaterial.StableIdentity("state-a"),
+            new DisplayLabel("State A", false));
+        SupportedPatterns patterns = new(SupportedPatterns.Invoke);
+
+        Assert.NotEqual(new BoundingRect(9, 2, 30, 40), rect);
+        Assert.NotEqual(new BoundingRect(1, 9, 30, 40), rect);
+        Assert.NotEqual(new BoundingRect(1, 2, 99, 40), rect);
+        Assert.NotEqual(new BoundingRect(1, 2, 30, 99), rect);
+        Assert.NotEqual(Availability.Available, unavailable);
+        Assert.NotEqual(Availability.Unavailable(UnavailableReason.Timeout), unavailable);
+        Assert.NotEqual(
+            new ScreenStateDiscriminator(IdentityMaterial.StableIdentity("state-b"), new DisplayLabel("State A", false)),
+            state);
+        Assert.NotEqual(
+            new ScreenStateDiscriminator(IdentityMaterial.StableIdentity("state-a"), new DisplayLabel("State B", false)),
+            state);
+        Assert.NotEqual(new SupportedPatterns(SupportedPatterns.ReadableValue), patterns);
+    }
+
+    [Fact(DisplayName = "UT0014 value object hash codes include every equality component")]
+    public void UT0014ValueObjectHashCodesIncludeEveryEqualityComponent()
+    {
+        ScreenKey screen = new(ValidDigest, isFallback: false, ScreenKey.CurrentVersion);
+        ElementKey element = new(ValidDigest, isFallback: false, ElementKey.CurrentVersion);
+        BoundingRect rect = new(1, 2, 30, 40);
+        DisplayLabel label = new("Orders", false);
+        Availability unavailable = Availability.Unavailable(UnavailableReason.NotRealized);
+        SupportedPatterns patterns = new(SupportedPatterns.Invoke);
+        IdentityMaterial stateMaterial = IdentityMaterial.StableIdentity("state-a");
+        IdentityMaterial elementMaterial = IdentityMaterial.StableIdentity("element-a");
+        ScreenStateDiscriminator state = new(stateMaterial, new DisplayLabel("State A", false));
+        ElementIdentity identity = new(IdentitySource.AutomationId, elementMaterial, siblingOrdinal: 2);
+
+        AssertHashCodeChanges(screen, new ScreenKey(OtherDigest, isFallback: false, ScreenKey.CurrentVersion));
+        AssertHashCodeChanges(screen, new ScreenKey(ValidDigest, isFallback: true, ScreenKey.CurrentVersion));
+        AssertHashCodeChanges(screen, new ScreenKey(ValidDigest, isFallback: false, "2"));
+        AssertHashCodeChanges(element, new ElementKey(OtherDigest, isFallback: false, ElementKey.CurrentVersion));
+        AssertHashCodeChanges(element, new ElementKey(ValidDigest, isFallback: true, ElementKey.CurrentVersion));
+        AssertHashCodeChanges(element, new ElementKey(ValidDigest, isFallback: false, "2"));
+        AssertHashCodeChanges(rect, new BoundingRect(9, 2, 30, 40));
+        AssertHashCodeChanges(rect, new BoundingRect(1, 9, 30, 40));
+        AssertHashCodeChanges(rect, new BoundingRect(1, 2, 99, 40));
+        AssertHashCodeChanges(rect, new BoundingRect(1, 2, 30, 99));
+        AssertHashCodeChanges(label, new DisplayLabel("Other", false));
+        AssertHashCodeChanges(label, new DisplayLabel("Orders", true));
+        AssertHashCodeChanges(Availability.Available, unavailable);
+        AssertHashCodeChanges(unavailable, Availability.Unavailable(UnavailableReason.Timeout));
+        AssertHashCodeChanges(patterns, new SupportedPatterns(SupportedPatterns.ReadableValue));
+        AssertHashCodeChanges(
+            state,
+            new ScreenStateDiscriminator(IdentityMaterial.StableIdentity("state-b"), new DisplayLabel("State A", false)));
+        AssertHashCodeChanges(
+            state,
+            new ScreenStateDiscriminator(stateMaterial, new DisplayLabel("State B", false)));
+        AssertHashCodeChanges(
+            identity,
+            new ElementIdentity(IdentitySource.FrameworkStableId, elementMaterial, siblingOrdinal: 2));
+        AssertHashCodeChanges(
+            identity,
+            new ElementIdentity(IdentitySource.AutomationId, IdentityMaterial.StableIdentity("element-b"), siblingOrdinal: 2));
+        AssertHashCodeChanges(
+            identity,
+            new ElementIdentity(IdentitySource.AutomationId, elementMaterial, siblingOrdinal: 3));
+    }
+
+    [Theory(DisplayName = "UT0014 key material escape protects every structural separator")]
+    [InlineData("a\\b", "a\\\\b")]
+    [InlineData("a\nb", "a\\\nb")]
+    [InlineData("a/b", "a\\/b")]
+    [InlineData("a:b", "a\\:b")]
+    [InlineData("a=b", "a\\=b")]
+    [InlineData("a#b", "a\\#b")]
+    public void UT0014KeyMaterialEscapeProtectsEveryStructuralSeparator(
+        string value,
+        string expected)
+    {
+        Assert.Equal(expected, KeyMaterial.Escape(value));
+    }
+
     private static ScreenIdentity NewScreenIdentity(
         string processImageName,
         string windowClass,
@@ -207,5 +350,11 @@ public sealed class DomainValueObjectContractTests
             AcquisitionConfidence.High,
             children,
             SupportedPatterns.None);
+    }
+
+    private static void AssertHashCodeChanges<T>(T baseline, T changed)
+        where T : notnull
+    {
+        Assert.NotEqual(baseline.GetHashCode(), changed.GetHashCode());
     }
 }

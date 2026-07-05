@@ -16,6 +16,10 @@ public sealed class ScoringConfigValidationTests
     [Fact(DisplayName = "UT0014 既定 v1 設定は検証を通過する")]
     public void UT0014DefaultV1ConfigValidates()
     {
+        ScoringConfig.DefaultV1().Validate();
+        Assert.Equal("scoring-v1", ScoringConfig.DefaultV1().Version);
+        Assert.Equal("candidate-rules-v1", ScoringConfig.DefaultV1().CandidateRulesVersion);
+
         // 常に throw する誤実装 (mutation) はここで赤になる。
         ScoringConfig.DefaultV1().Validate();
     }
@@ -52,6 +56,23 @@ public sealed class ScoringConfigValidationTests
         };
 
         Assert.Throws<ArgumentException>(() => (ScoringConfig.DefaultV1() with { AxisWeights = incomplete }).Validate());
+    }
+
+    [Fact(DisplayName = "UT0014 axis weight missing key is rejected even when count matches")]
+    public void UT0014AxisWeightsWithSameCountButMissingKeyIsRejected()
+    {
+        Dictionary<ScoreAxis, int> wrongKeys = new()
+        {
+            [ScoreAxis.Identifiability] = 2000,
+            [ScoreAxis.Operability] = 2000,
+            [ScoreAxis.ResultDeterminability] = 1500,
+            [ScoreAxis.PreconditionControllability] = 1500,
+            [ScoreAxis.ScreenStability] = 1000,
+            [ScoreAxis.CustomUiRisk] = 1000,
+            [(ScoreAxis)999] = 1000,
+        };
+
+        Assert.Throws<ArgumentException>(() => (ScoringConfig.DefaultV1() with { AxisWeights = wrongKeys }).Validate());
     }
 
     [Fact(DisplayName = "UT0014 負の軸重みは拒否する")]
@@ -121,6 +142,17 @@ public sealed class ScoringConfigValidationTests
         Assert.Throws<ArgumentException>(() => (ScoringConfig.DefaultV1() with { SignalWeights = weights }).Validate());
     }
 
+    [Fact(DisplayName = "UT0014 zero signal weight is allowed when sum is ten thousand")]
+    public void UT0014ZeroSignalWeightIsAllowedWhenSumIsTenThousand()
+    {
+        SignalWeights weights = new(new Dictionary<ScoreAxis, IReadOnlyDictionary<string, int>>
+        {
+            [ScoreAxis.Identifiability] = new Dictionary<string, int> { ["a"] = 0, ["b"] = 10000 },
+        });
+
+        (ScoringConfig.DefaultV1() with { SignalWeights = weights }).Validate();
+    }
+
     [Fact(DisplayName = "UT0014 信号重み合計が 10000 でなければ拒否する")]
     public void UT0014SignalWeightSumOtherThanTenThousandIsRejected()
     {
@@ -169,6 +201,58 @@ public sealed class ScoringClassificationBranchTests
         Assert.Contains(
             result.Findings,
             static finding => finding.RootCause == RootCauseCode.AcquisitionUnavailable && finding.Severity == FindingSeverity.Blocking);
+    }
+
+    [Fact(DisplayName = "UT0014 partially unavailable action elements remain applicable")]
+    public void UT0014PartiallyUnavailableActionElementsRemainApplicable()
+    {
+        ScoreResult result = new TestabilityScorer().Score(
+            ScoringFixture.Model(
+                ScoringFixture.Button("Ready", patterns: SupportedPatterns.Invoke),
+                ScoringFixture.Button("Lazy", availability: Availability.Unavailable(UnavailableReason.NotRealized))),
+            ScoringConfig.DefaultV1());
+
+        AxisScore operability = Assert.Single(result.AxisScores, static axis => axis.Axis == ScoreAxis.Operability);
+
+        Assert.Equal(AxisApplicability.Applicable, operability.Applicability);
+        Assert.NotNull(operability.ScoreBp);
+    }
+
+    [Fact(DisplayName = "UT0014 partially unavailable result elements remain applicable")]
+    public void UT0014PartiallyUnavailableResultElementsRemainApplicable()
+    {
+        ScoreResult result = new TestabilityScorer().Score(
+            ScoringFixture.Model(
+                ScoringFixture.Text("Ready"),
+                ScoringFixture.Text("Lazy", Availability.Unavailable(UnavailableReason.NotRealized))),
+            ScoringConfig.DefaultV1());
+
+        AxisScore resultAxis = Assert.Single(result.AxisScores, static axis => axis.Axis == ScoreAxis.ResultDeterminability);
+
+        Assert.Equal(AxisApplicability.Applicable, resultAxis.Applicability);
+        Assert.NotNull(resultAxis.ScoreBp);
+        Assert.Contains(result.Findings, static finding => finding.Code == FindingCode.MissingObservableResult);
+    }
+
+    [Fact(DisplayName = "UT0014 fallback identity and unstable identity use distinct finding codes")]
+    public void UT0014FallbackIdentityAndUnstableIdentityUseDistinctFindingCodes()
+    {
+        ScoreResult result = new TestabilityScorer().Score(
+            ScoringFixture.Model(
+                ScoringFixture.Button(
+                    "Fallback",
+                    source: IdentitySource.FallbackHash,
+                    material: IdentityMaterial.FallbackKeyToken("0123456789abcdef0123456789abcdef", "1")),
+                ScoringFixture.Button(
+                    "Ordinal",
+                    source: IdentitySource.StructuralOrdinal,
+                    material: IdentityMaterial.StructuralOrdinalMaterial(2))),
+            ScoringConfig.DefaultV1());
+
+        Assert.Contains(result.Findings, static finding => finding.Code == FindingCode.FallbackOnlyIdentity);
+        Assert.Contains(result.Findings, static finding => finding.Code == FindingCode.NoStableIdentity);
+        AxisScore identifiability = Assert.Single(result.AxisScores, static axis => axis.Axis == ScoreAxis.Identifiability);
+        Assert.True(identifiability.ScoreBp < 10000);
     }
 
     [Fact(DisplayName = "UT0014 重複識別子は可修正 blocking として ImproveFirst と一意化候補を出す")]

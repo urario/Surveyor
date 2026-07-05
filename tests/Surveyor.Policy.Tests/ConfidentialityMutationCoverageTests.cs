@@ -16,6 +16,43 @@ namespace Surveyor.Policy.Tests;
 /// </summary>
 public sealed class ConfidentialityPolicyEdgeCaseTests
 {
+    [Theory(DisplayName = "UT0014 all allowlisted decision sources are accepted and preserved")]
+    [InlineData("Default")]
+    [InlineData("UserConfirmed")]
+    [InlineData("TestFixture")]
+    public void UT0014AllAllowlistedDecisionSourcesAreAcceptedAndPreserved(string source)
+    {
+        ConfidentialityPolicy policy = new();
+
+        ConfidentialityDecision decision = policy.Decide(
+            new ConfidentialityRequest(
+                ConfidentialityFixture.FixedRequestedAt,
+                ConfidentialityMode.ProtectedLocal,
+                source,
+                OptOut: null));
+
+        Assert.Equal(source, decision.DecisionSource);
+        Assert.Equal(ConfidentialityPolicy.PolicyVersionV1, decision.PolicyVersion);
+        Assert.Equal(
+            ["mask-display-text", "mask-window-title", "pseudonymize-fallback-key", "sanitize-diagnostics"],
+            decision.AppliedTransforms);
+    }
+
+    [Fact(DisplayName = "UT0014 opt-out transform list contains only diagnostics sanitization")]
+    public void UT0014OptOutTransformListContainsOnlyDiagnosticsSanitization()
+    {
+        ConfidentialityPolicy policy = new();
+
+        ConfidentialityDecision decision = policy.Decide(
+            new ConfidentialityRequest(
+                ConfidentialityFixture.FixedRequestedAt,
+                ConfidentialityMode.ExplicitLocalOptOut,
+                "UserConfirmed",
+                new OptOutRequest("local-debug-artifacts")));
+
+        Assert.Equal(["sanitize-diagnostics"], decision.AppliedTransforms);
+    }
+
     [Fact(DisplayName = "UT0014 allowlist 外の判定ソースは拒否する")]
     public void UT0014UnknownDecisionSourceIsRejected()
     {
@@ -106,6 +143,14 @@ public sealed class ConfidentialityPolicyEdgeCaseTests
 /// </summary>
 public sealed class SensitiveValueSanitizerEdgeCaseTests
 {
+    [Fact(DisplayName = "UT0014 null sensitive text object is rejected")]
+    public void UT0014NullSensitiveTextObjectIsRejected()
+    {
+        SensitiveValueSanitizer sanitizer = new();
+
+        Assert.Throws<ArgumentNullException>(() => sanitizer.MaskText(null!));
+    }
+
     [Fact(DisplayName = "UT0014 Argument / InvalidOperation / Timeout 例外はそれぞれの種別へ写像される")]
     public void UT0014RemainingExceptionKindsAreMapped()
     {
@@ -114,6 +159,23 @@ public sealed class SensitiveValueSanitizerEdgeCaseTests
         Assert.Equal(ExceptionKind.Argument, sanitizer.SanitizeException(new ArgumentException("raw")).Kind);
         Assert.Equal(ExceptionKind.InvalidOperation, sanitizer.SanitizeException(new InvalidOperationException("raw")).Kind);
         Assert.Equal(ExceptionKind.Timeout, sanitizer.SanitizeException(new TimeoutException("raw")).Kind);
+    }
+
+    [Fact(DisplayName = "UT0014 exception null guard is preserved")]
+    public void UT0014NullExceptionIsRejected()
+    {
+        SensitiveValueSanitizer sanitizer = new();
+
+        Assert.Throws<ArgumentNullException>(() => sanitizer.SanitizeException(null!));
+    }
+
+    [Fact(DisplayName = "UT0014 length bucket upper boundaries are inclusive")]
+    public void UT0014LengthBucketUpperBoundariesAreInclusive()
+    {
+        SensitiveValueSanitizer sanitizer = new();
+
+        Assert.Equal("5-12", sanitizer.MaskText(new SensitiveText(SensitiveKind.DisplayText, new string('x', 12))).LengthBucket);
+        Assert.Equal("13-40", sanitizer.MaskText(new SensitiveText(SensitiveKind.DisplayText, new string('x', 40))).LengthBucket);
     }
 
     [Fact(DisplayName = "UT0014 null 値のマスクは拒否する")]
@@ -131,6 +193,26 @@ public sealed class SensitiveValueSanitizerEdgeCaseTests
 public sealed class FallbackKeyExportMapperEdgeCaseTests
 {
     private const string FallbackDigest = "0123456789abcdef0123456789abcdef";
+
+    [Fact(DisplayName = "UT0014 null export context is rejected")]
+    public void UT0014NullExportContextIsRejected()
+    {
+        FallbackKeyExportMapper mapper = new();
+        ElementKey fallbackKey = new(FallbackDigest, isFallback: true, ElementKey.CurrentVersion);
+
+        Assert.Throws<ArgumentNullException>(() => mapper.Map(fallbackKey, fallbackToken: null, context: null!));
+    }
+
+    [Fact(DisplayName = "UT0014 short export ids below eight characters remain intact")]
+    public void UT0014ShortExportIdsBelowEightCharactersRemainIntact()
+    {
+        FallbackKeyExportMapper mapper = new();
+        ElementKey fallbackKey = new(FallbackDigest, isFallback: true, ElementKey.CurrentVersion);
+
+        ExportElementKey sevenChars = mapper.Map(fallbackKey, fallbackToken: null, new ExportMappingContext("abcdefg", Ordinal: 2));
+
+        Assert.Equal("exp-abcdefg-fk-0002", sevenChars.ExportKey);
+    }
 
     [Fact(DisplayName = "UT0014 ExportId は 8 文字境界で切り詰める")]
     public void UT0014ExportIdIsTruncatedAtEightCharacterBoundary()
@@ -236,5 +318,18 @@ public sealed class FallbackKeyDerivationMutationTests
         Assert.NotEqual(
             derivation.DeriveFallbackToken("k=v", "value").FallbackHash,
             derivation.DeriveFallbackToken("k:v", "value").FallbackHash);
+    }
+
+    [Fact(DisplayName = "UT0014 every escaped separator contributes to fallback material")]
+    public void UT0014EveryEscapedSeparatorContributesToFallbackMaterial()
+    {
+        Sha256FallbackKeyDerivation derivation = new();
+
+        string backslash = derivation.DeriveFallbackToken(@"k\v", "value").FallbackHash;
+        string newline = derivation.DeriveFallbackToken("k\nv", "value").FallbackHash;
+        string colon = derivation.DeriveFallbackToken("k:v", "value").FallbackHash;
+        string equals = derivation.DeriveFallbackToken("k=v", "value").FallbackHash;
+
+        Assert.Equal(4, new[] { backslash, newline, colon, equals }.Distinct(StringComparer.Ordinal).Count());
     }
 }
