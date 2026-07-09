@@ -57,6 +57,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 * [UT-0005 Read-Only Acquisition Audit Behavior Evidence](traces/ut-0005-read-only-audit-evidence.md) - Behavior tests for the read-only audit spy under `DES-0014` (`RQ-048`), with failing-first RED evidence closed by `IMP-0007`.
 * [IMP-0007 Read-Only Acquisition Audit Implementation](traces/imp-0007-read-only-audit-implementation.md) - Portable read-only acquisition audit implementation evidence that turns `UT-0005` green.
 * [IMP-0016 Stryker.NET Baseline Implementation](traces/imp-0016-stryker-baseline.md) - CS-10 implementation evidence for the pinned Stryker.NET local tool, Domain/Policy mutation baseline scores, and below-80% improvement candidates.
+* [UT-0014 Domain / Policy Mutation-Focused Coverage Evidence](traces/ut-0014-domain-policy-mutation-coverage-evidence.md) - Focused mutation-killer behavior tests for the Domain scoring config-validation / classification branches and the Policy confidentiality, sanitizer, fallback-key export, and derivation invariants under `CS-10`.
 
 # Process
 
