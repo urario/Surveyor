@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup .NET (from global.json)
         uses: actions/setup-dotnet@v4
@@ -36,8 +36,13 @@ jobs:
       - name: Restore
         run: dotnet restore eng/Surveyor.Unit.slnf
 
+      # The unit lane runs in the default (Debug) configuration on purpose:
+      # DES-0008/CS-07 define the gate as a plain `dotnet test`, and the
+      # fresh-process probe tests spawn `dotnet test <project> --no-build`
+      # without a configuration, so their child processes only find
+      # binaries when the outer run uses the default configuration too.
       - name: Build
-        run: dotnet build eng/Surveyor.Unit.slnf -c Release --no-restore
+        run: dotnet build eng/Surveyor.Unit.slnf --no-restore
 
       # Coverlet enforces the CS-07 80% line-coverage gate on core test
       # projects via Directory.Build.props, so `dotnet test` fails the run
@@ -45,9 +50,8 @@ jobs:
       - name: Test
         run: >
           dotnet test eng/Surveyor.Unit.slnf
-          -c Release
           --no-build
-          --logger "trx;LogFileName=test-results.trx"
+          --logger trx
           --results-directory artifacts/test-results
 
       - name: Upload test and coverage results
@@ -66,7 +70,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup .NET (from global.json)
         uses: actions/setup-dotnet@v4
@@ -93,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Validate OKF knowledge tree
         shell: pwsh
