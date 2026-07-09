@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit (headless)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET (from global.json)
+        uses: actions/setup-dotnet@v4
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-ubuntu-${{ hashFiles('Directory.Packages.props', 'global.json', '**/*.csproj') }}
+          restore-keys: |
+            nuget-ubuntu-
+
+      - name: Restore
+        run: dotnet restore eng/Surveyor.Unit.slnf
+
+      - name: Build
+        run: dotnet build eng/Surveyor.Unit.slnf -c Release --no-restore
+
+      # Coverlet enforces the CS-07 80% line-coverage gate on core test
+      # projects via Directory.Build.props, so `dotnet test` fails the run
+      # when coverage drops below threshold.
+      - name: Test
+        run: >
+          dotnet test eng/Surveyor.Unit.slnf
+          -c Release
+          --no-build
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory artifacts/test-results
+
+      - name: Upload test and coverage results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-results
+          path: |
+            artifacts/test-results
+            artifacts/coverage
+          retention-days: 7
+          if-no-files-found: ignore
+
+  windows-build:
+    name: Windows build + format
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET (from global.json)
+        uses: actions/setup-dotnet@v4
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-windows-${{ hashFiles('Directory.Packages.props', 'global.json', '**/*.csproj') }}
+          restore-keys: |
+            nuget-windows-
+
+      # windows-latest is the only runner that can restore the
+      # net10.0-windows TFM projects (App / Presentation / non-audit
+      # adapters), so full-solution compile and format live here.
+      - name: Build full solution
+        run: dotnet build Surveyor.slnx -c Release
+
+      - name: Verify formatting (CS-09)
+        run: dotnet format Surveyor.slnx --verify-no-changes --no-restore
+
+  knowledge:
+    name: Knowledge base (OKF)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate OKF knowledge tree
+        shell: pwsh
+        run: ./tools/okf/Validate-Okf.ps1
+
+      - name: Verify rq-index is up to date
+        shell: pwsh
+        run: |
+          ./tools/requirements/Export-RqIndex.ps1
+          git diff --exit-code -- knowledge/requirements/rq-index.generated.md
