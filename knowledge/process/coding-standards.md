@@ -232,6 +232,12 @@ public interface IUiTreeAcquisitionPort
 | ミューテーションスコア(`CS-10`) | Stryker.NET 定期実行 + trace 記録 | 本書 + 実装 skill |
 | 命名・スタイル | `.editorconfig` + `EnforceCodeStyleInBuild` | DES-0008 |
 
+## CS-10 Operational Note
+
+- Canonical restore/run/evidence flow lives in [Stryker Mutation Workflow](stryker-workflow.md). Use the committed `.config/dotnet-tools.json` manifest plus `tools/stryker/Run-StrykerBaseline.ps1`; do not rely on ad hoc global-tool state or hardcoded package versions.
+- When a local environment reports that `dotnet tool run dotnet-stryker` still needs restore after a successful `dotnet tool restore`, use the committed runner script and record the environment-specific workaround in the trace evidence rather than silently skipping `CS-10`.
+- Scores below 80% are non-blocking baseline evidence unless a governing Issue or future process decision changes that rule. In that case, record the score, surviving-mutant concentration, and concrete improvement candidates or follow-up Issue in `knowledge/traces/`.
+
 # Related
 
 - [DES-0008 Project Structure and Test Harness](../design/des-0008-project-structure-and-test-harness.md)

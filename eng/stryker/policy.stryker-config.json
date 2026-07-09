@@ -1,0 +1,20 @@
+{
+  "stryker-config": {
+    "project": "Surveyor.Policy.csproj",
+    "test-projects": [
+      "Surveyor.Policy.Tests.csproj"
+    ],
+    "reporters": [
+      "progress",
+      "html",
+      "markdown"
+    ],
+    "thresholds": {
+      "high": 80,
+      "low": 0,
+      "break": 0
+    },
+    "mutation-level": "Standard",
+    "concurrency": 4
+  }
+}

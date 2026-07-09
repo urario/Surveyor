@@ -30,6 +30,7 @@ Check at least:
 - Generated machine-readable outputs can support comparison and traceability.
 - Coding standards (`knowledge/process/coding-standards.md`) hold: Japanese XML doc comments on public APIs state real contracts (`CS-01`), accessibility defaults to `internal`/`sealed` with `public` only for boundary contracts (`CS-02`), SOLID responsibilities and dependency direction hold (`CS-03`), and applied design patterns name their purpose per the GoF vocabulary catalog (`CS-04`).
 - Quantitative gates are respected, not evaded (`CS-05`–`CS-10`): new suppressions are justified and rarer than refactoring, `PublicAPI.Unshipped.txt` diffs match the reviewed design, the core coverage gate is met by meaningful tests, and mutation-score evidence exists when the cadence requires it.
+- When `CS-10` is in scope, the mutation evidence follows `knowledge/process/stryker-workflow.md`: exact restore/run command, target layers, trace link, recorded score, and below-target follow-up candidates or residual risk are all present.
 - Git workflow is respected: no direct `main` commit/push assumptions, PR evidence is present when relevant.
 - PR body follows `knowledge/process/git-policy.md`「PR 本文の記載ルール」: written in Japanese, every template section filled or marked `N/A`, a crystallized 自己レビュー (findings and trade-offs, not just checkboxes), and — for implementation PRs — quantitative quality-gate evidence (`CS-01`–`CS-10`, DES-0008: build, unit tests with core coverage `CS-07` ≥ 80%, architecture tests, `dotnet format`).
 
