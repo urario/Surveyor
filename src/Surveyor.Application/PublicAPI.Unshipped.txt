@@ -1,4 +1,9 @@
 #nullable enable
+Surveyor.Application.Time.IClock
+Surveyor.Application.Time.IClock.UtcNow.get -> System.DateTimeOffset
+Surveyor.Application.Time.SystemClock
+Surveyor.Application.Time.SystemClock.SystemClock() -> void
+Surveyor.Application.Time.SystemClock.UtcNow.get -> System.DateTimeOffset
 Surveyor.Application.Ports.ConfidentialityDecision
 Surveyor.Application.Ports.ConfidentialityDecision.AppliedTransforms.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Surveyor.Application.Ports.ConfidentialityDecision.AppliedTransforms.init -> void
