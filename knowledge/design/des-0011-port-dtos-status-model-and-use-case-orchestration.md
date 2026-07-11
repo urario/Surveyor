@@ -106,6 +106,8 @@ Required fields:
 
 `ScreenSelectionMetadata` is passed through unchanged. `M03` may validate shape but must not fabricate priority, business criticality, or screen intent. If metadata is absent, downstream `PriorityBasis` remains null.
 
+> **Version note (2026-07-11, refined by [DES-0016](des-0016-operating-ui-detailed-design.md), per DES-0007 §5.3):** the `OutputRequest` field detail this package left open is fixed by `DES-0016` as `OutputRequest(ConfidentialityMode RequestedMode, OptOutRequest? ConfidentialityOptOut)` — the recorded `SCR-08` confidentiality choice. `AnalyzeScreenUseCase` builds `ConfidentialityRequest.RequestedMode`/`OptOut` from it; the `Decide(ProtectedLocal)` step in the orchestration sequence below is the default path of that parameterization (`ProtectedLocal` unless an explicit, recorded opt-out is present). No other field or rule of this package changes.
+
 ### PriorityBasis Mapping
 
 `AnalyzeScreenUseCase` is the only application-layer component that maps `AnalysisRunRequest.ScreenSelectionMetadata` to the scoring `PriorityBasis` defined by [DES-0010](des-0010-scoring-classification-and-improvement-candidates.md). The mapping happens after scoring config resolution and before `TestabilityScorer.Score`.
@@ -364,7 +366,16 @@ public sealed class AnalyzeScreenUseCase
 
     public Task<AnalysisRunResult> ExecuteAsync(
         AnalysisRunRequest request,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken,
+        IProgress<StageResult>? stageProgress = null);
+
+    // Version note (2026-07-11, refined by DES-0016, per DES-0007 §5.3):
+    // the optional stageProgress parameter is additive. The use case reports each
+    // completed stage's StageResult so SCR-02 can show live stage progress
+    // (DES-0006 requires it); null preserves the original behavior. Progress
+    // reporting is diagnostic-only and must not affect outcome derivation,
+    // ordering, or determinism. UT-0012 gains one intent: stages are reported
+    // in RunStage order and never after cancellation is observed.
 }
 
 public sealed class GenerateReportUseCase
