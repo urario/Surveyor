@@ -16,7 +16,7 @@ timestamp: 2026-07-11T00:00:00+09:00
 | Upstream | [DES-0014](../design/des-0014-discovery-uia-msaa-acquisition-and-read-only-audit.md); [ADR-0002](../decisions/adr-0002-adapter-technology-selection.md); [IMP-0006](imp-0006-acquisition-port-implementation.md); [IMP-0007](imp-0007-read-only-audit-implementation.md); Issue #71; `RQ-017`, `RQ-026`, `RQ-048`, `RQ-049`; `RD-003`, `RD-004`, `RD-023`, `RD-032` |
 | Downstream | `IT-0001` target state-invariance, `IT-0002` live UIA legacy-edge comparison, `IT-0005` integrity/permission validation, `IT-0006` cancellation/timeout calibration, future `DES-0018` / `IMP-0015` composition wiring |
 | Evidence | Added `Surveyor.Adapters.Uia.UiaTreeAcquisitionAdapter` implementing `IUiTreeAcquisitionPort`; `UiaTargetHandleRegistry` for opaque `TargetReference` token to HWND/process-image mapping inside the adapter boundary; internal `IRawUiaReader` / `RawUiaNode` / `RawUiaReadResult` seam; `DynamicRawUiaReader` that activates the Windows UIA COM client, attempts `IUIAutomation6` call-budget configuration, and records read-only member invocations; adapter-side mapper that reuses the DES-0014 identity rung, confidence, availability, and run-level rollup semantics; read-only audit wiring using `ReadOnlyAcquisitionAudit`; and adapter tests covering mapping, audit violation, unresolved target, caller cancellation, and registry process metadata propagation. |
-| Verification | `dotnet test tests\Surveyor.Adapters.Uia.Tests\Surveyor.Adapters.Uia.Tests.csproj --no-restore -v minimal` passed 56 tests. `dotnet test eng\Surveyor.Unit.slnf --no-restore -v minimal` passed Architecture 8, Domain 59, Application 23, Policy 45, Adapters.Uia 56; Domain line coverage 97.01%, Application 100%, Policy 100%. |
+| Verification | `dotnet test tests\Surveyor.Adapters.Uia.Tests\Surveyor.Adapters.Uia.Tests.csproj --no-restore -v minimal` passed 57 tests. `dotnet test eng\Surveyor.Unit.slnf --no-restore -v minimal` passed Architecture 8, Domain 59, Application 23, Policy 45; Domain line coverage 97.01%, Application 100%, Policy 100%. `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\stryker\Run-StrykerBaseline.ps1 -SkipVersionCheck` passed with Domain mutation score 80.54% and Policy mutation score 89.02%. |
 | Residual Risk | The raw COM path is compiled and structurally wired, but this slice did not run a live Windows target smoke acquisition. `DynamicRawUiaReader` uses the installed UIA COM type information through dynamic COM dispatch; real legacy target behavior, MSAA/`WM_GETTEXT` fallback breadth, COM-level timeout calibration, and state-invariance remain `IT-0001`/`IT-0002`/`IT-0005`/`IT-0006` obligations. Discovery-owned registry population is not implemented here; `UiaTargetHandleRegistry` is the adapter-side mechanism for future `DES-0018`/`IMP-0015` wiring and now carries process image metadata when available. |
 
 ## Implemented Contract
@@ -38,7 +38,7 @@ timestamp: 2026-07-11T00:00:00+09:00
 
 ```text
 > dotnet test tests\Surveyor.Adapters.Uia.Tests\Surveyor.Adapters.Uia.Tests.csproj --no-restore -v minimal
-Passed! - Failed: 0, Passed: 56, Skipped: 0, Total: 56
+Passed! - Failed: 0, Passed: 57, Skipped: 0, Total: 57
 ```
 
 ```text
@@ -47,7 +47,6 @@ Passed! - Failed: 0, Passed: 8  - Surveyor.Architecture.Tests.dll
 Passed! - Failed: 0, Passed: 59 - Surveyor.Domain.Tests.dll
 Passed! - Failed: 0, Passed: 23 - Surveyor.Application.Tests.dll
 Passed! - Failed: 0, Passed: 45 - Surveyor.Policy.Tests.dll
-Passed! - Failed: 0, Passed: 56 - Surveyor.Adapters.Uia.Tests.dll
 
 Coverage:
 Surveyor.Domain      97.01% line
@@ -55,4 +54,10 @@ Surveyor.Application 100% line
 Surveyor.Policy      100% line
 ```
 
-Stryker.NET (`CS-10`) was not run in this slice; the change is adapter/Windows-bound, while current mutation baseline tooling is recorded for Domain/Policy in `IMP-0016` / `UT-0014`.
+```text
+> powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\stryker\Run-StrykerBaseline.ps1 -SkipVersionCheck
+Domain: final mutation score 80.54% (414 killed / 93 survived / 7 no coverage / 99 compile errors / 742 total)
+Policy: final mutation score 89.02% (73 killed / 9 survived / 0 no coverage / 12 compile errors / 120 total)
+```
+
+Stryker.NET (`CS-10`) was run through the canonical `IMP-0016` runner. Both configured core-layer targets met the `>= 80%` score target, so no mutation-score remediation was required.
