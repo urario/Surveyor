@@ -3,7 +3,7 @@ type: Process
 title: Quality Review Policy
 description: ISO/IEC 25010-oriented quality review model for Surveyor lifecycle artifacts and agents.
 tags: [process, quality, review, iso-25010, traceability]
-timestamp: 2026-07-01T00:00:00+09:00
+timestamp: 2026-07-11T00:00:00+09:00
 ---
 
 # Purpose
@@ -106,6 +106,8 @@ Review for reliability, compatibility, interaction capability, security, and res
 Review for lifecycle traceability and acceptance readiness.
 
 - The PR or trace note states phase, requirement IDs, changed files or artifacts, tests run, validation commands, and residual risk.
+- Quantitative gate evidence follows `knowledge/process/git-policy.md`: a fixed-row summary table exposes applicability, target, actual, and result before command-level evidence. A reviewer must not accept `PASS` without an actual value, or accept `N/A` / `NOT RUN` without a reason.
+- Required implementation gates are individually reviewable: build/analyzers, unit tests and per-core-layer line coverage, architecture/banned API tests, format, and conditionally mutation testing. `BELOW TARGET` is valid only for the non-blocking `CS-10` baseline and must carry improvement evidence or residual risk.
 - Durable cross-phase evidence lives under `knowledge/` when PR-local evidence is not enough.
 - OKF validation passes after knowledge edits.
 

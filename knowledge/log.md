@@ -1,5 +1,9 @@
 # Surveyor Knowledge Log
 
+## 2026-07-11
+
+* **Process**: PR の定量品質ゲート証跡を、人間のレビュアが短時間で判定できる二段構成へ改善した。`.github/pull_request_template.md` は固定行の `適用条件` / `目標値` / `実測値` / `判定` サマリと、再現コマンド / 証跡表を分離し、`PASS` / `FAIL` / `NOT RUN` / `N/A` / `BELOW TARGET` の意味を明確化した。`knowledge/process/git-policy.md` と `quality-review-policy.md`、Claude / Codex の Git・実装・品質レビュースキル、実装レビュー / 品質監査エージェントを同じ判定ルールへ同期した。過去の PR 本文は変更対象外とする。
+
 ## 2026-07-05
 
 * **Process**: Added [Stryker Mutation Workflow](process/stryker-workflow.md) as the canonical `CS-10` playbook. It standardizes the pinned-manifest source of truth, the committed `tools/stryker/Run-StrykerBaseline.ps1` entrypoint, environment fallback when `dotnet tool run` is inconsistent, non-blocking below-80% evidence rules, and PR / Issue reporting expectations. Wired the playbook into the shared OKF guidance, the Codex implementation / git workflow references, and the tracked Claude OKF / git workflow / TDD review / reviewer guidance so different models and local environments converge on the same Stryker procedure.

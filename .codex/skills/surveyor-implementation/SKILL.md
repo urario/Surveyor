@@ -19,8 +19,9 @@ Use this skill when implementing or changing Surveyor code, tests, project struc
 8. Write or update the smallest useful failing test first whenever the behavior is testable.
 9. Implement the smallest production change that makes the test pass.
 10. Run targeted tests and any relevant validation scripts.
-11. Update OKF logs or trace notes when the change creates durable knowledge.
-12. Report completion to `surveyor-project-management` with the Issue, artifact, verification result, OKF update, residual risk, and recommended next Project `Status` / `Owner Role`.
+11. Record quantitative results in the PR template's fixed-row summary (`目標値`, `実測値`, `判定`) and command/evidence table; do not reduce verification to raw logs or prose.
+12. Update OKF logs or trace notes when the change creates durable knowledge.
+13. Report completion to `surveyor-project-management` with the Issue, artifact, verification result, OKF update, residual risk, and recommended next Project `Status` / `Owner Role`.
 
 ## Architecture Rules
 

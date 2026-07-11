@@ -3,7 +3,7 @@ type: Process
 title: Git Policy
 description: Branch, commit, pull request, and protection rules for Surveyor development.
 tags: [process, git, github, review]
-timestamp: 2026-07-01T00:00:00+09:00
+timestamp: 2026-07-11T00:00:00+09:00
 ---
 
 # Policy
@@ -50,12 +50,17 @@ PR 本文は [.github/pull_request_template.md](../../.github/pull_request_templ
 - **日本語で書く。** GitHub Issue と同じ方針で、PR の概要・自己レビュー・残リスクは日本語で記述する。ただし `RQ-xxx` / `RD-xxx` / `ADR-xxxx` / `DES-xxxx` / `IMP-xxxx` / `UT-xxxx` / `IT-xxxx` / `TRC-xxxx` の識別子、Project フィールド名・選択肢、コマンド、コードは英語・原文のまま残す。
 - **各節を必ず埋める。** 該当しない節は空欄にせず `N/A` と明記する。
 - **自己レビューを結晶化する。** レビュアに渡す前に作成者自身が差分を通し読みし、その結果を「自己レビュー」節に所見として残す。チェックボックスを埋めるだけでなく、気付いた懸念とその解消、あえて残した判断・妥協点 (トレードオフ) を日本語で書く。最低限、要求 / 設計との突合、レイヤ境界、read-only (`RQ-048`)、決定性 (`RQ-051`)、機密性 (`RQ-052`) の観点を崩していないことを確認する。
-- **実装タスクは定量品質ゲート証跡を残す。** 実装系 (`feat` / `fix` / `refactor`) の PR は、実行したコマンドと結果を「定量品質ゲート証跡」節に貼る。ゲートの定義は [Coding Standards](coding-standards.md) の `CS-01`〜`CS-10` と [DES-0008](../design/des-0008-project-structure-and-test-harness.md) に従い、少なくとも次を含める。
+- **実装タスクは定量品質ゲート証跡を残す。** 実装系 (`feat` / `fix` / `refactor`) の PR は、「定量品質ゲート証跡」節を **判定サマリ** と **実行コマンド / 証跡** の二段構成で埋める。ゲートの定義は [Coding Standards](coding-standards.md) の `CS-01`〜`CS-10` と [DES-0008](../design/des-0008-project-structure-and-test-harness.md) に従う。
+  - 判定サマリは `ゲート | 適用条件 | 目標値 | 実測値 | 判定` の表を使う。レビュアがログを展開しなくても、適用条件・目標値・実測値・合否を横並びで判定できること。
+  - 実行コマンド / 証跡は `ゲート | 実行コマンド | 証跡 / 補足` の表を使う。再現可能なコマンド、テスト内訳、ログまたは artifact / trace へのリンク、非適用理由を記録する。長い生ログをサマリ表へ貼らない。
+  - `判定` は `PASS` / `FAIL` / `NOT RUN` / `N/A` / `BELOW TARGET` のいずれかとする。`BELOW TARGET` は非ブロッキング基準値未達である `CS-10` にのみ使う。未実施を `N/A` や `PASS` と表現してはならない。
+  - テンプレートの標準行は削除しない。非適用時は `判定` を `N/A` とし、`実測値` または `証跡 / 補足` に理由を書く。必須ゲートを実行できなかった場合は `NOT RUN` として残リスクに転記する。
+  - 少なくとも次を含める。
   - ビルド (警告=エラー: `CS-01` / `CS-05` / `CS-06` / `CS-08`)。
   - ユニットテスト件数・成否と、コア層 (Domain / Application / Policy / Reports) の行カバレッジ (`CS-07`: 80% 以上)。
   - アーキテクチャテスト (依存方向 / banned API)。
   - `dotnet format --verify-no-changes` (`CS-09`)。
-  - 該当する項目が無い場合は、その項目を `N/A` と理由付きで明記する。
+  - `CS-10` が適用される場合の対象層・mutation score・trace / follow-up Issue。80% 未満は `BELOW TARGET` とし、改善候補または残リスクを記録する。
 - ドキュメント / プロセス / ツールのみの PR (`docs` / `chore` / `test`) は、定量品質ゲート証跡のうち該当する項目 (例: OKF 検証、`test` なら該当テスト) だけを記載し、残りは `N/A` としてよい。
 - PR は関連 Issue にリンクし、検証結果と残リスクを PR または Issue に残す。
 
@@ -77,4 +82,3 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\git\Install-GitHooks
 ```
 
 These hooks are local guardrails, not a substitute for GitHub branch protection. Configure GitHub branch protection for `main` to require pull requests before merge.
-

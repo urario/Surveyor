@@ -27,6 +27,7 @@ Use this skill as an independent quality reviewer. Do not implement fixes while 
    - `RQ-052`: screenshots and extracted text can contain confidential data.
    - `RQ-054`: WinUI 3 stays in the shell; core analysis, scoring, and reports stay UI-independent.
 5. Review evidence quality: measurable acceptance criteria, test seams, automated tests, manual validation, trace blocks, and residual risk.
+6. For PR evidence, compare every fixed summary row's target, actual, and result with its command/evidence row. Treat missing actual values labeled `PASS`, unexplained `N/A` / `NOT RUN`, deleted standard rows, and `BELOW TARGET` outside `CS-10` as findings.
 
 ## Output Shape
 

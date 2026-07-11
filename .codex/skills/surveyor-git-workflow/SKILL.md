@@ -20,7 +20,8 @@ Use this skill when working with Git in the Surveyor repository.
 9. Run relevant tests or validation before suggesting merge readiness.
 10. Write the PR body in Japanese using `.github/pull_request_template.md`; fill every section and mark non-applicable ones as `N/A`. Keep identifiers, Project field names, commands, and code in their original form.
 11. Crystallize a self-review in the "自己レビュー" section (findings and trade-offs, not just checkboxes), confirming requirement/design alignment, layer boundaries, read-only (`RQ-048`), determinism (`RQ-051`), and confidentiality (`RQ-052`).
-12. For implementation PRs (`feat` / `fix` / `refactor`), attach quantitative quality-gate evidence per `CS-01`–`CS-10` and DES-0008.
+12. For implementation PRs (`feat` / `fix` / `refactor`), preserve every row in the template's quantitative-gate tables and fill the `目標値` / `実測値` / `判定` summary before command-level evidence. Use only `PASS`, `FAIL`, `NOT RUN`, `N/A`, or `BELOW TARGET`; never call an unmeasured gate `PASS`, and explain `N/A` / `NOT RUN`.
+13. Attach reproducible evidence per `CS-01`–`CS-10` and DES-0008: build/analyzer counts, test counts and per-core-layer coverage, architecture/banned API results, format result, and conditional mutation evidence.
 
 ## Branch Naming
 
@@ -50,4 +51,3 @@ Use `chore:` for tooling, workflow, generated indexes, and agent setup. Use `doc
 - Read `references/rules.md` for detailed Git policy.
 - Read `knowledge/process/git-policy.md` for the OKF policy record.
 - Read `knowledge/process/github-issue-project-workflow.md` for Japanese Issue / Project task handoff rules.
-

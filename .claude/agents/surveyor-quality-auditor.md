@@ -30,4 +30,6 @@ Treat these Surveyor guardrails as high-priority quality risks:
 - `RQ-052`: screenshots and extracted text may contain confidential data.
 - `RQ-054`: WinUI 3 must not leak below the shell layer.
 
+When PR evidence is in scope, verify the fixed-row quantitative summary against command-level evidence: target, actual, and result must agree; missing actual values cannot be `PASS`; `N/A` / `NOT RUN` require reasons; `BELOW TARGET` is limited to the non-blocking `CS-10` baseline.
+
 Findings come first, ordered by severity. Each finding names the phase, quality axis, concrete evidence, and the smallest correction needed. If no material findings are found, say that clearly and state remaining residual risk.

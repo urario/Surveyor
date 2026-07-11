@@ -40,7 +40,8 @@ Include:
 - Requirements: `RQ-xxx` / `RD-xxx` IDs or "N/A"
 - Artifacts: `ADR-xxxx`, `DES-xxxx`, `IMP-xxxx`, `UT-xxxx`, `IT-xxxx`, `TRC-xxxx`, PR-only, or "N/A"
 - 自己レビュー: 作成者自身の差分通し読み結果を結晶化する。所見 (見つけた懸念と解消、あえて残したトレードオフ) を日本語で書き、要求/設計との突合、レイヤ境界、read-only (`RQ-048`)、決定性 (`RQ-051`)、機密性 (`RQ-052`) を確認する。
-- 定量品質ゲート証跡 (実装タスクは必須): `CS-01`–`CS-10` と DES-0008 に基づく実行コマンドと結果。ビルド (警告=エラー)、ユニットテスト件数・成否とコア層カバレッジ (`CS-07` ≥ 80%)、アーキテクチャテスト (依存方向 / banned API)、`dotnet format --verify-no-changes` (`CS-09`)。`CS-10` を実行した場合は Stryker の実行コマンド、対象レイヤ、スコア、trace へのリンクを入れる。80% 未満でも baseline は非ブロッキングのため、PR では改善候補か follow-up Issue を明記する。該当なしは理由付きで `N/A`。
+- 定量品質ゲート証跡 (実装タスクは必須): テンプレートの標準行を削除せず、最初の表で `適用条件` / `目標値` / `実測値` / `判定` を比較可能にし、次の表で再現コマンドと evidence / trace を示す。`判定` は `PASS` / `FAIL` / `NOT RUN` / `N/A` / `BELOW TARGET` のみ。未計測を `PASS` にせず、`N/A` / `NOT RUN` には理由を書く。
+- ゲート内容: `CS-01`–`CS-10` と DES-0008 に基づくビルド (警告・エラー・メトリクス・公開 API)、ユニットテスト件数・成否と各コア層カバレッジ (`CS-07` ≥ 80%)、アーキテクチャテスト (依存方向 / banned API)、`dotnet format --verify-no-changes` (`CS-09`)。`CS-10` を実行した場合は Stryker の実行コマンド、対象レイヤ、スコア、trace へのリンクを入れる。80% 未満は `BELOW TARGET` (非ブロッキング) とし、改善候補か follow-up Issue を明記する。
 - OKF: files updated (`tools/okf/Validate-Okf.ps1` の結果) or "N/A"
 - Risk: residual manual validation or "None known"
 
