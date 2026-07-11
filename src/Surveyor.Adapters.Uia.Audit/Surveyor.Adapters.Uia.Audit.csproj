@@ -5,6 +5,9 @@
 
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Surveyor.Adapters.Uia</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>Surveyor.Adapters.Uia.Tests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>

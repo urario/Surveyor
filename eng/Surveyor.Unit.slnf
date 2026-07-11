@@ -11,8 +11,7 @@
       "tests/Surveyor.Application.Tests/Surveyor.Application.Tests.csproj",
       "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj",
       "tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj",
-      "tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj",
-      "tests/Surveyor.Adapters.Uia.Tests/Surveyor.Adapters.Uia.Tests.csproj"
+      "tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj"
     ]
   }
 }
