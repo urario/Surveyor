@@ -10,15 +10,23 @@ namespace Surveyor.Adapters.Uia.RawUia;
 internal sealed class DynamicRawUiaReader : IRawUiaReader
 {
     private static readonly Guid CUIAutomationClsid = new("ff48dba4-60ef-4201-aa87-54103eef594e");
+    private const int UiaCallBudgetMilliseconds = 5000;
 
-    public RawUiaReadResult ReadTree(nint windowHandle, int maxElementCount, ReadOnlyAcquisitionSpy spy, CancellationToken cancellationToken)
+    public RawUiaReadResult ReadTree(
+        nint windowHandle,
+        string processImageName,
+        int maxElementCount,
+        ReadOnlyAcquisitionSpy spy,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(spy);
         cancellationToken.ThrowIfCancellationRequested();
 
         try
         {
+            List<RunDiagnostic> diagnostics = [];
             dynamic automation = CreateAutomationClient();
+            ConfigureCallBudget(automation, diagnostics);
             dynamic root = automation.ElementFromHandle(windowHandle);
             if (root is null)
             {
@@ -28,8 +36,13 @@ internal sealed class DynamicRawUiaReader : IRawUiaReader
             int count = 0;
             bool hitCap = false;
             dynamic walker = automation.RawViewWalker;
-            RawUiaNode rawRoot = ReadNode(root, walker, maxElementCount, spy, cancellationToken, ref count, ref hitCap);
-            return new RawUiaReadResult(OperationStatus.Ok, rawRoot, hitCap, hitCap ? [RawUiaDiagnostics.CapReached(maxElementCount, count)] : []);
+            RawUiaNode rawRoot = ReadNode(root, walker, NormalizeProcessImageName(processImageName), maxElementCount, spy, cancellationToken, ref count, ref hitCap);
+            if (hitCap)
+            {
+                diagnostics.Add(RawUiaDiagnostics.CapReached(maxElementCount, count));
+            }
+
+            return new RawUiaReadResult(OperationStatus.Ok, rawRoot, hitCap, diagnostics);
         }
         catch (COMException exception)
         {
@@ -52,9 +65,27 @@ internal sealed class DynamicRawUiaReader : IRawUiaReader
         return Activator.CreateInstance(automationType) ?? throw new InvalidOperationException();
     }
 
+    private static void ConfigureCallBudget(dynamic automation, List<RunDiagnostic> diagnostics)
+    {
+        try
+        {
+            automation.ConnectionTimeout = UiaCallBudgetMilliseconds;
+            automation.TransactionTimeout = UiaCallBudgetMilliseconds;
+        }
+        catch (COMException exception)
+        {
+            diagnostics.Add(RawUiaDiagnostics.UiaCallBudgetFallback("com-exception", exception.HResult));
+        }
+        catch (RuntimeBinderException exception)
+        {
+            diagnostics.Add(RawUiaDiagnostics.UiaCallBudgetFallback("iui-automation6-unavailable", exception.HResult));
+        }
+    }
+
     private static RawUiaNode ReadNode(
         dynamic element,
         dynamic walker,
+        string processImageName,
         int maxElementCount,
         ReadOnlyAcquisitionSpy spy,
         CancellationToken cancellationToken,
@@ -70,19 +101,18 @@ internal sealed class DynamicRawUiaReader : IRawUiaReader
         string className = ReadStringProperty(element, spy, "CurrentClassName") ?? "unknown-window";
         int controlType = ReadIntProperty(element, spy, "CurrentControlType");
         BoundingRect? bounds = ReadBounds(element, spy);
-        UnavailableReason? unavailableReason = ReadUnavailableReason(element, spy);
-        IReadOnlyList<RawUiaNode> children = ReadChildren(element, walker, maxElementCount, spy, cancellationToken, ref count, ref hitCap);
+        IReadOnlyList<RawUiaNode> children = ReadChildren(element, walker, processImageName, maxElementCount, spy, cancellationToken, ref count, ref hitCap);
 
         return new RawUiaNode(
             automationId,
             frameworkId,
             name,
-            ProcessImageName: "unknown.exe",
+            processImageName,
             className,
             ToControlKind(controlType),
             HasControlType: controlType != 0,
             bounds,
-            unavailableReason,
+            UnavailableReason: null,
             AcquisitionProvenance.UiaNative,
             SupportedPatterns.None,
             children);
@@ -91,6 +121,7 @@ internal sealed class DynamicRawUiaReader : IRawUiaReader
     private static List<RawUiaNode> ReadChildren(
         dynamic element,
         dynamic walker,
+        string processImageName,
         int maxElementCount,
         ReadOnlyAcquisitionSpy spy,
         CancellationToken cancellationToken,
@@ -108,7 +139,7 @@ internal sealed class DynamicRawUiaReader : IRawUiaReader
                 break;
             }
 
-            children.Add(ReadNode(child, walker, maxElementCount, spy, cancellationToken, ref count, ref hitCap));
+            children.Add(ReadNode(child, walker, processImageName, maxElementCount, spy, cancellationToken, ref count, ref hitCap));
             spy.RecordInvocation("IUIAutomationTreeWalker.GetNextSiblingElement");
             child = walker.GetNextSiblingElement(child);
         }
@@ -143,13 +174,6 @@ internal sealed class DynamicRawUiaReader : IRawUiaReader
             : null;
     }
 
-    private static UnavailableReason? ReadUnavailableReason(dynamic element, ReadOnlyAcquisitionSpy spy)
-    {
-        spy.RecordInvocation("IUIAutomationElement.GetCurrentPropertyValue");
-        object? value = ReadDynamicProperty(element, "CurrentIsOffscreen");
-        return value is bool offscreen && offscreen ? UnavailableReason.NotExposed : null;
-    }
-
     private static object? ReadDynamicProperty(dynamic element, string propertyName)
     {
         return propertyName switch
@@ -159,7 +183,6 @@ internal sealed class DynamicRawUiaReader : IRawUiaReader
             "CurrentName" => element.CurrentName,
             "CurrentClassName" => element.CurrentClassName,
             "CurrentControlType" => element.CurrentControlType,
-            "CurrentIsOffscreen" => element.CurrentIsOffscreen,
             _ => null,
         };
     }
@@ -188,5 +211,10 @@ internal sealed class DynamicRawUiaReader : IRawUiaReader
     private static int ToInt32(double value)
     {
         return Convert.ToInt32(Math.Round(value, MidpointRounding.AwayFromZero), CultureInfo.InvariantCulture);
+    }
+
+    private static string NormalizeProcessImageName(string? processImageName)
+    {
+        return string.IsNullOrWhiteSpace(processImageName) ? "unknown.exe" : processImageName.Trim();
     }
 }

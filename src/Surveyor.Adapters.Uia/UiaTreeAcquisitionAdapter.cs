@@ -60,13 +60,13 @@ public sealed class UiaTreeAcquisitionAdapter : IUiTreeAcquisitionPort
         ArgumentNullException.ThrowIfNull(options);
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (!targetRegistry.TryResolve(target, out nint windowHandle))
+        if (!targetRegistry.TryResolve(target, out UiaTargetHandle handle))
         {
             return Task.FromResult(UiaAcquisitionResultFactory.Unavailable("Acquisition.Target.NotResolved", OperationStatus.NotFound));
         }
 
         ReadOnlyAcquisitionSpy spy = new();
-        RawUiaReadResult readResult = reader.ReadTree(windowHandle, options.MaxElementCount, spy, cancellationToken);
+        RawUiaReadResult readResult = reader.ReadTree(handle.WindowHandle, handle.ProcessImageName, options.MaxElementCount, spy, cancellationToken);
         ReadOnlyAuditResult auditResult = audit.Evaluate(spy);
         if (!auditResult.IsReadOnly)
         {

@@ -94,7 +94,6 @@ public sealed class ArchitectureProjectGraphTests
         "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj",
         "tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj",
         "tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj",
-        "tests/Surveyor.Adapters.Uia.Tests/Surveyor.Adapters.Uia.Tests.csproj",
     ];
 
     private static readonly string[] ForbiddenCoreFrameworkMarkers =
@@ -296,6 +295,7 @@ public sealed class ArchitectureProjectGraphTests
 
         Assert.DoesNotContain("tests/integration/", filterText, StringComparison.Ordinal);
         Assert.DoesNotContain("tests/it-fixtures/", filterText, StringComparison.Ordinal);
+        Assert.DoesNotContain("tests/Surveyor.Adapters.Uia.Tests/Surveyor.Adapters.Uia.Tests.csproj", filterText, StringComparison.Ordinal);
     }
 
     private static Dictionary<string, string[]> LoadProjectReferenceGraph()

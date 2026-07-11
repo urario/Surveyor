@@ -29,8 +29,21 @@ public sealed class UiaTreeAcquisitionAdapterTests
     internal static UiaTreeAcquisitionAdapter CreateAdapter(FakeRawUiaReader reader, out TargetReference target)
     {
         UiaTargetHandleRegistry registry = new();
-        target = registry.RegisterWindowHandle((nint)1234, "fixture", TargetIntegrityHint.SameOrLower);
+        target = registry.RegisterWindowHandle((nint)1234, "fixture", TargetIntegrityHint.SameOrLower, "fixture.exe");
         return new UiaTreeAcquisitionAdapter(new FakeFallbackKeyDerivation(), registry, reader, new ReadOnlyAcquisitionAudit());
+    }
+
+    [Fact(DisplayName = "IMP-0013: registry metadata supplies process image name to raw reader")]
+    public async Task RegistryMetadataSuppliesProcessImageNameToRawReader()
+    {
+        FakeRawUiaReader reader = new(RawUiaFixture.Tree());
+        UiaTargetHandleRegistry registry = new();
+        TargetReference target = registry.RegisterWindowHandle((nint)5678, "fixture", TargetIntegrityHint.SameOrLower, "real-target.exe");
+        UiaTreeAcquisitionAdapter adapter = new(new FakeFallbackKeyDerivation(), registry, reader, new ReadOnlyAcquisitionAudit());
+
+        _ = await adapter.AcquireAsync(target, AcquisitionOptions.Default, CancellationToken.None);
+
+        Assert.Equal("real-target.exe", reader.ProcessImageName);
     }
 }
 
@@ -81,9 +94,17 @@ internal sealed class FakeRawUiaReader(RawUiaReadResult result, string? extraInv
 {
     public bool WasCalled { get; private set; }
 
-    public RawUiaReadResult ReadTree(nint windowHandle, int maxElementCount, ReadOnlyAcquisitionSpy spy, CancellationToken cancellationToken)
+    public string? ProcessImageName { get; private set; }
+
+    public RawUiaReadResult ReadTree(
+        nint windowHandle,
+        string processImageName,
+        int maxElementCount,
+        ReadOnlyAcquisitionSpy spy,
+        CancellationToken cancellationToken)
     {
         WasCalled = true;
+        ProcessImageName = processImageName;
         cancellationToken.ThrowIfCancellationRequested();
         spy.RecordInvocation("IUIAutomationElement.GetCurrentPropertyValue");
         spy.RecordInvocation("IUIAutomationTreeWalker.GetFirstChildElement");

@@ -38,4 +38,22 @@ internal static class RawUiaDiagnostics
             ExceptionKind: hresult is null ? null : ExceptionKind.Unknown,
             HResult: hresult);
     }
+
+    internal static RunDiagnostic UiaCallBudgetFallback(string reason, int? hresult)
+    {
+        return new RunDiagnostic(
+            "Acquisition.UiaCallBudget.Fallback",
+            RunStage.TreeAcquisition,
+            DiagnosticSeverity.Warning,
+            OperationStatus.Ok,
+            ScreenKey: null,
+            ElementKey: null,
+            "acquisition.uia-call-budget.fallback",
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["reason"] = reason,
+            },
+            ExceptionKind: hresult is null ? null : ExceptionKind.Unknown,
+            HResult: hresult);
+    }
 }

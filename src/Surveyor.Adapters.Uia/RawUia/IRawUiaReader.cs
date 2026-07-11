@@ -4,5 +4,10 @@ namespace Surveyor.Adapters.Uia.RawUia;
 
 internal interface IRawUiaReader
 {
-    RawUiaReadResult ReadTree(nint windowHandle, int maxElementCount, ReadOnlyAcquisitionSpy spy, CancellationToken cancellationToken);
+    RawUiaReadResult ReadTree(
+        nint windowHandle,
+        string processImageName,
+        int maxElementCount,
+        ReadOnlyAcquisitionSpy spy,
+        CancellationToken cancellationToken);
 }

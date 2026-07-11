@@ -1,6 +1,6 @@
 #nullable enable
 Surveyor.Adapters.Uia.UiaTargetHandleRegistry
-Surveyor.Adapters.Uia.UiaTargetHandleRegistry.RegisterWindowHandle(nint windowHandle, string? safeDisplayHint = null, Surveyor.Application.Dto.TargetIntegrityHint integrityHint = Surveyor.Application.Dto.TargetIntegrityHint.Unknown) -> Surveyor.Application.Dto.TargetReference!
+Surveyor.Adapters.Uia.UiaTargetHandleRegistry.RegisterWindowHandle(nint windowHandle, string? safeDisplayHint = null, Surveyor.Application.Dto.TargetIntegrityHint integrityHint = Surveyor.Application.Dto.TargetIntegrityHint.Unknown, string? processImageName = null) -> Surveyor.Application.Dto.TargetReference!
 Surveyor.Adapters.Uia.UiaTargetHandleRegistry.UiaTargetHandleRegistry() -> void
 Surveyor.Adapters.Uia.UiaTreeAcquisitionAdapter
 Surveyor.Adapters.Uia.UiaTreeAcquisitionAdapter.AcquireAsync(Surveyor.Application.Dto.TargetReference! target, Surveyor.Application.Dto.AcquisitionOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.AcquisitionResult!>!
