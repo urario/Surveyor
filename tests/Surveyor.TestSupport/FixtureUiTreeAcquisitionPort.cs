@@ -33,40 +33,18 @@ public sealed class FixtureUiTreeAcquisitionPort : IUiTreeAcquisitionPort
             IdentitySource.AutomationId,
             IdentityMaterial.StableIdentity(fixture.ScreenAutomationId));
         ScreenKey screenKey = ScreenKey.FromIdentity(identity, state: null);
-        UiElement root = BuildNaive(fixture.Root, screenKey, []);
+
+        AcquisitionBuildState state = new(screenKey, options.MaxElementCount);
+        UiElement root = AcquisitionModelMapper.Build(fixture.Root, [], siblingOrdinal: 1, state);
         ScreenModel model = new(screenKey, identity, state: null, new DisplayLabel(fixture.ScreenLabel), root);
 
         AcquisitionResult result = new(
-            OperationStatus.Ok,
+            state.IsPartial ? OperationStatus.PartialResult : OperationStatus.Ok,
             model,
             model.ElementsInStableOrder.Count,
-            HitElementCap: false,
-            Availability: [],
-            Diagnostics: []);
+            state.HitElementCap,
+            state.Rollup,
+            state.Diagnostics);
         return Task.FromResult(result);
-    }
-
-    // NAIVE happy-path-only mapping (UT-0004 RED / DES-0007 §7 の忌避スメル):
-    // すべてのノードを Available / High として固定 identity で写像し、runtime-id 判定・provenance・
-    // プロパティ完全性・仮想化・レガシーエッジをすべて無視します。IMP-0006 で完全実装に差し替えます。
-    private static UiElement BuildNaive(UiaTreeFixtureNode node, ScreenKey screenKey, ElementIdentity[] parentPath)
-    {
-        ElementIdentity identity = new(
-            IdentitySource.AutomationId,
-            IdentityMaterial.StableIdentity(node.AutomationId ?? node.FrameworkStableId ?? node.RawName ?? "node"));
-        ElementIdentity[] path = [.. parentPath, identity];
-        ElementKey key = ElementKey.FromPath(screenKey, path);
-        UiElement[] children = node.Children.Select(child => BuildNaive(child, screenKey, path)).ToArray();
-
-        return new UiElement(
-            key,
-            identity,
-            new DisplayLabel(node.RawName ?? string.Empty),
-            node.Kind,
-            new BoundingRect(0, 0, 100, 20),
-            Availability.Available,
-            AcquisitionConfidence.High,
-            children,
-            SupportedPatterns.None);
     }
 }
