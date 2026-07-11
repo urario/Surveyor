@@ -1,5 +1,11 @@
 # Surveyor Knowledge Log
 
+## 2026-07-11
+
+* **Project Management**: Updated GitHub Project `Surveyor Lifecycle Work` before starting #71. #43 (`UT-0004`) was moved to `Done` after PR #102 had merged the UT-0004/IMP-0006 work; #64 (`IMP-0006`) and #65 (`IMP-0007`) were re-synced as `Done`; #71 (`IMP-0013`) was moved from `Blocked` to `In Implementation` because #30, #36, #43, #64, and #65 were all cleared.
+
+* **Implementation Evidence**: Added `IMP-0013` (#71) for the real UIA acquisition adapter under `DES-0014` (`RQ-017`, `RQ-026`, `RQ-048`, `RQ-049`). Implemented `UiaTreeAcquisitionAdapter`, `UiaTargetHandleRegistry`, the internal raw-reader seam, dynamic raw COM UIA reader, read-only audit wiring, adapter-side mapping to `ScreenModel` / `UiElement`, and tests for mapping, audit violation, unresolved target, and caller cancellation. Verification: `dotnet test tests\Surveyor.Adapters.Uia.Tests\Surveyor.Adapters.Uia.Tests.csproj --no-restore -v minimal` passed 56 tests; `dotnet test eng\Surveyor.Unit.slnf --no-restore -v minimal` passed Architecture 8, Domain 59, Application 23, Policy 45, and Adapters.Uia 56 with core coverage above 80%. Residual risk: live Windows target smoke, MSAA/`WM_GETTEXT` breadth, COM timeout calibration, and target state-invariance remain `IT-0001`/`IT-0002`/`IT-0005`/`IT-0006` work.
+
 ## 2026-07-05
 
 * **Process**: Added [Stryker Mutation Workflow](process/stryker-workflow.md) as the canonical `CS-10` playbook. It standardizes the pinned-manifest source of truth, the committed `tools/stryker/Run-StrykerBaseline.ps1` entrypoint, environment fallback when `dotnet tool run` is inconsistent, non-blocking below-80% evidence rules, and PR / Issue reporting expectations. Wired the playbook into the shared OKF guidance, the Codex implementation / git workflow references, and the tracked Claude OKF / git workflow / TDD review / reviewer guidance so different models and local environments converge on the same Stryker procedure.

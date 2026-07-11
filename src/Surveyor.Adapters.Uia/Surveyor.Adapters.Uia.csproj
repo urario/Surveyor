@@ -4,6 +4,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Surveyor.Adapters.Uia.Audit\Surveyor.Adapters.Uia.Audit.csproj" />
     <ProjectReference Include="..\Surveyor.Application\Surveyor.Application.csproj" />
     <ProjectReference Include="..\Surveyor.Domain\Surveyor.Domain.csproj" />
   </ItemGroup>

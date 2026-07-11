@@ -89,8 +89,25 @@ jobs:
       - name: Build full solution
         run: dotnet build Surveyor.slnx -c Release
 
+      - name: Test UIA adapter
+        run: >
+          dotnet test tests/Surveyor.Adapters.Uia.Tests/Surveyor.Adapters.Uia.Tests.csproj
+          --no-build
+          -c Release
+          --logger trx
+          --results-directory artifacts/test-results
+
       - name: Verify formatting (CS-09)
         run: dotnet format Surveyor.slnx --verify-no-changes --no-restore
+
+      - name: Upload Windows test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-results
+          path: artifacts/test-results
+          retention-days: 7
+          if-no-files-found: ignore
 
   knowledge:
     name: Knowledge base (OKF)

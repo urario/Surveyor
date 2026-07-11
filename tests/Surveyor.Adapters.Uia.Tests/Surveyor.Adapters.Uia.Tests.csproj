@@ -24,6 +24,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Surveyor.Adapters.Uia.Audit\Surveyor.Adapters.Uia.Audit.csproj" />
+    <ProjectReference Include="..\..\src\Surveyor.Adapters.Uia\Surveyor.Adapters.Uia.csproj" />
+    <ProjectReference Include="..\..\src\Surveyor.Application\Surveyor.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
