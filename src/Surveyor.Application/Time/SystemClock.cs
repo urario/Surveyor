@@ -10,5 +10,7 @@ namespace Surveyor.Application.Time;
 public sealed class SystemClock : IClock
 {
     /// <inheritdoc/>
+#pragma warning disable RS0030 // SystemClock is the only production boundary allowed to read ambient UTC time.
     public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
+#pragma warning restore RS0030
 }
