@@ -229,6 +229,13 @@ public sealed record ConfidentialityRequest(
     IReadOnlyList<RunDiagnostic> Diagnostics,
     OptOutRequest? OptOut);
 
+// Version note (2026-07-11, per DES-0007 §5.3): the OptOutRequest field detail is
+// fixed by DES-0016 (the consent surface this package's Downstream row delegates
+// to): OptOutRequest(OptOutScope Scope, string ReasonCode) with the allowlisted
+// opt-out-reason-v1 codes; scope is local-only (DisableMaskingLocalOnly /
+// WidenStorageLocalOnly). Timestamping stays here via Decide/DecidedAtUtc.
+// No masking, storage, or export rule of this package changes.
+
 public sealed record PolicyApplicationRequest(
     AnalysisRunResult RunResult,
     ConfidentialityDecision Decision);

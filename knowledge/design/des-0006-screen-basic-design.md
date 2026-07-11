@@ -84,6 +84,8 @@ stateDiagram-v2
 
 Detailed design decides the concrete `INavigationService` intent members (including the metadata-gate signal exposed to `SCR-02`), whether the shell is a single window with a nav rail or multiple pages, and dialog types for `IDialogService`.
 
+> **Version note (2026-07-11, refined by [DES-0016](des-0016-operating-ui-detailed-design.md), per DES-0007 §5.3):** the gating-table row for `Reporting`/`Exporting` was written against the [DES-0004](des-0004-analysis-flow-basic-design.md) linear model where report/export ran inside the run. Under the accepted [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) use-case split they are post-review commands issued from `SCR-07`; for those command-scoped states `DES-0016` refines the row to: user stays on `SCR-07` with a cancellable inline progress surface, `SCR-02` remains reachable to show the in-flight state, all other navigation is blocked, and Run stays disabled. The intent — no review-screen interaction races an output operation — is unchanged. In-run states (`Analyzing`/`Capturing` and the store step) keep the original `SCR-02`-only row.
+
 ## 4. Review-Surface Decision: Native vs HTML (Resolves Gap A)
 
 [DES-0001](../architecture/des-0001-initial-architecture.md) left "HTML report display — WebView2 in-app vs external browser" open, and `M01` lists both "result browsing" and "report display." This basic design **decides the split** so downstream work does not stall:
