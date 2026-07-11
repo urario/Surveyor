@@ -51,6 +51,31 @@ public sealed class DiscoveryPortBehaviorTests
         Assert.Equal(DiscoveryScope.ProcessScoped, query.Scope);
     }
 
+    [Fact(DisplayName = "UT-0003: Discovery fake は Scope と visibility を実 adapter 範囲として保持し候補属性を通す")]
+    public async Task ListTargetsCarriesCandidateShapeWithoutScopeOrVisibilitySemantics()
+    {
+        FakeTargetDiscoveryPort port = new(
+        [
+            Candidate(
+                "tgt-headless",
+                "Headless",
+                "headless.exe",
+                500,
+                OperationStatus.Ok,
+                TargetIntegrityHint.SameOrLower,
+                isLikelyLegacyGui: false),
+        ]);
+        DiscoveryQuery query = new(DiscoveryScope.ProcessScoped, "headless.exe", IncludeInvisible: true);
+
+        TargetDiscoveryResult result = await port.ListTargetsAsync(query, CancellationToken.None);
+
+        TargetCandidate candidate = Assert.Single(result.Candidates);
+        Assert.False(candidate.IsLikelyLegacyGui);
+        Assert.Equal("Headless", candidate.SafeName);
+        Assert.Equal(DiscoveryScope.ProcessScoped, query.Scope);
+        Assert.True(query.IncludeInvisible);
+    }
+
     [Fact(DisplayName = "UT-0003: Resolve は既知対象の status を返し unknown は NotFound にする")]
     public async Task ResolveReturnsMappedStatusOrNotFound()
     {
@@ -72,13 +97,25 @@ public sealed class DiscoveryPortBehaviorTests
         Assert.Null(missing.Target);
     }
 
+    [Fact(DisplayName = "UT-0003: Discovery fake は null 入力を拒否する")]
+    public async Task FakeRejectsNullInputs()
+    {
+        Assert.Throws<ArgumentNullException>(() => new FakeTargetDiscoveryPort(null!));
+
+        FakeTargetDiscoveryPort port = new([]);
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => port.ListTargetsAsync(null!, CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => port.ResolveAsync(null!, CancellationToken.None));
+    }
+
     private static FakeTargetDiscoveryCandidate Candidate(
         string sessionTargetId,
         string safeName,
         string processImageName,
         int processId,
         OperationStatus status,
-        TargetIntegrityHint integrityHint)
+        TargetIntegrityHint integrityHint,
+        bool isLikelyLegacyGui = true)
     {
         return new FakeTargetDiscoveryCandidate(
             sessionTargetId,
@@ -88,7 +125,7 @@ public sealed class DiscoveryPortBehaviorTests
             TargetKind.TopLevelWindow,
             integrityHint,
             status,
-            IsLikelyLegacyGui: true);
+            isLikelyLegacyGui);
     }
 
     private static TargetReference Reference(string sessionTargetId)

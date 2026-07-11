@@ -65,6 +65,7 @@ public sealed class FakeTargetDiscoveryPort : ITargetDiscoveryPort
 
     private static bool MatchesFilter(TargetCandidate candidate, DiscoveryQuery query)
     {
+        // Scope and visibility are real-discovery adapter concerns; this fake models only stable ordering and process-name filtering.
         return string.IsNullOrWhiteSpace(query.ProcessNameFilter)
             || string.Equals(candidate.Process.ProcessImageName, query.ProcessNameFilter, StringComparison.Ordinal);
     }
