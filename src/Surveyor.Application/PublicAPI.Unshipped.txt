@@ -1,4 +1,125 @@
 #nullable enable
+Surveyor.Application.Dto.DiagnosticSeverity
+Surveyor.Application.Dto.DiagnosticSeverity.Error = 2 -> Surveyor.Application.Dto.DiagnosticSeverity
+Surveyor.Application.Dto.DiagnosticSeverity.Info = 0 -> Surveyor.Application.Dto.DiagnosticSeverity
+Surveyor.Application.Dto.DiagnosticSeverity.Warning = 1 -> Surveyor.Application.Dto.DiagnosticSeverity
+Surveyor.Application.Dto.DiscoveryQuery
+Surveyor.Application.Dto.DiscoveryQuery.DiscoveryQuery(Surveyor.Application.Dto.DiscoveryScope Scope, string? ProcessNameFilter, bool IncludeInvisible) -> void
+Surveyor.Application.Dto.DiscoveryQuery.IncludeInvisible.get -> bool
+Surveyor.Application.Dto.DiscoveryQuery.IncludeInvisible.init -> void
+Surveyor.Application.Dto.DiscoveryQuery.ProcessNameFilter.get -> string?
+Surveyor.Application.Dto.DiscoveryQuery.ProcessNameFilter.init -> void
+Surveyor.Application.Dto.DiscoveryQuery.Scope.get -> Surveyor.Application.Dto.DiscoveryScope
+Surveyor.Application.Dto.DiscoveryQuery.Scope.init -> void
+Surveyor.Application.Dto.DiscoveryScope
+Surveyor.Application.Dto.DiscoveryScope.ProcessScoped = 1 -> Surveyor.Application.Dto.DiscoveryScope
+Surveyor.Application.Dto.DiscoveryScope.TopLevelWindows = 0 -> Surveyor.Application.Dto.DiscoveryScope
+Surveyor.Application.Dto.ExceptionKind
+Surveyor.Application.Dto.ExceptionKind.Cancelled = 4 -> Surveyor.Application.Dto.ExceptionKind
+Surveyor.Application.Dto.ExceptionKind.InvalidInput = 5 -> Surveyor.Application.Dto.ExceptionKind
+Surveyor.Application.Dto.ExceptionKind.Io = 2 -> Surveyor.Application.Dto.ExceptionKind
+Surveyor.Application.Dto.ExceptionKind.Timeout = 3 -> Surveyor.Application.Dto.ExceptionKind
+Surveyor.Application.Dto.ExceptionKind.Unauthorized = 1 -> Surveyor.Application.Dto.ExceptionKind
+Surveyor.Application.Dto.ExceptionKind.Unknown = 0 -> Surveyor.Application.Dto.ExceptionKind
+Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.OperationStatus.Cancelled = 7 -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.OperationStatus.IntegrityMismatch = 3 -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.OperationStatus.IoError = 9 -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.OperationStatus.NotFound = 6 -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.OperationStatus.Ok = 0 -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.OperationStatus.PartialResult = 5 -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.OperationStatus.PermissionDenied = 2 -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.OperationStatus.SchemaInvalid = 8 -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.OperationStatus.Timeout = 4 -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.OperationStatus.Unavailable = 1 -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.RunDiagnostic
+Surveyor.Application.Dto.RunDiagnostic.Code.get -> string!
+Surveyor.Application.Dto.RunDiagnostic.Code.init -> void
+Surveyor.Application.Dto.RunDiagnostic.ElementKey.get -> Surveyor.Domain.Keys.ElementKey?
+Surveyor.Application.Dto.RunDiagnostic.ElementKey.init -> void
+Surveyor.Application.Dto.RunDiagnostic.ExceptionKind.get -> Surveyor.Application.Dto.ExceptionKind?
+Surveyor.Application.Dto.RunDiagnostic.ExceptionKind.init -> void
+Surveyor.Application.Dto.RunDiagnostic.HResult.get -> int?
+Surveyor.Application.Dto.RunDiagnostic.HResult.init -> void
+Surveyor.Application.Dto.RunDiagnostic.MessageTemplateId.get -> string!
+Surveyor.Application.Dto.RunDiagnostic.MessageTemplateId.init -> void
+Surveyor.Application.Dto.RunDiagnostic.RunDiagnostic(string! Code, Surveyor.Application.Dto.RunStage Stage, Surveyor.Application.Dto.DiagnosticSeverity Severity, Surveyor.Application.Dto.OperationStatus Status, Surveyor.Domain.Keys.ScreenKey? ScreenKey, Surveyor.Domain.Keys.ElementKey? ElementKey, string! MessageTemplateId, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! SafeArgs, Surveyor.Application.Dto.ExceptionKind? ExceptionKind, int? HResult) -> void
+Surveyor.Application.Dto.RunDiagnostic.SafeArgs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Surveyor.Application.Dto.RunDiagnostic.SafeArgs.init -> void
+Surveyor.Application.Dto.RunDiagnostic.ScreenKey.get -> Surveyor.Domain.Keys.ScreenKey?
+Surveyor.Application.Dto.RunDiagnostic.ScreenKey.init -> void
+Surveyor.Application.Dto.RunDiagnostic.Severity.get -> Surveyor.Application.Dto.DiagnosticSeverity
+Surveyor.Application.Dto.RunDiagnostic.Severity.init -> void
+Surveyor.Application.Dto.RunDiagnostic.Stage.get -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunDiagnostic.Stage.init -> void
+Surveyor.Application.Dto.RunDiagnostic.Status.get -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.RunDiagnostic.Status.init -> void
+Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunStage.Capture = 5 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunStage.ConfidentialityPolicy = 6 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunStage.Export = 10 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunStage.RegionPlanning = 4 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunStage.ReportGeneration = 8 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunStage.ResultAssembly = 7 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunStage.Scoring = 3 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunStage.Store = 9 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunStage.TargetDiscovery = 0 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunStage.TargetSelection = 1 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.RunStage.TreeAcquisition = 2 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.TargetCandidate
+Surveyor.Application.Dto.TargetCandidate.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
+Surveyor.Application.Dto.TargetCandidate.Diagnostics.init -> void
+Surveyor.Application.Dto.TargetCandidate.IsLikelyLegacyGui.get -> bool
+Surveyor.Application.Dto.TargetCandidate.IsLikelyLegacyGui.init -> void
+Surveyor.Application.Dto.TargetCandidate.Process.get -> Surveyor.Application.Dto.TargetProcessInfo!
+Surveyor.Application.Dto.TargetCandidate.Process.init -> void
+Surveyor.Application.Dto.TargetCandidate.Reference.get -> Surveyor.Application.Dto.TargetReference!
+Surveyor.Application.Dto.TargetCandidate.Reference.init -> void
+Surveyor.Application.Dto.TargetCandidate.SafeName.get -> string!
+Surveyor.Application.Dto.TargetCandidate.SafeName.init -> void
+Surveyor.Application.Dto.TargetCandidate.Status.get -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.TargetCandidate.Status.init -> void
+Surveyor.Application.Dto.TargetCandidate.TargetCandidate(Surveyor.Application.Dto.TargetReference! Reference, string! SafeName, Surveyor.Application.Dto.TargetProcessInfo! Process, bool IsLikelyLegacyGui, Surveyor.Application.Dto.OperationStatus Status, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.TargetDiscoveryResult
+Surveyor.Application.Dto.TargetDiscoveryResult.Candidates.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.TargetCandidate!>!
+Surveyor.Application.Dto.TargetDiscoveryResult.Candidates.init -> void
+Surveyor.Application.Dto.TargetDiscoveryResult.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
+Surveyor.Application.Dto.TargetDiscoveryResult.Diagnostics.init -> void
+Surveyor.Application.Dto.TargetDiscoveryResult.Status.get -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.TargetDiscoveryResult.Status.init -> void
+Surveyor.Application.Dto.TargetDiscoveryResult.TargetDiscoveryResult(Surveyor.Application.Dto.OperationStatus Status, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.TargetCandidate!>! Candidates, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.TargetIntegrityHint
+Surveyor.Application.Dto.TargetIntegrityHint.HigherRequiresElevation = 1 -> Surveyor.Application.Dto.TargetIntegrityHint
+Surveyor.Application.Dto.TargetIntegrityHint.SameOrLower = 0 -> Surveyor.Application.Dto.TargetIntegrityHint
+Surveyor.Application.Dto.TargetIntegrityHint.Unknown = 2 -> Surveyor.Application.Dto.TargetIntegrityHint
+Surveyor.Application.Dto.TargetKind
+Surveyor.Application.Dto.TargetKind.Fixture = 2 -> Surveyor.Application.Dto.TargetKind
+Surveyor.Application.Dto.TargetKind.ProcessWindow = 0 -> Surveyor.Application.Dto.TargetKind
+Surveyor.Application.Dto.TargetKind.TopLevelWindow = 1 -> Surveyor.Application.Dto.TargetKind
+Surveyor.Application.Dto.TargetProcessInfo
+Surveyor.Application.Dto.TargetProcessInfo.ProcessId.get -> int
+Surveyor.Application.Dto.TargetProcessInfo.ProcessId.init -> void
+Surveyor.Application.Dto.TargetProcessInfo.ProcessImageName.get -> string!
+Surveyor.Application.Dto.TargetProcessInfo.ProcessImageName.init -> void
+Surveyor.Application.Dto.TargetProcessInfo.TargetProcessInfo(string! ProcessImageName, int ProcessId) -> void
+Surveyor.Application.Dto.TargetReference
+Surveyor.Application.Dto.TargetReference.IntegrityHint.get -> Surveyor.Application.Dto.TargetIntegrityHint
+Surveyor.Application.Dto.TargetReference.IntegrityHint.init -> void
+Surveyor.Application.Dto.TargetReference.Kind.get -> Surveyor.Application.Dto.TargetKind
+Surveyor.Application.Dto.TargetReference.Kind.init -> void
+Surveyor.Application.Dto.TargetReference.SafeDisplayHint.get -> string?
+Surveyor.Application.Dto.TargetReference.SafeDisplayHint.init -> void
+Surveyor.Application.Dto.TargetReference.SessionTargetId.get -> string!
+Surveyor.Application.Dto.TargetReference.SessionTargetId.init -> void
+Surveyor.Application.Dto.TargetReference.TargetReference(string! SessionTargetId, Surveyor.Application.Dto.TargetKind Kind, string? SafeDisplayHint, Surveyor.Application.Dto.TargetIntegrityHint IntegrityHint) -> void
+Surveyor.Application.Dto.TargetResolveResult
+Surveyor.Application.Dto.TargetResolveResult.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
+Surveyor.Application.Dto.TargetResolveResult.Diagnostics.init -> void
+Surveyor.Application.Dto.TargetResolveResult.Status.get -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.TargetResolveResult.Status.init -> void
+Surveyor.Application.Dto.TargetResolveResult.Target.get -> Surveyor.Application.Dto.TargetReference?
+Surveyor.Application.Dto.TargetResolveResult.Target.init -> void
+Surveyor.Application.Dto.TargetResolveResult.TargetResolveResult(Surveyor.Application.Dto.OperationStatus Status, Surveyor.Application.Dto.TargetReference? Target, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
 Surveyor.Application.Time.IClock
 Surveyor.Application.Time.IClock.UtcNow.get -> System.DateTimeOffset
 Surveyor.Application.Time.SystemClock
@@ -41,6 +162,9 @@ Surveyor.Application.Ports.IConfidentialityPolicy.Decide(Surveyor.Application.Po
 Surveyor.Application.Ports.IConfidentialityPolicy.RequiresTextMasking(Surveyor.Application.Ports.ConfidentialityDecision! decision, Surveyor.Application.Ports.ConfidentialityTarget target) -> bool
 Surveyor.Application.Ports.IFallbackKeyDerivation
 Surveyor.Application.Ports.IFallbackKeyDerivation.DeriveFallbackToken(string! scope, string! rawText) -> Surveyor.Domain.Model.IdentityMaterial!
+Surveyor.Application.Ports.ITargetDiscoveryPort
+Surveyor.Application.Ports.ITargetDiscoveryPort.ListTargetsAsync(Surveyor.Application.Dto.DiscoveryQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.TargetDiscoveryResult!>!
+Surveyor.Application.Ports.ITargetDiscoveryPort.ResolveAsync(Surveyor.Application.Dto.TargetReference! target, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.TargetResolveResult!>!
 Surveyor.Application.Ports.OptOutRequest
 Surveyor.Application.Ports.OptOutRequest.OptOutRequest(string! ReasonCode) -> void
 Surveyor.Application.Ports.OptOutRequest.ReasonCode.get -> string!
