@@ -1,0 +1,27 @@
+{
+  "schema": "acquisition-tree/v1",
+  "processImageName": "legacyapp.exe",
+  "windowClass": "AfxFrameOrView140u",
+  "screenAutomationId": "MainWindow",
+  "screenLabel": "Orders - missing identifiers",
+  "root": {
+    "automationId": "RootWindow",
+    "rawName": "Orders",
+    "kind": "Window",
+    "provenance": "UiaNative",
+    "children": [
+      {
+        "rawName": "Custom chart pane",
+        "kind": "Custom",
+        "provenance": "Synthesized",
+        "children": []
+      },
+      {
+        "kind": "Unknown",
+        "provenance": "Synthesized",
+        "hasBounds": false,
+        "children": []
+      }
+    ]
+  }
+}
