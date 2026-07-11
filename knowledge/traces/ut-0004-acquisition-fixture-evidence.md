@@ -17,7 +17,7 @@ tags: [surveyor, unit-test, acquisition, confidence, availability, rq-017, rq-02
 | Issues | #43; drives the implementation side #64 |
 | Upstream | `DES-0005` slice 6, `DES-0007` §7 UT-0004 intent, `DES-0011` DTO 契約, `DES-0014` エッジ表・confidence rubric・runtime-id 判定 |
 | Requirements | `RQ-017`, `RQ-026`; `RD-003`, `RD-004`; guardrails `RQ-048`, `RQ-051`, `RQ-052` |
-| Test files | `tests/Surveyor.Application.Tests/AcquisitionFixtureBehaviorTests.cs` |
+| Test files | `tests/Surveyor.Application.Tests/AcquisitionFixtureMappingTests.cs`, `tests/Surveyor.Application.Tests/AcquisitionFixtureEdgeTests.cs`, `tests/Surveyor.Application.Tests/AcquisitionFixtureContractTests.cs`, `tests/Surveyor.Application.Tests/AcquisitionScenarios.cs` |
 | Support files | `tests/Surveyor.TestSupport/FixtureUiTreeAcquisitionPort.cs`, `tests/Surveyor.TestSupport/AcquisitionModelMapper.cs`, `tests/Surveyor.TestSupport/FixtureRuntimeId.cs`, `tests/Surveyor.TestSupport/FixtureFallbackKey.cs`, `tests/Surveyor.TestSupport/AcquisitionBuildState.cs`, `tests/Surveyor.TestSupport/UiaTreeFixtureReader.cs` |
 | Fixtures | `tests/fixtures/uia-trees/acq-*.tree` (happy-path / missing-and-custom / virtualized-vs-absent / legacy-edges / counter-runtimeid / counter-missing-property) |
 
@@ -41,8 +41,8 @@ tags: [surveyor, unit-test, acquisition, confidence, availability, rq-017, rq-02
 
 | Command | Result |
 | --- | --- |
-| `dotnet test eng/Surveyor.Unit.slnf` | PR CI unit lane (ubuntu-latest) で確認 — 本PRのチェックを参照 |
-| `dotnet test tests/Surveyor.Application.Tests/Surveyor.Application.Tests.csproj --filter AcquisitionFixtureBehaviorTests` | UT-0004 behavior tests green |
+| `dotnet test eng/Surveyor.Unit.slnf` | PR #102 CI unit lane (ubuntu-latest, run 29140761984) green |
+| `dotnet test tests/Surveyor.Application.Tests/Surveyor.Application.Tests.csproj` | UT-0004 behavior tests (Mapping / Edge / Contract) green |
 
 > 注: 実行環境の egress ポリシーにより .NET SDK をローカル取得できないため、ビルド/テストは PR の CI unit lane (ubuntu) で検証する。RED → GREEN 遷移は commit `7e89f94` (naive, RED) → `553ee5b` (完全実装, GREEN) に残る。
 

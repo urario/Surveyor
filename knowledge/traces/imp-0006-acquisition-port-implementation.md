@@ -19,7 +19,7 @@ tags: [surveyor, implementation, acquisition, port, fixture, rq-017, rq-026]
 | Requirements | `RQ-017`, `RQ-026`; `RD-003`, `RD-004`; guardrails `RQ-048`, `RQ-051`, `RQ-052` |
 | Production files | `src/Surveyor.Application/Ports/IUiTreeAcquisitionPort.cs`, `src/Surveyor.Application/Dto/AcquisitionResult.cs`, `src/Surveyor.Application/Dto/AcquisitionOptions.cs`, `src/Surveyor.Application/Dto/AcquisitionProvenance.cs`, `src/Surveyor.Application/PublicAPI.Unshipped.txt` |
 | Test-support files | `tests/Surveyor.TestSupport/FixtureUiTreeAcquisitionPort.cs`, `tests/Surveyor.TestSupport/AcquisitionModelMapper.cs`, `tests/Surveyor.TestSupport/FixtureRuntimeId.cs`, `tests/Surveyor.TestSupport/FixtureFallbackKey.cs`, `tests/Surveyor.TestSupport/AcquisitionBuildState.cs`, `tests/Surveyor.TestSupport/UiaTreeFixtureReader.cs`, `tests/Surveyor.TestSupport/UiaTreeFixture.cs`, `tests/Surveyor.TestSupport/UiaTreeFixtureNode.cs`, `tests/Surveyor.TestSupport/FixtureReadOutcome.cs`, `tests/Surveyor.TestSupport/FixtureRepositoryPaths.cs` |
-| Test files | `tests/Surveyor.Application.Tests/AcquisitionFixtureBehaviorTests.cs` |
+| Test files | `tests/Surveyor.Application.Tests/AcquisitionFixtureMappingTests.cs`, `tests/Surveyor.Application.Tests/AcquisitionFixtureEdgeTests.cs`, `tests/Surveyor.Application.Tests/AcquisitionFixtureContractTests.cs`, `tests/Surveyor.Application.Tests/AcquisitionScenarios.cs` |
 
 ## Implementation Notes
 
@@ -33,10 +33,10 @@ tags: [surveyor, implementation, acquisition, port, fixture, rq-017, rq-026]
 
 | Command | Result |
 | --- | --- |
-| `dotnet build eng/Surveyor.Unit.slnf` | PR CI unit lane (ubuntu-latest) で警告0/エラー0を確認 — 本PRのチェックを参照 |
-| `dotnet test eng/Surveyor.Unit.slnf` | 全 lane green (`UT-0004` green)、コア層カバレッジ ≥ 80% を CI で確認 |
-| `dotnet format Surveyor.slnx --verify-no-changes` | PR CI windows-build job で確認 |
-| `tools/okf/Validate-Okf.ps1` | PR CI knowledge job で確認 |
+| `dotnet build eng/Surveyor.Unit.slnf` | PR #102 CI unit lane (run 29140761984) 警告0/エラー0 green |
+| `dotnet test eng/Surveyor.Unit.slnf` | 全 lane green (`UT-0004` green)、コア層カバレッジ ≥ 80% |
+| `dotnet build Surveyor.slnx` + `dotnet format --verify-no-changes` | PR #102 CI windows-build job green |
+| `tools/okf/Validate-Okf.ps1` + rq-index freshness | PR #102 CI knowledge job green |
 
 > 注: 実行環境の egress ポリシーにより .NET SDK をローカル取得できないため、ビルド/テストは PR の CI で検証する。RED → GREEN 遷移は commit `7e89f94` (naive, RED) → `553ee5b` (完全実装, GREEN) に残る。
 
@@ -45,3 +45,4 @@ tags: [surveyor, implementation, acquisition, port, fixture, rq-017, rq-026]
 - 本スライスは fake / フィクスチャ seam に限定し、実 UIA/MSAA アダプタ・実仮想化・実レガシーエッジ・実 read-only COM 結線は `IMP-0013` / `IT-0002` に残る。
 - `AcquisitionOptions.PerNodeReadBudget` の既定値は `DES-0017` で確定するまで暫定 (500ms) であり、フィクスチャでは advisory (read outcome で timeout を明示)。
 - confidence rubric / availability エッジ方針のロジックはフィクスチャ fake 内にあり、実アダプタでの再利用整合は `IMP-0013` で確認する。
+- ノード単位の `Timeout` / `PermissionDenied` を run レベル `PartialResult` に丸める粒度 (要素単位。DES-0011 §714 の "full Timeout yields FailedUnexpected" はステージ全体で別物) は、`IMP-0013` で実アダプタへ移植する際に設計トレースへ明記する。
