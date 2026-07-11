@@ -51,7 +51,7 @@ public static class UiaTreeFixtureReader
             ReadChildren(element));
     }
 
-    private static IReadOnlyList<UiaTreeFixtureNode> ReadChildren(JsonElement element)
+    private static UiaTreeFixtureNode[] ReadChildren(JsonElement element)
     {
         if (!element.TryGetProperty("children", out JsonElement children))
         {
