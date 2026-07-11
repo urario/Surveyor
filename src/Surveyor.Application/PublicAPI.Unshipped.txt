@@ -120,6 +120,11 @@ Surveyor.Application.Dto.TargetResolveResult.Status.init -> void
 Surveyor.Application.Dto.TargetResolveResult.Target.get -> Surveyor.Application.Dto.TargetReference?
 Surveyor.Application.Dto.TargetResolveResult.Target.init -> void
 Surveyor.Application.Dto.TargetResolveResult.TargetResolveResult(Surveyor.Application.Dto.OperationStatus Status, Surveyor.Application.Dto.TargetReference? Target, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Time.IClock
+Surveyor.Application.Time.IClock.UtcNow.get -> System.DateTimeOffset
+Surveyor.Application.Time.SystemClock
+Surveyor.Application.Time.SystemClock.SystemClock() -> void
+Surveyor.Application.Time.SystemClock.UtcNow.get -> System.DateTimeOffset
 Surveyor.Application.Ports.ConfidentialityDecision
 Surveyor.Application.Ports.ConfidentialityDecision.AppliedTransforms.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Surveyor.Application.Ports.ConfidentialityDecision.AppliedTransforms.init -> void

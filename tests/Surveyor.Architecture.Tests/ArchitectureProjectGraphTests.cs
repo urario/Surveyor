@@ -193,6 +193,7 @@ public sealed class ArchitectureProjectGraphTests
         Assert.Contains("P:System.DateTime.Now", bannedSymbols, StringComparison.Ordinal);
         Assert.Contains("P:System.DateTime.UtcNow", bannedSymbols, StringComparison.Ordinal);
         Assert.Contains("P:System.DateTimeOffset.Now", bannedSymbols, StringComparison.Ordinal);
+        Assert.Contains("P:System.DateTimeOffset.UtcNow", bannedSymbols, StringComparison.Ordinal);
         Assert.Contains("M:System.DateTime.Parse(System.String)", bannedSymbols, StringComparison.Ordinal);
         Assert.Contains("M:System.DateTime.ToString", bannedSymbols, StringComparison.Ordinal);
     }
