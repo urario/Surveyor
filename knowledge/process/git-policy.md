@@ -13,6 +13,7 @@ Surveyor uses pull-request based development. Direct commits and direct pushes t
 # Branch Rules
 
 - `main` is protected as the integration branch.
+- Before creating a topic branch, update local `main` from `origin/main` with a fast-forward-only pull.
 - Create a topic branch before making project changes.
 - Use short kebab-case branch names with a purpose prefix:
   - `feature/<topic>`
@@ -39,6 +40,7 @@ Surveyor uses pull-request based development. Direct commits and direct pushes t
 # Pull Request Rules
 
 - Use PRs for all changes into `main`.
+- If a topic branch changes high-churn coordination files such as `knowledge/log.md`, refresh it from `origin/main` again before the final push or merge-readiness handoff.
 - Include lifecycle phase, requirement links, artifact IDs where applicable, test evidence, OKF updates, and residual risk in the PR description.
 - Request Claude Code review for design/review-heavy changes and use Codex for implementation/test follow-through.
 - Merge only after review concerns are resolved or explicitly accepted.

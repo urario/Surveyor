@@ -11,7 +11,9 @@ Use this skill for branch creation, staging, commit message proposals, PR prepar
 
 - Never commit directly on `main`.
 - Never push directly to `main`.
+- Before creating a topic branch, update local `main` from `origin/main` with a fast-forward-only pull.
 - Create a topic branch before edits: `feature/`, `fix/`, `chore/`, `docs/`, or `test/`.
+- If a topic branch edits high-churn coordination files such as `knowledge/log.md`, refresh it from `origin/main` again before the final push or merge-readiness handoff.
 - Keep commits focused and use Conventional Commit style.
 - Preserve `RQ-xxx` traceability in commit bodies or PR descriptions for requirement-bearing work.
 - Preserve lifecycle phase and artifact IDs in PR descriptions when durable evidence exists.
@@ -26,10 +28,11 @@ Use this skill for branch creation, staging, commit message proposals, PR prepar
 ## Workflow
 
 1. Check `git status --short --branch`.
-2. If on `main`, create a topic branch before making changes.
-3. Review staged changes before proposing a commit message.
-4. Suggest a commit subject and body that reflect the actual diff.
-5. For PRs, use `.github/pull_request_template.md` and write the body in Japanese: 概要, 種別, 関連要求/成果物 (phase, requirements, artifact IDs), 自己レビュー (crystallized findings), 定量品質ゲート証跡 (target/actual/result summary first, reproducible commands second), OKF/トレーサビリティ, and 残リスク.
+2. Before starting new work, switch to `main` and fast-forward it from `origin/main`.
+3. Create a topic branch before making changes.
+4. Review staged changes before proposing a commit message.
+5. Suggest a commit subject and body that reflect the actual diff.
+6. For PRs, use `.github/pull_request_template.md` and write the body in Japanese: 概要, 種別, 関連要求/成果物 (phase, requirements, artifact IDs), 自己レビュー (crystallized findings), 定量品質ゲート証跡 (target/actual/result summary first, reproducible commands second), OKF/トレーサビリティ, and 残リスク.
 
 See [Git Policy — PR 本文の記載ルール](../../../knowledge/process/git-policy.md) for the authoritative rules.
 

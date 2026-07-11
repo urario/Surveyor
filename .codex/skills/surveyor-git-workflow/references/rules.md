@@ -11,6 +11,7 @@
 
 ```powershell
 git switch main
+git fetch origin
 git pull --ff-only
 git switch -c chore/example-topic
 # edit, test, stage
@@ -19,6 +20,8 @@ git push -u origin chore/example-topic
 ```
 
 Then open a pull request into `main`.
+
+If the topic branch edits high-churn coordination files such as `knowledge/log.md`, refresh it from `origin/main` again before the final push or merge-readiness handoff.
 
 ## GitHub Issue / Project Work
 
