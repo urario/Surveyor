@@ -2,7 +2,7 @@
 
 ## 2026-07-11
 
-* **Process**: Strengthened the Git workflow after a `knowledge/log.md` conflict review. New work now starts from a local `main` fast-forwarded to `origin/main`, and topic branches that edit high-churn coordination files such as `knowledge/log.md` must refresh from `origin/main` again before the final push or merge-readiness handoff. Reflected this rule in `knowledge/process/git-policy.md` and the shared Claude / Codex / `.agents` Git workflow skills.
+* **Process**: Strengthened the Git workflow after a `knowledge/log.md` conflict review. New work now starts from a local `main` fast-forwarded to `origin/main`, and topic branches that edit high-churn coordination files such as `knowledge/log.md` must refresh from `origin/main` again before the final push or merge-readiness handoff. Reflected this rule in `knowledge/process/git-policy.md` and the tracked Claude / Codex Git workflow skills.
 
 * **Process**: PR の定量品質ゲート証跡を、人間のレビュアが短時間で判定できる二段構成へ改善した。`.github/pull_request_template.md` は固定行の `適用条件` / `目標値` / `実測値` / `判定` サマリと、再現コマンド / 証跡表を分離し、`PASS` / `FAIL` / `NOT RUN` / `N/A` / `BELOW TARGET` の意味を明確化した。`knowledge/process/git-policy.md` と `quality-review-policy.md`、Claude / Codex の Git・実装・品質レビュースキル、実装レビュー / 品質監査エージェントを同じ判定ルールへ同期した。過去の PR 本文は変更対象外とする。
 
