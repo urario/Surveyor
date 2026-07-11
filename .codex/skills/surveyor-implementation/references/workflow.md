@@ -21,6 +21,7 @@
 
 ## Before Handoff
 
+- Fill the PR quantitative-gate summary before command details: preserve every standard row, compare target with actual, and use `PASS` / `FAIL` / `NOT RUN` / `N/A` / `BELOW TARGET` consistently. Missing measurements are never `PASS`; explain every `N/A` / `NOT RUN`.
 - Run targeted tests (core-layer coverage gate ≥ 80% line must pass, `CS-07`).
 - Run `dotnet format --verify-no-changes` (`CS-09`).
 - Run OKF validation if knowledge files changed.
