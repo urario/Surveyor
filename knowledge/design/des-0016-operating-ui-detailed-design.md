@@ -21,7 +21,7 @@ It fixes what [DES-0006](des-0006-screen-basic-design.md#10-downstream-design-an
 | Upstream | [DES-0006](des-0006-screen-basic-design.md) screen inventory/transitions/per-screen bindings; [ADR-0003](../decisions/adr-0003-review-surface-native-vs-html.md) native-primary/HTML-portable; [ADR-0002](../decisions/adr-0002-adapter-technology-selection.md) WGC capture-border/consent observation and unpackaged-primary packaging; [DES-0003](des-0003-module-interface-basic-design.md) presentation ports; [DES-0004](des-0004-analysis-flow-basic-design.md) run state machine; [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md) `UT-0011` (extended) / `IT-0007`; [DES-0007](des-0007-detailed-design-execution-strategy.md) package 9; [DES-0008](des-0008-project-structure-and-test-harness.md) `Surveyor.Presentation`/`Surveyor.App` homes; [DES-0010](des-0010-scoring-classification-and-improvement-candidates.md) `ScoreResult`/`Finding`/`TestabilityClass`; [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) use cases/DTOs/statuses/diagnostics; [DES-0012](des-0012-report-schema-and-deterministic-serialization.md) `ReportResult`/HTML artifact; [DES-0013](des-0013-confidentiality-storage-and-export.md) `ConfidentialityMode`/`ConfidentialityDecision`/opt-out record; [DES-0015](des-0015-capture-and-snapshot-correspondence.md) `SnapshotRef`/`RectangleDip` |
 | Requirements | `RQ-030`, `RQ-046`, `RQ-052`, `RQ-054`; guardrails `RQ-048`, `RQ-051`; derived `RD-016`, `RD-020`, `RD-022`, `RD-025`, `RD-028`, `RD-030` |
 | Downstream | Review gate #38; `UT-0011` #50; implementation `IMP-0012` #70; manual usability walkthrough `IT-0007` #59; `DES-0018` composition root wires the concrete pages/ViewModels |
-| Evidence | Navigation/dialog intent enums, run-UI state machine + stage progress contract, metadata-gate rule, correspondence selection state, opt-out recording contract (`OutputRequest`/`OptOutRequest` field detail), HTML preview host decision, per-screen control set, resource-string and diagnostics-display rules, accessibility target, contract-closure tables, fixture strategy, `UT-0011` intent with counter-examples, DRP self-review evidence |
+| Evidence | Navigation/dialog intent enums, run-UI state machine + stage progress contract + `RunActivityKind` activity discriminator, metadata-gate rule, correspondence selection state, opt-out recording contract (`OutputRequest`/`OptOutRequest` field detail), HTML preview host decision + plaintext-preview confirmation, banner stacking/priority rules, per-screen control set, resource-string and diagnostics-display rules, accessibility target (incl. dynamic-content focus/live-region rules), contract-closure tables, fixture strategy, `UT-0011` intent with counter-examples, DRP self-review evidence |
 | Verification | `tools/okf/Validate-Okf.ps1`; `git diff --check`; author-side `DRP-01`–`DRP-10` + DES-0007 §9 self-review (below); future `dotnet test tests/Surveyor.Presentation.Tests --filter UT0011` once source exists; `IT-0007` manual walkthrough on the Windows gate |
 | Residual Risk | Pixel layout, spacing, iconography, and final Japanese resource strings are implementation freedom within the rules below; WGC yellow-border visuals vary by OS build (`ADR-0002`) — the notice wording may need adjustment after `IT-0007`; the in-app WebView2 preview host is deferred, revisit if offline users reject the external-browser preview; accessibility conformance is verified manually in `IT-0007` until an automated self-scan exists |
 
@@ -127,6 +127,7 @@ public enum DialogIntent
     ConfirmRunCancel,               // DES-0006 modal: run-cancel confirmation
     ConfidentialityHandlingNotice,  // DES-0006 modal: handling notice before share/export (RD-022)
     ConfirmConfidentialityOptOut,   // DES-0006 modal: opt-out confirmation (RD-022)
+    ConfirmPlaintextPreview,        // DES-0016 modal: preview confirmation for a plaintext (opt-out) artifact (RQ-052)
     UnexpectedFault                 // DES-0006 modal: unexpected-fault error dialog
 }
 
@@ -163,6 +164,12 @@ public sealed class RunSessionState
 
 `StatusBannerItem` carries resource keys + allowlisted `SafeArgs` only, mirroring `DialogRequest`. `RunSessionState` is the single session-scoped holder of the resolved target and the post-policy results the review screens project from; `FindingSelectionState` resolves finding↔region lookups against the currently selected result in this state.
 
+Banner stacking and priority rules (the `StatusBannerKind` declaration order above **is** the priority order, highest first):
+
+- The banner stack renders sorted by `StatusBannerKind` ordinal, then by a stable per-kind insertion sequence — display order is deterministic and independent of event arrival order (`RQ-051` display discipline).
+- At most **three** banners are expanded at once; further items collapse into a single summary `InfoBar` ("N more notices") that expands on demand, so a first run raising `CaptureBorderInfo` + `MetadataGateHint` + a status banner never becomes a wall.
+- Dismissal: informational kinds (`CaptureBorderInfo`, `MetadataGateHint`) are user-dismissible and stay dismissed for the session. Condition-derived kinds (`PermissionDenied`, `IntegrityMismatch`, `PartialResult`, `Timeout`, `Unavailable`, `IoError`, `OptOutActive`) persist while their condition holds and are removed when it clears; starting a new run clears the previous run's status banners.
+
 Rules:
 
 - `DialogRequest` carries resource keys and [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md)-allowlisted `SafeArgs` only — never raw `DisplayLabel`, titles, paths, or exception text (`RQ-052`).
@@ -179,28 +186,40 @@ public enum RunUiState
     Idle, Selecting, Analyzing, Capturing,
     Reporting, Exporting, Completed, Failed, Cancelled
 }
+
+public enum RunActivityKind
+{
+    None,           // no use-case call in flight
+    AnalysisRun,    // AnalyzeScreenUseCase in flight (includes its Stage-8 Store phase)
+    ReportCommand,  // GenerateReportUseCase in flight (post-review SCR-07 command)
+    ExportCommand   // ExportResultUseCase in flight (post-review SCR-07 command)
+}
 ```
+
+`RunUiState` keeps the DES-0004 display names one-for-one, which deliberately reuses `Exporting` for both the in-run Stage-8 `Store` phase and the post-review `ExportResultUseCase` command. Because the enum value alone cannot tell those two apart, `ShellViewModel` also owns `RunActivityKind`, updated by the same single reducer in the same transition. Gating, cancel semantics, and tests key on the (`RunUiState`, `RunActivityKind`) pair — never on `RunUiState` alone.
 
 Mapping rules (the refinement already implied by the [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) use-case split, recorded there as a §5.3 version note):
 
-| Trigger | State |
-| -- | -- |
-| No target resolved | `Idle` |
-| `SCR-01`/`SCR-03` acquisition path active (target resolution and/or metadata not yet recorded) | `Selecting` |
-| `AnalyzeScreenUseCase` in flight, last progressed stage ≤ `Scoring` | `Analyzing` |
-| `AnalyzeScreenUseCase` in flight, last progressed stage in `RegionPlanning`..`ResultAssembly` | `Capturing` |
-| `AnalyzeScreenUseCase` in flight, last progressed stage = `Store` | `Exporting` (DES-0004 Stage-8 store semantics) |
-| `GenerateReportUseCase` in flight (post-review command from `SCR-07`) | `Reporting` |
-| `ExportResultUseCase` in flight (explicit command from `SCR-07`) | `Exporting` |
-| `RunOutcome.Succeeded` / `SucceededWithPartialResult` returned; report/export command finished | `Completed` (partial shown via banner, not a distinct state — `RD-020`) |
-| `RunOutcome.FailedUnexpected`, or a required command invariant failure | `Failed` (via `DialogIntent.UnexpectedFault`, then reset to `Idle`) |
-| `RunOutcome.Cancelled` | `Cancelled` (then reset to `Idle`) |
+| Trigger | State | `RunActivityKind` |
+| -- | -- | -- |
+| No target resolved | `Idle` | `None` |
+| `SCR-01`/`SCR-03` acquisition path active (target resolution and/or metadata not yet recorded) | `Selecting` | `None` |
+| `AnalyzeScreenUseCase` in flight, last progressed stage ≤ `Scoring` | `Analyzing` | `AnalysisRun` |
+| `AnalyzeScreenUseCase` in flight, last progressed stage in `RegionPlanning`..`ResultAssembly` | `Capturing` | `AnalysisRun` |
+| `AnalyzeScreenUseCase` in flight, last progressed stage = `Store` | `Exporting` (DES-0004 Stage-8 store semantics) | `AnalysisRun` |
+| `GenerateReportUseCase` in flight (post-review command from `SCR-07`) | `Reporting` | `ReportCommand` |
+| `ExportResultUseCase` in flight (explicit command from `SCR-07`) | `Exporting` | `ExportCommand` |
+| `RunOutcome.Succeeded` / `SucceededWithPartialResult` returned; report/export command finished | `Completed` (partial shown via banner, not a distinct state — `RD-020`) | `None` |
+| `RunOutcome.FailedUnexpected`, or a required command invariant failure | `Failed` (via `DialogIntent.UnexpectedFault`, then reset to `Idle`) | `None` |
+| `RunOutcome.Cancelled` | `Cancelled` (then reset to `Idle`) | `None` |
+
+Cancel semantics differ by activity, and `RunActivityKind` is what selects them: cancelling while `RunActivityKind == AnalysisRun` (any of `Analyzing`/`Capturing`/`Exporting`) is the destructive run cancel — `ConfirmRunCancel` dialog, then `Cancelled` → reset to `Idle`. Cancelling while `RunActivityKind` is `ReportCommand` or `ExportCommand` is non-destructive — the inline `SCR-07` cancel cancels the command token and the state returns to `Completed` with the session result kept (no confirmation dialog; the analysis result is not at stake).
 
 Stage progress reaches the ViewModel through the additive `IProgress<StageResult>` parameter on `AnalyzeScreenUseCase.ExecuteAsync` (recorded in [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) as a §5.3 version note): the use case reports each stage's `StageResult` as it completes; the ViewModel marshals via `IUiDispatcher` and shows a determinate `ProgressBar` over the fixed `RunStage` enum order plus the current stage name from a resource key. Fakes drive the progress sink deterministically, so `UT-0011` verifies the `Analyzing`→`Capturing`→`Exporting` display transitions without real time.
 
 Expected statuses (`Unavailable`, `PermissionDenied`, `IntegrityMismatch`, `Timeout`, `PartialResult`) never enter `Failed`; they surface on the status banner with the [DES-0006 §7](des-0006-screen-basic-design.md#7-statuserror-surface-resolves-gap-f) grammar. Cancel is always available while a run or command is in flight; the cancel command first shows `DialogIntent.ConfirmRunCancel`, then cancels the token; caller cancellation wins over stage timeout ([DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md#timeout-handling)).
 
-**Command-scoped `Reporting`/`Exporting` gating refinement.** [DES-0006 §3](des-0006-screen-basic-design.md#3-navigation-and-transition-resolves-gap-d) wrote its gating row for `Reporting`/`Exporting` against the DES-0004 linear model where report/export ran inside the run. Under the accepted [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) split they are post-review commands issued from `SCR-07`. Refined rule (recorded as a §5.3 version note in DES-0006): while a report/export command is in flight, the user stays on `SCR-07` with a cancellable inline progress surface; all other navigation intents return `Blocked` except `RunProgress` (`SCR-02`, which shows the same in-flight state); Run remains disabled. This preserves DES-0006's intent — no review-screen interaction races an output operation — while keeping report generation post-review.
+**Command-scoped `Reporting`/`Exporting` gating refinement.** [DES-0006 §3](des-0006-screen-basic-design.md#3-navigation-and-transition-resolves-gap-d) wrote its gating row for `Reporting`/`Exporting` against the DES-0004 linear model where report/export ran inside the run. Under the accepted [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) split they are post-review commands issued from `SCR-07`. Refined rule (recorded as a §5.3 version note in DES-0006): while a report/export command is in flight (`RunActivityKind` is `ReportCommand`/`ExportCommand`), the user stays on `SCR-07` with a cancellable inline progress surface; all other navigation intents return `Blocked` except `RunProgress` (`SCR-02`, which shows the same in-flight state); Run remains disabled. This preserves DES-0006's intent — no review-screen interaction races an output operation — while keeping report generation post-review.
 
 ### Metadata gate (`SCR-03`, `RQ-046`/`RD-016`/`RD-028`)
 
@@ -271,6 +290,10 @@ Rules:
 
 `ReportExportViewModel` composes `GenerateReportRequest` with caller-chosen `ReportDestination` values, remembers those destinations for the session keyed by `ReportFormat`, and enables Preview only after `ReportResult.Status == Ok` includes an artifact with `ReportFormat.Html`. Preview calls `IHtmlPreviewHost.OpenAsync` with **exactly the remembered destination path** for the HTML artifact. The path is never derived from `SafeArtifactReference.RelativeSafePath`, never shown in diagnostics, and never persisted ([DES-0012](des-0012-report-schema-and-deterministic-serialization.md): `AbsolutePathForWrite` is input-only command data). `PreviewOutcome.Unavailable` (file missing, no handler) surfaces as an `IoError`-grammar banner, not a failure state.
 
+**Plaintext-preview confirmation (opt-out interplay, `RQ-052`).** The external-browser preview decision below was argued for post-policy (masked) artifacts. When the selected result's `ConfidentialityDecision.Mode == ExplicitLocalOptOut`, the report artifact may contain unmasked text, and the default browser adds egress surfaces Surveyor does not control (history, sync, extensions). Rule: before calling `OpenAsync` for an artifact generated under `ExplicitLocalOptOut`, the ViewModel shows `DialogIntent.ConfirmPlaintextPreview` stating exactly that; only `DialogOutcome.Confirmed` proceeds, `Dismissed` aborts with no `IHtmlPreviewHost` call. Previews of default (`ProtectedLocal`-decided) artifacts are unaffected — no extra dialog. This keeps the preview a user-directed, per-invocation, explicitly re-confirmed egress rather than a silent widening of the opt-out's local-only scope.
+
+Cross-referencing the preview with the native screens is by id: `SCR-04`/`SCR-05` display the core-owned `Finding.Id`/candidate ids, and the report artifact carries the same ids ([DES-0012](des-0012-report-schema-and-deterministic-serialization.md) `findings[].id`/`improvementCandidates[].id`), so a finding seen in the browser can be located in `SCR-05` and vice versa. Whether this manual key is sufficient for the review round trip in practice is an `IT-0007` observation item (feeding the external-preview revisit trigger below).
+
 ### ViewModel catalog and per-screen control set
 
 All ViewModels live in `Surveyor.Presentation`, depend only on the four [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) use cases and the presentation ports, and are constructed by the `DES-0018` composition root.
@@ -296,7 +319,11 @@ All ViewModels live in `Surveyor.Presentation`, depend only on the four [DES-001
 
 ### Accessibility target (closes the DES-0006 delegation)
 
-The v1 conformance target is: **every interactive element is keyboard-reachable and operable, and exposes a stable `AutomationProperties.AutomationId` plus a localized `AutomationProperties.Name`**; focus order follows visual order; class/status information is never conveyed by color alone. Verification is manual in `IT-0007` (keyboard-only pass + Accessibility Insights spot check). Dogfood intent (non-gating in v1): Surveyor analyzing its own screens should raise no `Blocking` identifiability findings — recorded as an `IT-0007` observation item, not an acceptance gate.
+The v1 conformance target is: **every interactive element is keyboard-reachable and operable, and exposes a stable `AutomationProperties.AutomationId` plus a localized `AutomationProperties.Name`**; focus order follows visual order; class/status information is never conveyed by color alone.
+
+Dynamic-content rules (same target, previously implicit): the `SCR-02` stage list exposes **one** polite live region (`AutomationProperties.LiveSetting = Polite`) carrying the current stage name — per-item list mutations are not individually announced; banner arrivals are announced politely and never steal keyboard focus; `SCR-05`↔`SCR-06` selection sync updates selection and scroll position on the counterpart screen but never moves keyboard focus away from the surface the user is operating; the `SCR-06` zoom level is exposed as the slider's value text. Contrast and hit targets follow the WinUI theme resources (light/dark/high-contrast) and default control sizing — no custom below-default hit targets are introduced.
+
+Verification is manual in `IT-0007` (keyboard-only pass + Accessibility Insights spot check). Dogfood intent (non-gating in v1): Surveyor analyzing its own screens should raise no `Blocking` identifiability findings — recorded as an `IT-0007` observation item, not an acceptance gate.
 
 ## Contract Closure
 
@@ -323,7 +350,7 @@ Every input is derivable from user input, session-held prior outputs, or app con
 | `AnalysisRunRequest.ScreenSelectionMetadata` | `RunProgressViewModel` (copies the SCR-03 value) | Run command assembly | Byte-for-byte the SCR-03 value; no normalization or defaulting (`RD-016`) |
 | `OutputRequest.RequestedMode` / `ConfidentialityOptOut` | `ConfidentialityChoicesViewModel` | opt-out confirmation flow | `ProtectedLocal`+null unless a confirmed opt-out is held; cleared on app start and on opt-out revocation |
 | `FindingSelectionState.SelectedFindingId`/`SelectedRegionId` | `FindingSelectionState` itself (via its two setters) | user selection in SCR-05/SCR-06 | The two fields are updated atomically by one setter call; views never set them independently |
-| `RunUiState` | `ShellViewModel` (single reducer over use-case lifecycle + progress events) | state-machine transitions only | Screen VMs read; no screen VM writes run state |
+| `RunUiState` / `RunActivityKind` | `ShellViewModel` (single reducer over use-case lifecycle + progress events; both fields updated in the same transition) | state-machine transitions only | Screen VMs read; no screen VM writes run state or activity; the pair is never allowed to disagree (e.g. `Exporting`+`None`) |
 | session `ReportDestination` memory | `ReportExportViewModel` | report request assembly | Preview reads only; never reconstructed from artifacts or references |
 
 ### Round-trip inventory (`DRP-04`)
@@ -336,8 +363,8 @@ The presentation layer persists nothing in v1: no view-state save/load, no setti
 
 | # | Condition | Allowed intents | Run command |
 | -- | -- | -- | -- |
-| 1 | Report/export command in flight (`Reporting`/`Exporting` command-scoped) | `ReportExport`, `RunProgress` | disabled |
-| 2 | `Analyzing`/`Capturing`/`Exporting` (analysis run in flight) | `RunProgress` only; Cancel available | disabled (start is idempotent; further Run requests ignored) |
+| 1 | Report/export command in flight (`RunActivityKind` is `ReportCommand`/`ExportCommand`) | `ReportExport`, `RunProgress` | disabled |
+| 2 | Analysis run in flight (`RunActivityKind == AnalysisRun`; displayed as `Analyzing`/`Capturing`/`Exporting`) | `RunProgress` only; Cancel available | disabled (start is idempotent; further Run requests ignored) |
 | 3 | `Completed` | all of `SCR-01`–`SCR-08` intents | enabled only after the gate is re-satisfied for a new run |
 | 4 | `Failed`/`Cancelled` (pre-reset) | `RunProgress`, `TargetSelection` | disabled |
 | 5 | `Idle`/`Selecting` | `TargetSelection`, `SelectionMetadata`, `RunProgress`, `ConfidentialityChoices` | enabled iff `TargetResolved && MetadataGateState != NotRecorded` |
@@ -368,7 +395,7 @@ CanRun = TargetResolved && gateState != NotRecorded
 
 | Axis | WebView2 in-app | External default browser (chosen) |
 | -- | -- | -- |
-| Confidentiality (`RQ-052`) | Report content enters the WebView2 user-data folder (cache/temp) outside the [DES-0013](des-0013-confidentiality-storage-and-export.md) protected store — a second, unmanaged copy | Opens the already-written post-policy artifact in place; no additional Surveyor-managed copy (the browser is the user's chosen viewer for a portable artifact) |
+| Confidentiality (`RQ-052`) | Report content enters the WebView2 user-data folder (cache/temp) outside the [DES-0013](des-0013-confidentiality-storage-and-export.md) protected store — a second, unmanaged copy | Opens the already-written post-policy artifact in place; no additional Surveyor-managed copy (the browser is the user's chosen viewer for a portable artifact). Plaintext (opt-out) artifacts are additionally gated by `ConfirmPlaintextPreview` (§ [Report preview contract](#report-preview-contract-scr-07)) because the browser adds history/sync/extension surfaces |
 | Dependency/packaging | Requires the WebView2 Evergreen runtime; unpackaged-primary distribution ([ADR-0002](../decisions/adr-0002-adapter-technology-selection.md)) cannot assume it on locked-down legacy-maintenance environments | No new dependency; a default browser exists on any supported Windows |
 | Testability (`RQ-054`) | Not fakeable in the unit lane; adds a live-window surface to `UT-0011`'s scope | One-method port, trivially faked; the launch is the only untested seam (covered by `IT-0007`) |
 | Requirement fit | `RQ-030` needs a human-readable report; [ADR-0003](../decisions/adr-0003-review-surface-native-vs-html.md) fixed interactivity on native screens, so an in-app HTML surface adds no required capability | Same `RQ-030` satisfaction; reinforces "HTML is the portable artifact" |
@@ -384,6 +411,7 @@ classDiagram
 
   class ShellViewModel {
     +RunUiState RunState
+    +RunActivityKind Activity
     +NavigationIntent ActiveScreen
     +bool CanRun
     +IReadOnlyList~StatusBannerItem~ Banners
@@ -453,28 +481,34 @@ WinUI pages in `Surveyor.App` (one page per `SCR-xx` plus the shell window) bind
 
 ```mermaid
 stateDiagram-v2
+  state "Exporting (AnalysisRun / Store stage)" as ExportingRun
+  state "Exporting (ExportCommand)" as ExportingCmd
+
   [*] --> Idle
   Idle --> Selecting: target resolution started (SCR-01)
   Selecting --> Idle: target cleared
   Selecting --> Analyzing: Run (gate satisfied - entered or defaults accepted)
   Analyzing --> Capturing: progress stage >= RegionPlanning
-  Capturing --> Exporting: progress stage == Store
-  Exporting --> Completed: RunOutcome Succeeded / SucceededWithPartialResult
+  Capturing --> ExportingRun: progress stage == Store
+  ExportingRun --> Completed: RunOutcome Succeeded / SucceededWithPartialResult
   Completed --> Reporting: report command (SCR-07)
   Reporting --> Completed: ReportResult returned
-  Completed --> Exporting: export command (SCR-07)
-  Exporting --> Completed: ExportResult returned
+  Reporting --> Completed: report cancelled (result kept)
+  Completed --> ExportingCmd: export command (SCR-07)
+  ExportingCmd --> Completed: ExportResult returned
+  ExportingCmd --> Completed: export cancelled (result kept)
   Analyzing --> Cancelled: cancel confirmed
   Capturing --> Cancelled: cancel confirmed
-  Exporting --> Cancelled: cancel confirmed
-  Reporting --> Completed: report cancelled (result kept)
+  ExportingRun --> Cancelled: cancel confirmed
   Analyzing --> Failed: RunOutcome FailedUnexpected
   Capturing --> Failed: RunOutcome FailedUnexpected
-  Exporting --> Failed: RunOutcome FailedUnexpected
+  ExportingRun --> Failed: RunOutcome FailedUnexpected
   Completed --> Selecting: new run prepared (gate reset)
   Failed --> Idle: fault dialog dismissed - reset
   Cancelled --> Idle: reset
 ```
+
+Both `Exporting` nodes display the same `RunUiState.Exporting` value; the split in the diagram is the `RunActivityKind` discriminator (`AnalysisRun` vs. `ExportCommand`), which is what makes the two cancel outcomes differ — in-run cancel discards the run (`Cancelled` → `Idle`), command cancel keeps the session result (`Completed`).
 
 ## Sequence: SCR-05 ↔ SCR-06 correspondence
 
@@ -520,12 +554,14 @@ sequenceDiagram
 | Opt-out active | `SCR-02`/`SCR-04` show a persistent "local opt-out active" flag; cleared on revocation or app restart |
 | Export while opt-out active | Export still uses `MaskedShareableExport`; handling notice states this explicitly |
 | Report/export command in flight | Other navigation `Blocked` (rule 1); inline progress + cancel on `SCR-07` |
+| Cancel during post-review report/export command (`RunActivityKind` is `ReportCommand`/`ExportCommand`) | Inline `SCR-07` cancel cancels the command token, no `ConfirmRunCancel` dialog (non-destructive); state returns to `Completed`; the session result is kept; never routed to the in-run `Cancelled` → `Idle` reset |
+| Preview while the selected result was produced under `ExplicitLocalOptOut` | `DialogIntent.ConfirmPlaintextPreview` required before `OpenAsync`; `Dismissed` aborts with no preview-host call; masked (`ProtectedLocal`) previews show no extra dialog |
 | Display-scale (DPI) change while `SCR-06` open | Overlays keep `BoundsDip` coordinates under the uniform zoom transform; no per-rectangle rescale; a banner notes the snapshot reflects capture-time DPI ([DES-0015](des-0015-capture-and-snapshot-correspondence.md)) |
 | Keyboard-only operation | Every command reachable; gate/selection/zoom operable via keyboard (accessibility target) |
 
 ## Diagnostics And Logging
 
-The presentation layer **emits no diagnostics and writes no logs** in v1. It renders [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) `RunDiagnostic` values through the display projection (template id + `SafeArgs`) and shows dialog/banner text from resource keys only. Any future presentation-side logging must route through the [DES-0013](des-0013-confidentiality-storage-and-export.md) sanitizer; introducing it requires a version note here. This keeps the `RQ-052` egress set unchanged: the UI adds no new output channel.
+The presentation layer **emits no diagnostics and writes no logs** in v1. It renders [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) `RunDiagnostic` values through the display projection (template id + `SafeArgs`) and shows dialog/banner text from resource keys only. Any future presentation-side logging must route through the [DES-0013](des-0013-confidentiality-storage-and-export.md) sanitizer; introducing it requires a version note here. This keeps the `RQ-052` egress set unchanged: the UI adds no new output channel, and the one user-directed egress that can carry plaintext (the external-browser preview of an opt-out artifact) requires the explicit per-invocation `ConfirmPlaintextPreview` confirmation (§ [Report preview contract](#report-preview-contract-scr-07)).
 
 ## Fixture Strategy
 
@@ -545,19 +581,23 @@ All tests drive ViewModels + fakes only — no live WinUI window, no dispatcher 
 | Recorded metadata reaches `AnalysisRunRequest.ScreenSelectionMetadata` unchanged; acknowledgement kind maps to entered/defaults exactly | `M02` normalizing/defaulting user input (`RD-016`) | Fake analyze seam captures request; field-for-field equality with form values incl. blank-note case | Asserting only that "some metadata" was passed |
 | New run after `Completed`/`Failed`/`Cancelled` or target change re-requires acknowledgement | Stale metadata silently reused | Complete a run, prepare a new one; oracle: gate `NotRecorded`, Run disabled | Testing only the first run |
 | Navigation gating follows the decision table; blocked intents return `Blocked`, never throw; review intents blocked with no session result | Review screens race an in-flight run; crash on blocked nav | Recording nav fake; drive each table row; oracle: intent log + outcomes | One happy-path navigation test |
-| Stage progress maps to `Analyzing`→`Capturing`→`Exporting` display states; command-scoped `Reporting`/`Exporting` keep Run disabled | UI state contradicts run truth | Deterministic progress driver; oracle: `RunUiState` sequence | Sleeping/waiting on real async timing |
+| Stage progress maps to `Analyzing`→`Capturing`→`Exporting` display states; command-scoped `Reporting`/`Exporting` keep Run disabled; `RunActivityKind` tracks `AnalysisRun` through the in-run `Exporting` (Store) phase and `ReportCommand`/`ExportCommand` for the post-review commands | UI state contradicts run truth; the two `Exporting` meanings conflated | Deterministic progress driver; oracle: (`RunUiState`, `RunActivityKind`) pair sequence | Sleeping/waiting on real async timing; asserting `RunUiState` alone where the pair is the contract |
 | Cancel flow: confirm dialog → token cancelled → `Cancelled` → reset; dismissed dialog leaves run running; caller-cancel wins over timeout presentation | Cancel unavailable or destructive without confirmation | Scripted dialog fake; fake seam observes token; oracle: state + token + dialog log | Asserting only that a Cancel command exists |
+| Cancelling a post-review report/export command returns to `Completed` with the session result intact and no `ConfirmRunCancel` dialog; cancelling the analysis run (including its Store phase) goes `Cancelled` → `Idle` | Post-review export cancel wrongly routed through the in-run reset, discarding the completed result | Complete a run, start an export command, cancel it; oracle: state sequence + `RunSessionState.Results` unchanged + dialog log empty of `ConfirmRunCancel` | Testing only the in-run cancel path |
 | `SCR-05`→`SCR-06` and `SCR-06`→`SCR-05` selection sync via `SourceFindingId`/`RegionId`; uncapturable refs surface as markers distinct from low scores; no notification loop | Broken correspondence breaks position-based understanding (`RQ-011`/`RQ-016`); `Unavailable` read as "fine" (`RD-020`) | Fixture (a)+(f); oracle: both directions + marker rows + single notification per selection; counter-example: index-based mutant goes red | Testing one direction only |
 | Display order everywhere equals carried core-owned order; filtering/grouping never re-sorts | UI re-sorting breaks `RQ-051` determinism | Fixture with deliberately non-alphabetical carried order; oracle: view order equals carried order pre/post filter | Sorting the expected list in the test itself |
 | Opt-out requires confirmed dialog; produces allowlisted `OptOutRequest` + `ExplicitLocalOptOut` on `OutputRequest`; dismissal keeps safe default; export request still `MaskedShareableExport`; choice not persisted across VM lifetime | Opt-out by accident, free-text leak, unmasked export (`RD-022`, `RQ-052`) | Scripted dialog fake; captured requests; oracle: `OutputRequest`/`ExportRunRequest` field values | Testing the toggle state without the captured request |
 | Expected statuses (`PermissionDenied`, `PartialResult`, `Timeout`, `NotFound`) render as banners with state `Completed`/candidate badges; only `FailedUnexpected` raises the fault dialog | Expected status escalated to failure, or fault hidden ([DES-0006 §7](des-0006-screen-basic-design.md#7-statuserror-surface-resolves-gap-f)) | Fixtures (b)(d) + candidate fixture; oracle: banner queue kinds + dialog log + `RunUiState` | Mapping every non-Ok status to one generic error path in the test |
 | Preview enabled only after an `Ok` `ReportResult` with an HTML artifact; opens exactly the session-remembered destination; `Unavailable` becomes a banner | Path derived from safe references or leaked (`RQ-052`); preview of a non-existent artifact | Preview fake path log; oracle: exact path equality with the requested destination | Asserting "preview was called" without the path |
+| Preview of an `ExplicitLocalOptOut` artifact requires a confirmed `ConfirmPlaintextPreview` dialog before `OpenAsync`; dismissal produces no preview-host call; `ProtectedLocal` previews show no extra dialog | Plaintext egress to the external browser without explicit confirmation (`RQ-052`) | Scripted dialog fake + preview fake call log; fixtures with `ProtectedLocal` and `ExplicitLocalOptOut` decisions; oracle: dialog log + `OpenAsync` call presence/absence per outcome | Testing only the confirmed path |
+| The persistent read-only indicator is exposed and unchanged across every (`RunUiState`, `RunActivityKind`) transition, and no ViewModel exposes a target-mutating command | Read-only reassurance dropped mid-run (`RQ-048`) | Drive the full state machine with the progress driver; oracle: indicator state constant across all transitions | Checking the indicator only in `Idle` |
 | Diagnostics display projection renders template+`SafeArgs` only; non-allowlisted arg is replaced by the safe placeholder | Raw title/label/path reaching a visible/loggable surface (`RQ-052`, `R-SEC-01`) | Trap-fixture counter-example goes red on a projection that echoes unknown args | Asserting rendered text equality without the trap case |
 
 ## Integration Assumptions (`IT-0007`, manual)
 
 - Windows 11 manual gate ([DES-0007 §8.2](des-0007-detailed-design-execution-strategy.md#82-ci-and-execution-topology)); fixture app from the `DES-0008` harness; Japanese display language; a default browser present.
 - Walkthrough: `SCR-01`→`SCR-03`→`SCR-02`→`SCR-04`→`SCR-05`↔`SCR-06`→`SCR-07`(→preview)→`SCR-08`, recording multi-role readability (`RD-030`), the read-only reassurance and actual target-state constancy impression (`RQ-048`), handling-notice/opt-out behavior (`RD-022`), and the WGC capture-border visual vs. the notice wording ([ADR-0002](../decisions/adr-0002-adapter-technology-selection.md) residual).
+- UX observation items (non-gating, feed design revisit triggers): **metadata-gate fatigue** — run the same target repeatedly and record whether re-acknowledgement degrades into reflexive "Accept defaults" clicking (would undermine the `RQ-046` intent; feeds a possible DES-0006 reset-rule refinement); **first-run banner load** — verify the 3-expanded/overflow stacking keeps `CaptureBorderInfo` + `MetadataGateHint` + a status banner readable; **preview round trip** — locate one finding from the browser report back in `SCR-05` by its id and record the friction (feeds the external-preview revisit trigger).
 - Accessibility pass: keyboard-only completion of the full walkthrough; Accessibility Insights spot check for `AutomationId`/`Name` coverage; the non-gating Surveyor-on-Surveyor dogfood observation.
 - `SCR-06` overlay spot check at 100% and 150% display scale (viewer-side only; capture-side DPI truth is `IT-0003`).
 
@@ -574,11 +614,11 @@ All tests drive ViewModels + fakes only — no live WinUI window, no dispatcher 
 | Pattern | Result |
 | -- | -- |
 | `DRP-01` upstream drift | Screen set, use-case split, port names, state names, and DTO shapes kept as fixed upstream. Two deliberate additive refinements are recorded as §5.3 version notes in the owning artifacts: [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) (stage-progress parameter; `OutputRequest` field detail) and [DES-0006](des-0006-screen-basic-design.md) (command-scoped `Reporting`/`Exporting` gating row). No rename/merge/drop elsewhere; `RunUiState` reuses DES-0004 names one-for-one |
-| `DRP-02` dangling reference | All referenced types resolve: upstream types to DES-0010/0011/0012/0013/0015 definitions; new types (`NavigationIntent`, `DialogIntent`, `DialogRequest`, `NavigationOutcome`, `DialogOutcome`, `PreviewOutcome`, `RunUiState`, `MetadataGateState`, `FindingSelectionState`, `RunSessionState`, `OutputRequest`, `OptOutRequest`, `OptOutScope`, port interfaces) defined here. The previously-dangling `OptOutRequest` on [DES-0013](des-0013-confidentiality-storage-and-export.md)'s `ConfidentialityRequest` is now defined (noted there) |
+| `DRP-02` dangling reference | All referenced types resolve: upstream types to DES-0010/0011/0012/0013/0015 definitions; new types (`NavigationIntent`, `DialogIntent`, `DialogRequest`, `NavigationOutcome`, `DialogOutcome`, `PreviewOutcome`, `RunUiState`, `RunActivityKind`, `MetadataGateState`, `FindingSelectionState`, `RunSessionState`, `OutputRequest`, `OptOutRequest`, `OptOutScope`, port interfaces) defined here. The previously-dangling `OptOutRequest` on [DES-0013](des-0013-confidentiality-storage-and-export.md)'s `ConfidentialityRequest` is now defined (noted there) |
 | `DRP-03` data-flow closure | Port-method I/O derivation table covers every presentation port and use-case call; each input names its source, each output its consumer; the acquisition→run→review→report/export flow simulated end-to-end in the state/sequence diagrams |
 | `DRP-04` round-trip asymmetry | No persistence introduced; the destination-out/path-in pair is closed by session memory with a defined loss behavior (Preview disabled) |
 | `DRP-05` unowned field | Field-ownership table gives every new/held field a single writer, write timing, and fabrication ban |
-| `DRP-06` rule overlap | Navigation gating is an ordered first-match decision table; every row reachable (rows 1–5 correspond to disjoint state sets) |
+| `DRP-06` rule overlap | Navigation gating is an ordered first-match decision table; every row reachable. Rows 1–5 are disjoint on the (`RunUiState`, `RunActivityKind`) pair — the display name `Exporting` alone is ambiguous (in-run Store phase vs. post-review export command), so row 1 keys on `ReportCommand`/`ExportCommand` activity and row 2 on `AnalysisRun` activity, and no state/activity combination matches both |
 | `DRP-07` numeric under-specification | No numeric computation is introduced; scores/percentages are displayed as carried (`RQ-051`); zoom is a display transform with no data effect |
 | `DRP-08` missing failure semantics | Edge-case table defines blocked navigation, dismissed dialogs, preview unavailability, cancel-vs-timeout presentation (caller-cancel wins per DES-0011), and fault-vs-expected-status surfaces; the UI performs no I/O of its own beyond the preview launch, whose failure is a modeled outcome |
 | `DRP-09` port ownership | All four presentation ports declare owner (`M02`, `Surveyor.Presentation`) and implementer (`M01`, `Surveyor.App`); dependency direction stays inward (VMs → use cases; views → VMs); `OutputRequest`/`OptOutRequest` live in `Surveyor.Application.Dto` with application ownership |
@@ -593,6 +633,8 @@ DES-0007 §9 checklist: trace links explicit and honest (upstream table names on
 - The accessibility target is verified manually until a Surveyor-on-Surveyor self-scan is practical; the dogfood check stays non-gating in v1.
 - Stage-progress granularity is per-stage, not per-element; if large trees make `Analyzing` feel stalled, a within-stage heartbeat would need a further DES-0011 version note (not designed here).
 - Final Japanese resource strings may adjust `DES-0012` display labels within its "section ids/schema fields stay stable" constraint.
+- The metadata-gate reset rule (re-acknowledgement on every new run, including repeated same-target runs) is bound to [DES-0006 §3](des-0006-screen-basic-design.md#3-navigation-and-transition-resolves-gap-d) "not silently reused" and is kept as-is here; the gate-fatigue risk (reflexive default acceptance eroding the `RQ-046` intent) is an `IT-0007` observation item, and relaxing the reset to target-change-only would require a DES-0006 version note, not a unilateral change in this package.
+- Even with the `ConfirmPlaintextPreview` gate, a confirmed plaintext preview under an active opt-out is handled by the external default browser (history, sync, extensions) outside Surveyor's control. Accepted for v1 as an explicit, per-invocation, user-confirmed local egress; the WebView2 revisit path (run-scoped, cleaned-on-exit user-data folder) would also narrow this if triggered.
 
 ## Related
 
