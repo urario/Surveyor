@@ -1,0 +1,51 @@
+{
+  "schema": "acquisition-tree/v1",
+  "processImageName": "legacyapp.exe",
+  "windowClass": "AfxFrameOrView140u",
+  "screenAutomationId": "MainWindow",
+  "screenLabel": "Legacy shell - acquisition edges",
+  "root": {
+    "automationId": "RootWindow",
+    "rawName": "Legacy shell",
+    "kind": "Window",
+    "provenance": "UiaNative",
+    "children": [
+      {
+        "automationId": "ProxyList",
+        "rawName": "Items",
+        "kind": "Custom",
+        "provenance": "MsaaProxy",
+        "children": []
+      },
+      {
+        "rawName": "OK",
+        "kind": "Button",
+        "provenance": "WmGetText",
+        "children": []
+      },
+      {
+        "automationId": "LegacyLabel",
+        "rawName": "Status",
+        "kind": "Text",
+        "provenance": "WmGetText",
+        "readOutcome": "Timeout",
+        "children": []
+      },
+      {
+        "automationId": "MdiChild1",
+        "rawName": "Invoice",
+        "kind": "Window",
+        "provenance": "UiaNative",
+        "children": [
+          {
+            "automationId": "PrintButton",
+            "rawName": "Print",
+            "kind": "Button",
+            "provenance": "UiaNative",
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}

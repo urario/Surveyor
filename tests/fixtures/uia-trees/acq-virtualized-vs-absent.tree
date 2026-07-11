@@ -1,0 +1,31 @@
+{
+  "schema": "acquisition-tree/v1",
+  "processImageName": "legacyapp.exe",
+  "windowClass": "AfxFrameOrView140u",
+  "screenAutomationId": "MainWindow",
+  "screenLabel": "Orders - virtualized vs absent",
+  "root": {
+    "automationId": "RootWindow",
+    "rawName": "Orders",
+    "kind": "Window",
+    "provenance": "UiaNative",
+    "children": [
+      {
+        "automationId": "VirtualRow",
+        "rawName": "Row placeholder",
+        "kind": "Custom",
+        "provenance": "UiaNative",
+        "realized": false,
+        "children": []
+      },
+      {
+        "automationId": "HiddenThing",
+        "rawName": "Hidden",
+        "kind": "Custom",
+        "provenance": "UiaNative",
+        "exposed": false,
+        "children": []
+      }
+    ]
+  }
+}

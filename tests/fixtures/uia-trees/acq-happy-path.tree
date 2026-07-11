@@ -1,0 +1,29 @@
+{
+  "schema": "acquisition-tree/v1",
+  "processImageName": "legacyapp.exe",
+  "windowClass": "AfxFrameOrView140u",
+  "screenAutomationId": "MainWindow",
+  "screenLabel": "Orders - happy path",
+  "root": {
+    "automationId": "RootWindow",
+    "rawName": "Orders",
+    "kind": "Window",
+    "provenance": "UiaNative",
+    "children": [
+      {
+        "automationId": "SaveButton",
+        "rawName": "Save",
+        "kind": "Button",
+        "provenance": "UiaNative",
+        "children": []
+      },
+      {
+        "frameworkStableId": "1002",
+        "rawName": "Total",
+        "kind": "Text",
+        "provenance": "UiaNative",
+        "children": []
+      }
+    ]
+  }
+}

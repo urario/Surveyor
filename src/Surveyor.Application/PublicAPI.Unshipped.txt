@@ -1,4 +1,30 @@
 #nullable enable
+Surveyor.Application.Dto.AcquisitionOptions
+Surveyor.Application.Dto.AcquisitionOptions.AcquisitionOptions(int MaxElementCount, System.TimeSpan PerNodeReadBudget) -> void
+Surveyor.Application.Dto.AcquisitionOptions.MaxElementCount.get -> int
+Surveyor.Application.Dto.AcquisitionOptions.MaxElementCount.init -> void
+Surveyor.Application.Dto.AcquisitionOptions.PerNodeReadBudget.get -> System.TimeSpan
+Surveyor.Application.Dto.AcquisitionOptions.PerNodeReadBudget.init -> void
+Surveyor.Application.Dto.AcquisitionProvenance
+Surveyor.Application.Dto.AcquisitionProvenance.MsaaProxy = 1 -> Surveyor.Application.Dto.AcquisitionProvenance
+Surveyor.Application.Dto.AcquisitionProvenance.Synthesized = 3 -> Surveyor.Application.Dto.AcquisitionProvenance
+Surveyor.Application.Dto.AcquisitionProvenance.UiaNative = 0 -> Surveyor.Application.Dto.AcquisitionProvenance
+Surveyor.Application.Dto.AcquisitionProvenance.WmGetText = 2 -> Surveyor.Application.Dto.AcquisitionProvenance
+Surveyor.Application.Dto.AcquisitionResult
+Surveyor.Application.Dto.AcquisitionResult.AcquisitionResult(Surveyor.Application.Dto.OperationStatus Status, Surveyor.Domain.Model.ScreenModel? ScreenModel, int ElementCount, bool HitElementCap, System.Collections.Generic.IReadOnlyList<Surveyor.Domain.Model.Availability>! Availability, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.AcquisitionResult.Availability.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Domain.Model.Availability>!
+Surveyor.Application.Dto.AcquisitionResult.Availability.init -> void
+Surveyor.Application.Dto.AcquisitionResult.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
+Surveyor.Application.Dto.AcquisitionResult.Diagnostics.init -> void
+Surveyor.Application.Dto.AcquisitionResult.ElementCount.get -> int
+Surveyor.Application.Dto.AcquisitionResult.ElementCount.init -> void
+Surveyor.Application.Dto.AcquisitionResult.HitElementCap.get -> bool
+Surveyor.Application.Dto.AcquisitionResult.HitElementCap.init -> void
+Surveyor.Application.Dto.AcquisitionResult.ScreenModel.get -> Surveyor.Domain.Model.ScreenModel?
+Surveyor.Application.Dto.AcquisitionResult.ScreenModel.init -> void
+Surveyor.Application.Dto.AcquisitionResult.Status.get -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.AcquisitionResult.Status.init -> void
+static Surveyor.Application.Dto.AcquisitionOptions.Default.get -> Surveyor.Application.Dto.AcquisitionOptions!
 Surveyor.Application.Dto.DiagnosticSeverity
 Surveyor.Application.Dto.DiagnosticSeverity.Error = 2 -> Surveyor.Application.Dto.DiagnosticSeverity
 Surveyor.Application.Dto.DiagnosticSeverity.Info = 0 -> Surveyor.Application.Dto.DiagnosticSeverity
@@ -165,6 +191,8 @@ Surveyor.Application.Ports.IFallbackKeyDerivation.DeriveFallbackToken(string! sc
 Surveyor.Application.Ports.ITargetDiscoveryPort
 Surveyor.Application.Ports.ITargetDiscoveryPort.ListTargetsAsync(Surveyor.Application.Dto.DiscoveryQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.TargetDiscoveryResult!>!
 Surveyor.Application.Ports.ITargetDiscoveryPort.ResolveAsync(Surveyor.Application.Dto.TargetReference! target, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.TargetResolveResult!>!
+Surveyor.Application.Ports.IUiTreeAcquisitionPort
+Surveyor.Application.Ports.IUiTreeAcquisitionPort.AcquireAsync(Surveyor.Application.Dto.TargetReference! target, Surveyor.Application.Dto.AcquisitionOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.AcquisitionResult!>!
 Surveyor.Application.Ports.OptOutRequest
 Surveyor.Application.Ports.OptOutRequest.OptOutRequest(string! ReasonCode) -> void
 Surveyor.Application.Ports.OptOutRequest.ReasonCode.get -> string!

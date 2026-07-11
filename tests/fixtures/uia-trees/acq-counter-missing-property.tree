@@ -1,0 +1,23 @@
+{
+  "schema": "acquisition-tree/v1",
+  "processImageName": "legacyapp.exe",
+  "windowClass": "AfxFrameOrView140u",
+  "screenAutomationId": "MainWindow",
+  "screenLabel": "Form - high-with-missing-property counter-example",
+  "root": {
+    "automationId": "RootWindow",
+    "rawName": "Form",
+    "kind": "Window",
+    "provenance": "UiaNative",
+    "children": [
+      {
+        "automationId": "SaveButton",
+        "rawName": "Save",
+        "kind": "Button",
+        "provenance": "UiaNative",
+        "hasBounds": false,
+        "children": []
+      }
+    ]
+  }
+}
