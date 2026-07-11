@@ -34,6 +34,7 @@ public sealed class ArchitectureProjectGraphTests
             ],
             ["Surveyor.TestSupport"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Architecture.Tests"] = [],
+            ["Surveyor.Application.Tests"] = ["Surveyor.Application", "Surveyor.TestSupport"],
             ["Surveyor.Domain.Tests"] = ["Surveyor.Domain"],
             ["Surveyor.Adapters.Uia.Tests"] = ["Surveyor.Adapters.Uia.Audit"],
         };
@@ -89,6 +90,7 @@ public sealed class ArchitectureProjectGraphTests
         "src/Surveyor.Reports/Surveyor.Reports.csproj",
         "src/Surveyor.Adapters.Uia.Audit/Surveyor.Adapters.Uia.Audit.csproj",
         "tests/Surveyor.TestSupport/Surveyor.TestSupport.csproj",
+        "tests/Surveyor.Application.Tests/Surveyor.Application.Tests.csproj",
         "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj",
         "tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj",
         "tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj",
@@ -191,6 +193,7 @@ public sealed class ArchitectureProjectGraphTests
         Assert.Contains("P:System.DateTime.Now", bannedSymbols, StringComparison.Ordinal);
         Assert.Contains("P:System.DateTime.UtcNow", bannedSymbols, StringComparison.Ordinal);
         Assert.Contains("P:System.DateTimeOffset.Now", bannedSymbols, StringComparison.Ordinal);
+        Assert.Contains("P:System.DateTimeOffset.UtcNow", bannedSymbols, StringComparison.Ordinal);
         Assert.Contains("M:System.DateTime.Parse(System.String)", bannedSymbols, StringComparison.Ordinal);
         Assert.Contains("M:System.DateTime.ToString", bannedSymbols, StringComparison.Ordinal);
     }

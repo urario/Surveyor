@@ -8,6 +8,7 @@
       "src/Surveyor.Reports/Surveyor.Reports.csproj",
       "src/Surveyor.Adapters.Uia.Audit/Surveyor.Adapters.Uia.Audit.csproj",
       "tests/Surveyor.TestSupport/Surveyor.TestSupport.csproj",
+      "tests/Surveyor.Application.Tests/Surveyor.Application.Tests.csproj",
       "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj",
       "tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj",
       "tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj",
