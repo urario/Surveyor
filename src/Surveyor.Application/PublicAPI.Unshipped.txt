@@ -1,4 +1,5 @@
 #nullable enable
+static Surveyor.Application.Dto.AnalysisRunOptions.Default.get -> Surveyor.Application.Dto.AnalysisRunOptions!
 Surveyor.Application.Dto.AcquisitionOptions
 Surveyor.Application.Dto.AcquisitionOptions.AcquisitionOptions(int MaxElementCount, System.TimeSpan PerNodeReadBudget) -> void
 Surveyor.Application.Dto.AcquisitionOptions.MaxElementCount.get -> int
@@ -25,6 +26,58 @@ Surveyor.Application.Dto.AcquisitionResult.ScreenModel.init -> void
 Surveyor.Application.Dto.AcquisitionResult.Status.get -> Surveyor.Application.Dto.OperationStatus
 Surveyor.Application.Dto.AcquisitionResult.Status.init -> void
 static Surveyor.Application.Dto.AcquisitionOptions.Default.get -> Surveyor.Application.Dto.AcquisitionOptions!
+Surveyor.Application.Dto.AnalysisRunOptions
+Surveyor.Application.Dto.AnalysisRunOptions.AcquisitionOptions.get -> Surveyor.Application.Dto.AcquisitionOptions!
+Surveyor.Application.Dto.AnalysisRunOptions.AcquisitionOptions.init -> void
+Surveyor.Application.Dto.AnalysisRunOptions.AnalysisRunOptions(Surveyor.Application.Dto.AcquisitionOptions! AcquisitionOptions, bool RequireCapture) -> void
+Surveyor.Application.Dto.AnalysisRunOptions.RequireCapture.get -> bool
+Surveyor.Application.Dto.AnalysisRunOptions.RequireCapture.init -> void
+Surveyor.Application.Dto.AnalysisRunRequest
+Surveyor.Application.Dto.AnalysisRunRequest.AnalysisRunRequest(Surveyor.Application.Dto.TargetReference! Target, Surveyor.Application.Dto.ScreenSelectionMetadata? ScreenSelectionMetadata, Surveyor.Application.Dto.AnalysisRunOptions! Options) -> void
+Surveyor.Application.Dto.AnalysisRunRequest.Options.get -> Surveyor.Application.Dto.AnalysisRunOptions!
+Surveyor.Application.Dto.AnalysisRunRequest.Options.init -> void
+Surveyor.Application.Dto.AnalysisRunRequest.ScreenSelectionMetadata.get -> Surveyor.Application.Dto.ScreenSelectionMetadata?
+Surveyor.Application.Dto.AnalysisRunRequest.ScreenSelectionMetadata.init -> void
+Surveyor.Application.Dto.AnalysisRunRequest.Target.get -> Surveyor.Application.Dto.TargetReference!
+Surveyor.Application.Dto.AnalysisRunRequest.Target.init -> void
+Surveyor.Application.Dto.AnalysisRunResult
+Surveyor.Application.Dto.AnalysisRunResult.AnalysisRunResult(System.DateTimeOffset StartedAtUtc, System.DateTimeOffset CompletedAtUtc, Surveyor.Application.Dto.RunOutcome Outcome, Surveyor.Application.Dto.TargetReference! Target, Surveyor.Application.Dto.ScreenSelectionMetadata? ScreenSelectionMetadata, Surveyor.Domain.Model.ScreenModel? ScreenModel, Surveyor.Domain.Scoring.ScoreResult? ScoreResult, Surveyor.Application.Dto.CaptureResult? Capture, Surveyor.Application.Dto.StoreResult? Store, Surveyor.Application.Ports.ConfidentialityDecision? ConfidentialityDecision, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.StageResult!>! Stages, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.AnalysisRunResult.Capture.get -> Surveyor.Application.Dto.CaptureResult?
+Surveyor.Application.Dto.AnalysisRunResult.Capture.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.CompletedAtUtc.get -> System.DateTimeOffset
+Surveyor.Application.Dto.AnalysisRunResult.CompletedAtUtc.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.ConfidentialityDecision.get -> Surveyor.Application.Ports.ConfidentialityDecision?
+Surveyor.Application.Dto.AnalysisRunResult.ConfidentialityDecision.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
+Surveyor.Application.Dto.AnalysisRunResult.Diagnostics.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.Outcome.get -> Surveyor.Application.Dto.RunOutcome
+Surveyor.Application.Dto.AnalysisRunResult.Outcome.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.ScoreResult.get -> Surveyor.Domain.Scoring.ScoreResult?
+Surveyor.Application.Dto.AnalysisRunResult.ScoreResult.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.ScreenModel.get -> Surveyor.Domain.Model.ScreenModel?
+Surveyor.Application.Dto.AnalysisRunResult.ScreenModel.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.ScreenSelectionMetadata.get -> Surveyor.Application.Dto.ScreenSelectionMetadata?
+Surveyor.Application.Dto.AnalysisRunResult.ScreenSelectionMetadata.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.Stages.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.StageResult!>!
+Surveyor.Application.Dto.AnalysisRunResult.Stages.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.StartedAtUtc.get -> System.DateTimeOffset
+Surveyor.Application.Dto.AnalysisRunResult.StartedAtUtc.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.Store.get -> Surveyor.Application.Dto.StoreResult?
+Surveyor.Application.Dto.AnalysisRunResult.Store.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.Target.get -> Surveyor.Application.Dto.TargetReference!
+Surveyor.Application.Dto.AnalysisRunResult.Target.init -> void
+Surveyor.Application.Dto.CaptureRequest
+Surveyor.Application.Dto.CaptureRequest.CaptureRequest(Surveyor.Application.Dto.TargetReference! Target, bool RequireCapture) -> void
+Surveyor.Application.Dto.CaptureRequest.RequireCapture.get -> bool
+Surveyor.Application.Dto.CaptureRequest.RequireCapture.init -> void
+Surveyor.Application.Dto.CaptureRequest.Target.get -> Surveyor.Application.Dto.TargetReference!
+Surveyor.Application.Dto.CaptureRequest.Target.init -> void
+Surveyor.Application.Dto.CaptureResult
+Surveyor.Application.Dto.CaptureResult.CaptureResult(Surveyor.Application.Dto.OperationStatus Status, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.CaptureResult.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
+Surveyor.Application.Dto.CaptureResult.Diagnostics.init -> void
+Surveyor.Application.Dto.CaptureResult.Status.get -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.CaptureResult.Status.init -> void
 Surveyor.Application.Dto.DiagnosticSeverity
 Surveyor.Application.Dto.DiagnosticSeverity.Error = 2 -> Surveyor.Application.Dto.DiagnosticSeverity
 Surveyor.Application.Dto.DiagnosticSeverity.Info = 0 -> Surveyor.Application.Dto.DiagnosticSeverity
@@ -80,6 +133,11 @@ Surveyor.Application.Dto.RunDiagnostic.Stage.get -> Surveyor.Application.Dto.Run
 Surveyor.Application.Dto.RunDiagnostic.Stage.init -> void
 Surveyor.Application.Dto.RunDiagnostic.Status.get -> Surveyor.Application.Dto.OperationStatus
 Surveyor.Application.Dto.RunDiagnostic.Status.init -> void
+Surveyor.Application.Dto.RunOutcome
+Surveyor.Application.Dto.RunOutcome.Cancelled = 2 -> Surveyor.Application.Dto.RunOutcome
+Surveyor.Application.Dto.RunOutcome.FailedUnexpected = 3 -> Surveyor.Application.Dto.RunOutcome
+Surveyor.Application.Dto.RunOutcome.Succeeded = 0 -> Surveyor.Application.Dto.RunOutcome
+Surveyor.Application.Dto.RunOutcome.SucceededWithPartialResult = 1 -> Surveyor.Application.Dto.RunOutcome
 Surveyor.Application.Dto.RunStage
 Surveyor.Application.Dto.RunStage.Capture = 5 -> Surveyor.Application.Dto.RunStage
 Surveyor.Application.Dto.RunStage.ConfidentialityPolicy = 6 -> Surveyor.Application.Dto.RunStage
@@ -92,6 +150,58 @@ Surveyor.Application.Dto.RunStage.Store = 9 -> Surveyor.Application.Dto.RunStage
 Surveyor.Application.Dto.RunStage.TargetDiscovery = 0 -> Surveyor.Application.Dto.RunStage
 Surveyor.Application.Dto.RunStage.TargetSelection = 1 -> Surveyor.Application.Dto.RunStage
 Surveyor.Application.Dto.RunStage.TreeAcquisition = 2 -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.ScreenSelectionMetadata
+Surveyor.Application.Dto.ScreenSelectionMetadata.ChangeFrequency.get -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Application.Dto.ScreenSelectionMetadata.ChangeFrequency.init -> void
+Surveyor.Application.Dto.ScreenSelectionMetadata.ExecutionFrequency.get -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Application.Dto.ScreenSelectionMetadata.ExecutionFrequency.init -> void
+Surveyor.Application.Dto.ScreenSelectionMetadata.HasJudgmentSplit.get -> bool
+Surveyor.Application.Dto.ScreenSelectionMetadata.HasJudgmentSplit.init -> void
+Surveyor.Application.Dto.ScreenSelectionMetadata.RegressionTestCost.get -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Application.Dto.ScreenSelectionMetadata.RegressionTestCost.init -> void
+Surveyor.Application.Dto.ScreenSelectionMetadata.ScreenSelectionMetadata(Surveyor.Domain.Scoring.PriorityBasisSource Source, Surveyor.Domain.Scoring.PriorityBand RegressionTestCost, Surveyor.Domain.Scoring.PriorityBand ChangeFrequency, Surveyor.Domain.Scoring.PriorityBand ExecutionFrequency, Surveyor.Domain.Scoring.PriorityBand UiPatternRepresentativeness, bool HasJudgmentSplit, string? SelectionRationale) -> void
+Surveyor.Application.Dto.ScreenSelectionMetadata.SelectionRationale.get -> string?
+Surveyor.Application.Dto.ScreenSelectionMetadata.SelectionRationale.init -> void
+Surveyor.Application.Dto.ScreenSelectionMetadata.Source.get -> Surveyor.Domain.Scoring.PriorityBasisSource
+Surveyor.Application.Dto.ScreenSelectionMetadata.Source.init -> void
+Surveyor.Application.Dto.ScreenSelectionMetadata.UiPatternRepresentativeness.get -> Surveyor.Domain.Scoring.PriorityBand
+Surveyor.Application.Dto.ScreenSelectionMetadata.UiPatternRepresentativeness.init -> void
+Surveyor.Application.Dto.StageResult
+Surveyor.Application.Dto.StageResult.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
+Surveyor.Application.Dto.StageResult.Diagnostics.init -> void
+Surveyor.Application.Dto.StageResult.Stage.get -> Surveyor.Application.Dto.RunStage
+Surveyor.Application.Dto.StageResult.Stage.init -> void
+Surveyor.Application.Dto.StageResult.StageResult(Surveyor.Application.Dto.RunStage Stage, Surveyor.Application.Dto.OperationStatus Status, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.StageResult.Status.get -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.StageResult.Status.init -> void
+Surveyor.Application.Dto.StoreResult
+Surveyor.Application.Dto.StoreResult.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
+Surveyor.Application.Dto.StoreResult.Diagnostics.init -> void
+Surveyor.Application.Dto.StoreResult.Status.get -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.StoreResult.Status.init -> void
+Surveyor.Application.Dto.StoreResult.StoreResult(Surveyor.Application.Dto.OperationStatus Status, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.StoreRequest
+Surveyor.Application.Dto.StoreRequest.Capture.get -> Surveyor.Application.Dto.CaptureResult?
+Surveyor.Application.Dto.StoreRequest.Capture.init -> void
+Surveyor.Application.Dto.StoreRequest.ConfidentialityDecision.get -> Surveyor.Application.Ports.ConfidentialityDecision?
+Surveyor.Application.Dto.StoreRequest.ConfidentialityDecision.init -> void
+Surveyor.Application.Dto.StoreRequest.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
+Surveyor.Application.Dto.StoreRequest.Diagnostics.init -> void
+Surveyor.Application.Dto.StoreRequest.Outcome.get -> Surveyor.Application.Dto.RunOutcome
+Surveyor.Application.Dto.StoreRequest.Outcome.init -> void
+Surveyor.Application.Dto.StoreRequest.ScoreResult.get -> Surveyor.Domain.Scoring.ScoreResult?
+Surveyor.Application.Dto.StoreRequest.ScoreResult.init -> void
+Surveyor.Application.Dto.StoreRequest.ScreenModel.get -> Surveyor.Domain.Model.ScreenModel?
+Surveyor.Application.Dto.StoreRequest.ScreenModel.init -> void
+Surveyor.Application.Dto.StoreRequest.ScreenSelectionMetadata.get -> Surveyor.Application.Dto.ScreenSelectionMetadata?
+Surveyor.Application.Dto.StoreRequest.ScreenSelectionMetadata.init -> void
+Surveyor.Application.Dto.StoreRequest.Stages.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.StageResult!>!
+Surveyor.Application.Dto.StoreRequest.Stages.init -> void
+Surveyor.Application.Dto.StoreRequest.StartedAtUtc.get -> System.DateTimeOffset
+Surveyor.Application.Dto.StoreRequest.StartedAtUtc.init -> void
+Surveyor.Application.Dto.StoreRequest.StoreRequest(System.DateTimeOffset StartedAtUtc, Surveyor.Application.Dto.RunOutcome Outcome, Surveyor.Application.Dto.TargetReference! Target, Surveyor.Application.Dto.ScreenSelectionMetadata? ScreenSelectionMetadata, Surveyor.Domain.Model.ScreenModel? ScreenModel, Surveyor.Domain.Scoring.ScoreResult? ScoreResult, Surveyor.Application.Dto.CaptureResult? Capture, Surveyor.Application.Ports.ConfidentialityDecision? ConfidentialityDecision, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.StageResult!>! Stages, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.StoreRequest.Target.get -> Surveyor.Application.Dto.TargetReference!
+Surveyor.Application.Dto.StoreRequest.Target.init -> void
 Surveyor.Application.Dto.TargetCandidate
 Surveyor.Application.Dto.TargetCandidate.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
 Surveyor.Application.Dto.TargetCandidate.Diagnostics.init -> void
@@ -146,6 +256,12 @@ Surveyor.Application.Dto.TargetResolveResult.Status.init -> void
 Surveyor.Application.Dto.TargetResolveResult.Target.get -> Surveyor.Application.Dto.TargetReference?
 Surveyor.Application.Dto.TargetResolveResult.Target.init -> void
 Surveyor.Application.Dto.TargetResolveResult.TargetResolveResult(Surveyor.Application.Dto.OperationStatus Status, Surveyor.Application.Dto.TargetReference? Target, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Ports.IResultStorePort
+Surveyor.Application.Ports.IResultStorePort.SaveAsync(Surveyor.Application.Dto.StoreRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.StoreResult!>!
+Surveyor.Application.Ports.IScoringConfigProvider
+Surveyor.Application.Ports.IScoringConfigProvider.ResolveAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Domain.Scoring.ScoringConfig!>!
+Surveyor.Application.Ports.IScreenCapturePort
+Surveyor.Application.Ports.IScreenCapturePort.CaptureAsync(Surveyor.Application.Dto.CaptureRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.CaptureResult!>!
 Surveyor.Application.Time.IClock
 Surveyor.Application.Time.IClock.UtcNow.get -> System.DateTimeOffset
 Surveyor.Application.Time.SystemClock
@@ -197,3 +313,6 @@ Surveyor.Application.Ports.OptOutRequest
 Surveyor.Application.Ports.OptOutRequest.OptOutRequest(string! ReasonCode) -> void
 Surveyor.Application.Ports.OptOutRequest.ReasonCode.get -> string!
 Surveyor.Application.Ports.OptOutRequest.ReasonCode.init -> void
+Surveyor.Application.UseCases.AnalyzeScreenUseCase
+Surveyor.Application.UseCases.AnalyzeScreenUseCase.AnalyzeScreenUseCase(Surveyor.Application.Ports.IUiTreeAcquisitionPort! acquisitionPort, Surveyor.Application.Ports.IScreenCapturePort! capturePort, Surveyor.Application.Ports.IConfidentialityPolicy! confidentialityPolicy, Surveyor.Application.Ports.IResultStorePort! storePort, Surveyor.Domain.Scoring.TestabilityScorer! scorer, Surveyor.Application.Ports.IScoringConfigProvider! scoringConfigProvider, Surveyor.Application.Time.IClock! clock) -> void
+Surveyor.Application.UseCases.AnalyzeScreenUseCase.ExecuteAsync(Surveyor.Application.Dto.AnalysisRunRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.AnalysisRunResult!>!
