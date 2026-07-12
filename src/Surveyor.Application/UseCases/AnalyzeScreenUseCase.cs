@@ -51,6 +51,6 @@ public sealed class AnalyzeScreenUseCase
         ArgumentNullException.ThrowIfNull(request);
         AnalysisRunContext context = new(request, clock);
         await pipeline.RunAsync(context, cancellationToken).ConfigureAwait(false);
-        return context.BuildResult();
+        return AnalysisRunResultBuilder.Build(context, clock.UtcNow);
     }
 }

@@ -36,6 +36,7 @@ public sealed class ArchitectureProjectGraphTests
             ["Surveyor.Architecture.Tests"] = [],
             ["Surveyor.Application.Tests"] = ["Surveyor.Application", "Surveyor.TestSupport"],
             ["Surveyor.Domain.Tests"] = ["Surveyor.Domain"],
+            ["Surveyor.Reports.Tests"] = ["Surveyor.Reports", "Surveyor.TestSupport"],
             ["Surveyor.Adapters.Uia.Tests"] = ["Surveyor.Adapters.Uia", "Surveyor.Adapters.Uia.Audit", "Surveyor.Application"],
         };
 
@@ -94,6 +95,7 @@ public sealed class ArchitectureProjectGraphTests
         "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj",
         "tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj",
         "tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj",
+        "tests/Surveyor.Reports.Tests/Surveyor.Reports.Tests.csproj",
     ];
 
     private static readonly string[] ForbiddenCoreFrameworkMarkers =
@@ -252,9 +254,9 @@ public sealed class ArchitectureProjectGraphTests
     }
 
     [Fact]
-    public void DomainAndApplicationStayFreeOfWindowsFrameworkReferences()
+    public void CoreOutputProjectsStayFreeOfWindowsFrameworkReferences()
     {
-        string[] coreProjectNames = ["Surveyor.Domain", "Surveyor.Application"];
+        string[] coreProjectNames = ["Surveyor.Domain", "Surveyor.Application", "Surveyor.Reports"];
 
         foreach (string projectName in coreProjectNames)
         {

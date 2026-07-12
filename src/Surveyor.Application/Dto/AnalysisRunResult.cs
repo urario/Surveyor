@@ -4,20 +4,24 @@ using Surveyor.Domain.Scoring;
 
 namespace Surveyor.Application.Dto;
 
-/// <summary>画面解析ユースケースの集約結果を表します。</summary>
-/// <param name="StartedAtUtc">開始UTC時刻です。</param>
-/// <param name="CompletedAtUtc">完了UTC時刻です。</param>
-/// <param name="Outcome">実行全体の結果です。</param>
-/// <param name="Target">対象参照です。</param>
-/// <param name="ScreenSelectionMetadata">無変更で引き継いだ選定根拠です。</param>
-/// <param name="ScreenModel">取得した画面モデルです。</param>
-/// <param name="ScoreResult">スコア結果です。</param>
-/// <param name="Capture">撮像結果です。</param>
-/// <param name="Store">保存結果です。</param>
-/// <param name="ConfidentialityDecision">egress前に確定した機密ポリシー判断です。</param>
-/// <param name="Stages">実行順に並んだステージ結果です。</param>
-/// <param name="Diagnostics">決定的順序の安全な診断一覧です。</param>
+/// <summary>
+/// 分析実行ユースケースの最終結果を表します。
+/// </summary>
+/// <param name="RunId">実行 ID。</param>
+/// <param name="StartedAtUtc">開始 UTC 時刻。</param>
+/// <param name="CompletedAtUtc">完了 UTC 時刻。</param>
+/// <param name="Outcome">実行結果の要約状態。</param>
+/// <param name="Target">分析対象。</param>
+/// <param name="ScreenSelectionMetadata">画面選択時に記録した付帯情報。</param>
+/// <param name="ScreenModel">取得した画面モデル。</param>
+/// <param name="ScoreResult">採点結果。</param>
+/// <param name="Capture">キャプチャ結果。</param>
+/// <param name="Store">保存結果。</param>
+/// <param name="ConfidentialityDecision">適用済み機密性ポリシー決定。</param>
+/// <param name="Stages">各ステージ結果。</param>
+/// <param name="Diagnostics">安全化済み診断一覧。</param>
 public sealed record AnalysisRunResult(
+    RunId RunId,
     DateTimeOffset StartedAtUtc,
     DateTimeOffset CompletedAtUtc,
     RunOutcome Outcome,

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('All', 'Domain', 'Policy')]
+    [ValidateSet('All', 'Domain', 'Policy', 'Reports')]
     [string]$Target = 'All',
 
     [switch]$SkipVersionCheck
@@ -38,6 +38,12 @@ $runs = @(
         WorkDir = Join-Path $repoRoot 'tests\Surveyor.Policy.Tests'
         Config = '..\..\eng\stryker\policy.stryker-config.json'
         Output = '..\..\artifacts\stryker\policy'
+    },
+    [pscustomobject]@{
+        Name = 'Reports'
+        WorkDir = Join-Path $repoRoot 'tests\Surveyor.Reports.Tests'
+        Config = '..\..\eng\stryker\reports.stryker-config.json'
+        Output = '..\..\artifacts\stryker\reports'
     }
 )
 

@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "surveyor.report.v1",
+  "documentKind": "SurveyorAnalysisReport",
+  "run": {
+    "runId": "run-fixed-0001",
+    "outcome": "SucceededWithPartialResult",
+    "startedAtUtc": "2026-07-01T12:00:00.0000000Z",
+    "completedAtUtc": "2026-07-01T12:00:05.0000000Z",
+    "generatedAtUtc": "2026-07-01T12:01:00.0000000Z",
+    "targetSafeId": "fixture.target-1",
+    "screenSelectionMetadataPresent": false
+  },
+  "confidentiality": {
+    "mode": "ProtectedLocal",
+    "policyVersion": "confidentiality-v1",
+    "decidedAtUtc": "2026-07-01T12:00:06.0000000Z",
+    "decisionSource": "TestFixture",
+    "optOutReasonCode": null,
+    "appliedTransforms": [],
+    "handlingNoticeCode": "protected-local"
+  },
+  "screen": {
+    "screenKey": "scr:1:a2cc61b713eda9010c0ba121b71e5ebd",
+    "keyVersion": "1",
+    "isFallback": false,
+    "stableAcrossExports": true,
+    "elementCount": 2,
+    "unavailableElementCount": 1,
+    "availabilitySummary": "PermissionDenied:1"
+  },
+  "score": {
+    "screenKey": "scr:1:a2cc61b713eda9010c0ba121b71e5ebd",
+    "scoringConfigVersion": "scoring-v1",
+    "candidateRulesVersion": "candidate-rules-v1",
+    "aggregateScoreBp": 7500,
+    "aggregateScorePercentText": "75.00",
+    "testabilityClass": "SmallImprovement",
+    "confidence": "Medium",
+    "priorityBasis": null
+  },
+  "axes": [
+    {
+      "axis": "Identifiability",
+      "applicability": "Applicable",
+      "scoreBp": 7500,
+      "scorePercentText": "75.00",
+      "confidence": "Medium",
+      "findingIds": ["F-001"],
+      "evidenceCodes": ["stableIdentityCoverage"]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-001",
+      "code": "NoStableIdentity",
+      "axis": "Identifiability",
+      "rootCause": "MissingStableIdentity",
+      "severity": "Warning",
+      "elementKey": "elm:1:289d81e2e849fc4ada96f613ff77a459",
+      "availability": "Unavailable(PermissionDenied)",
+      "acquisitionConfidence": "Medium",
+      "relatedFindingIds": [],
+      "recommendationCode": "AddStableAutomationIdOrPeerName"
+    }
+  ],
+  "improvementCandidates": [
+    {
+      "id": "C-001",
+      "code": "AddStableAutomationIdOrPeerName",
+      "rootCause": "MissingStableIdentity",
+      "primaryAxis": "Identifiability",
+      "targetElementKey": "elm:1:289d81e2e849fc4ada96f613ff77a459",
+      "affectedElementCount": 1,
+      "expectedEffect": "UnlockAutomation",
+      "sourceFindingIds": ["F-001"],
+      "scope": "Element",
+      "userSuppliedPriorityBasis": null
+    }
+  ],
+  "stages": [
+    {
+      "stage": "TreeAcquisition",
+      "status": "PartialResult",
+      "timeoutBudgetMs": null,
+      "diagnosticCodes": ["ElementUnavailable"]
+    },
+    {
+      "stage": "Scoring",
+      "status": "Ok",
+      "timeoutBudgetMs": null,
+      "diagnosticCodes": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "stage": "TreeAcquisition",
+      "severity": "Warning",
+      "code": "ElementUnavailable",
+      "status": "PartialResult",
+      "elementKey": "elm:1:289d81e2e849fc4ada96f613ff77a459",
+      "safeArgs": {
+        "reason": "PermissionDenied"
+      }
+    }
+  ],
+  "serialization": {
+    "schemaVersion": "surveyor.report.v1",
+    "serializerVersion": "deterministic-json-v1",
+    "timestampFormat": "yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'",
+    "encoding": "utf-8-no-bom",
+    "newline": "lf",
+    "propertyOrder": "explicit-v1",
+    "contentHashAlgorithm": "SHA-256"
+  }
+}

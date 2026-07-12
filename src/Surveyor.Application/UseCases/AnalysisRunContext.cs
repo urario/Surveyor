@@ -32,6 +32,18 @@ internal sealed class AnalysisRunContext
 
     internal ScreenModel? ScreenModel { get; private set; }
 
+    internal ScoreResult? ScoreResult => scoreResult;
+
+    internal CaptureResult? CaptureResult => captureResult;
+
+    internal StoreResult? StoreResult => storeResult;
+
+    internal ConfidentialityDecision? ConfidentialityDecision => decision;
+
+    internal IReadOnlyList<StageResult> Stages => stages;
+
+    internal RunOutcome Outcome => DeriveOutcome();
+
     internal bool CanContinue => ScreenModel is not null && terminalOutcome is null;
 
     internal void RecordAcquisition(AcquisitionResult result)
@@ -99,26 +111,7 @@ internal sealed class AnalysisRunContext
             orderedDiagnostics);
     }
 
-    internal AnalysisRunResult BuildResult()
-    {
-        RunDiagnostic[] orderedDiagnostics = BuildOrderedDiagnostics();
-
-        return new AnalysisRunResult(
-            StartedAtUtc,
-            clock.UtcNow,
-            DeriveOutcome(),
-            Request.Target,
-            Request.ScreenSelectionMetadata,
-            ScreenModel,
-            scoreResult,
-            captureResult,
-            storeResult,
-            decision,
-            stages.ToArray(),
-            orderedDiagnostics);
-    }
-
-    private RunDiagnostic[] BuildOrderedDiagnostics()
+    internal RunDiagnostic[] BuildOrderedDiagnostics()
     {
         return diagnostics
             .OrderBy(static item => item.Stage)
