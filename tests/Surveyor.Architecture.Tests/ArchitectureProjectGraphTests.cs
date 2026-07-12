@@ -70,7 +70,6 @@ public sealed class ArchitectureProjectGraphTests
         "Surveyor.Adapters.Uia",
         "Surveyor.Adapters.Capture",
         "Surveyor.Adapters.Store",
-        "Surveyor.Presentation",
         "Surveyor.App",
     ];
 

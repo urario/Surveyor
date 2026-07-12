@@ -9,7 +9,7 @@
     <SurveyorIsCoreTestProject>false</SurveyorIsCoreTestProject>
     <SurveyorIsCoreTestProject Condition="'$(MSBuildProjectName)' == 'Surveyor.Domain.Tests' Or '$(MSBuildProjectName)' == 'Surveyor.Application.Tests' Or '$(MSBuildProjectName)' == 'Surveyor.Policy.Tests' Or '$(MSBuildProjectName)' == 'Surveyor.Reports.Tests'">true</SurveyorIsCoreTestProject>
     <TargetFramework>$(SurveyorCoreTargetFramework)</TargetFramework>
-    <TargetFramework Condition="'$(MSBuildProjectName)' == 'Surveyor.Adapters.Discovery' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia.Tests' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Capture' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Store' Or '$(MSBuildProjectName)' == 'Surveyor.Presentation' Or '$(MSBuildProjectName)' == 'Surveyor.Presentation.Tests' Or '$(MSBuildProjectName)' == 'Surveyor.App'">$(SurveyorWindowsTargetFramework)</TargetFramework>
+    <TargetFramework Condition="'$(MSBuildProjectName)' == 'Surveyor.Adapters.Discovery' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Uia.Tests' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Capture' Or '$(MSBuildProjectName)' == 'Surveyor.Adapters.Store' Or '$(MSBuildProjectName)' == 'Surveyor.App'">$(SurveyorWindowsTargetFramework)</TargetFramework>
 
     <Nullable>enable</Nullable>
     <InvariantGlobalization>true</InvariantGlobalization>
