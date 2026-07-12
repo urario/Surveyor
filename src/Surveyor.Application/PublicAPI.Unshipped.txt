@@ -41,7 +41,7 @@ Surveyor.Application.Dto.AnalysisRunRequest.ScreenSelectionMetadata.init -> void
 Surveyor.Application.Dto.AnalysisRunRequest.Target.get -> Surveyor.Application.Dto.TargetReference!
 Surveyor.Application.Dto.AnalysisRunRequest.Target.init -> void
 Surveyor.Application.Dto.AnalysisRunResult
-Surveyor.Application.Dto.AnalysisRunResult.AnalysisRunResult(System.DateTimeOffset StartedAtUtc, System.DateTimeOffset CompletedAtUtc, Surveyor.Application.Dto.RunOutcome Outcome, Surveyor.Application.Dto.TargetReference! Target, Surveyor.Application.Dto.ScreenSelectionMetadata? ScreenSelectionMetadata, Surveyor.Domain.Model.ScreenModel? ScreenModel, Surveyor.Domain.Scoring.ScoreResult? ScoreResult, Surveyor.Application.Dto.CaptureResult? Capture, Surveyor.Application.Dto.StoreResult? Store, Surveyor.Application.Ports.ConfidentialityDecision? ConfidentialityDecision, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.StageResult!>! Stages, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.AnalysisRunResult.AnalysisRunResult(Surveyor.Application.Dto.RunId! RunId, System.DateTimeOffset StartedAtUtc, System.DateTimeOffset CompletedAtUtc, Surveyor.Application.Dto.RunOutcome Outcome, Surveyor.Application.Dto.TargetReference! Target, Surveyor.Application.Dto.ScreenSelectionMetadata? ScreenSelectionMetadata, Surveyor.Domain.Model.ScreenModel? ScreenModel, Surveyor.Domain.Scoring.ScoreResult? ScoreResult, Surveyor.Application.Dto.CaptureResult? Capture, Surveyor.Application.Dto.StoreResult? Store, Surveyor.Application.Ports.ConfidentialityDecision? ConfidentialityDecision, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.StageResult!>! Stages, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
 Surveyor.Application.Dto.AnalysisRunResult.Capture.get -> Surveyor.Application.Dto.CaptureResult?
 Surveyor.Application.Dto.AnalysisRunResult.Capture.init -> void
 Surveyor.Application.Dto.AnalysisRunResult.CompletedAtUtc.get -> System.DateTimeOffset
@@ -52,6 +52,8 @@ Surveyor.Application.Dto.AnalysisRunResult.Diagnostics.get -> System.Collections
 Surveyor.Application.Dto.AnalysisRunResult.Diagnostics.init -> void
 Surveyor.Application.Dto.AnalysisRunResult.Outcome.get -> Surveyor.Application.Dto.RunOutcome
 Surveyor.Application.Dto.AnalysisRunResult.Outcome.init -> void
+Surveyor.Application.Dto.AnalysisRunResult.RunId.get -> Surveyor.Application.Dto.RunId!
+Surveyor.Application.Dto.AnalysisRunResult.RunId.init -> void
 Surveyor.Application.Dto.AnalysisRunResult.ScoreResult.get -> Surveyor.Domain.Scoring.ScoreResult?
 Surveyor.Application.Dto.AnalysisRunResult.ScoreResult.init -> void
 Surveyor.Application.Dto.AnalysisRunResult.ScreenModel.get -> Surveyor.Domain.Model.ScreenModel?
@@ -316,3 +318,80 @@ Surveyor.Application.Ports.OptOutRequest.ReasonCode.init -> void
 Surveyor.Application.UseCases.AnalyzeScreenUseCase
 Surveyor.Application.UseCases.AnalyzeScreenUseCase.AnalyzeScreenUseCase(Surveyor.Application.Ports.IUiTreeAcquisitionPort! acquisitionPort, Surveyor.Application.Ports.IScreenCapturePort! capturePort, Surveyor.Application.Ports.IConfidentialityPolicy! confidentialityPolicy, Surveyor.Application.Ports.IResultStorePort! storePort, Surveyor.Domain.Scoring.TestabilityScorer! scorer, Surveyor.Application.Ports.IScoringConfigProvider! scoringConfigProvider, Surveyor.Application.Time.IClock! clock) -> void
 Surveyor.Application.UseCases.AnalyzeScreenUseCase.ExecuteAsync(Surveyor.Application.Dto.AnalysisRunRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.AnalysisRunResult!>!
+Surveyor.Application.Dto.ArtifactKind
+Surveyor.Application.Dto.ArtifactKind.Captures = 2 -> Surveyor.Application.Dto.ArtifactKind
+Surveyor.Application.Dto.ArtifactKind.Diagnostics = 4 -> Surveyor.Application.Dto.ArtifactKind
+Surveyor.Application.Dto.ArtifactKind.ExportBundle = 5 -> Surveyor.Application.Dto.ArtifactKind
+Surveyor.Application.Dto.ArtifactKind.Manifest = 0 -> Surveyor.Application.Dto.ArtifactKind
+Surveyor.Application.Dto.ArtifactKind.Report = 3 -> Surveyor.Application.Dto.ArtifactKind
+Surveyor.Application.Dto.ArtifactKind.Result = 1 -> Surveyor.Application.Dto.ArtifactKind
+Surveyor.Application.Dto.GeneratedReportArtifact
+Surveyor.Application.Dto.GeneratedReportArtifact.ContentSha256Hex.get -> string!
+Surveyor.Application.Dto.GeneratedReportArtifact.ContentSha256Hex.init -> void
+Surveyor.Application.Dto.GeneratedReportArtifact.Format.get -> Surveyor.Application.Dto.ReportFormat
+Surveyor.Application.Dto.GeneratedReportArtifact.Format.init -> void
+Surveyor.Application.Dto.GeneratedReportArtifact.GeneratedReportArtifact(Surveyor.Application.Dto.ReportFormat Format, Surveyor.Application.Dto.SafeArtifactReference! Reference, string! SchemaVersion, string! ContentSha256Hex) -> void
+Surveyor.Application.Dto.GeneratedReportArtifact.Reference.get -> Surveyor.Application.Dto.SafeArtifactReference!
+Surveyor.Application.Dto.GeneratedReportArtifact.Reference.init -> void
+Surveyor.Application.Dto.GeneratedReportArtifact.SchemaVersion.get -> string!
+Surveyor.Application.Dto.GeneratedReportArtifact.SchemaVersion.init -> void
+Surveyor.Application.Dto.ReportArtifactRequest
+Surveyor.Application.Dto.ReportArtifactRequest.Destination.get -> Surveyor.Application.Dto.ReportDestination!
+Surveyor.Application.Dto.ReportArtifactRequest.Destination.init -> void
+Surveyor.Application.Dto.ReportArtifactRequest.Format.get -> Surveyor.Application.Dto.ReportFormat
+Surveyor.Application.Dto.ReportArtifactRequest.Format.init -> void
+Surveyor.Application.Dto.ReportArtifactRequest.ReportArtifactRequest(Surveyor.Application.Dto.ReportFormat Format, Surveyor.Application.Dto.ReportDestination! Destination) -> void
+Surveyor.Application.Dto.ReportCollisionPolicy
+Surveyor.Application.Dto.ReportCollisionPolicy.FailIfDestinationExists = 0 -> Surveyor.Application.Dto.ReportCollisionPolicy
+Surveyor.Application.Dto.ReportDestination
+Surveyor.Application.Dto.ReportDestination.AbsolutePathForWrite.get -> string!
+Surveyor.Application.Dto.ReportDestination.AbsolutePathForWrite.init -> void
+Surveyor.Application.Dto.ReportDestination.ReportDestination(string! AbsolutePathForWrite) -> void
+Surveyor.Application.Dto.ReportFormat
+Surveyor.Application.Dto.ReportFormat.Html = 1 -> Surveyor.Application.Dto.ReportFormat
+Surveyor.Application.Dto.ReportFormat.Json = 0 -> Surveyor.Application.Dto.ReportFormat
+Surveyor.Application.Dto.ReportOptions
+Surveyor.Application.Dto.ReportOptions.Artifacts.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.ReportArtifactRequest!>!
+Surveyor.Application.Dto.ReportOptions.Artifacts.init -> void
+Surveyor.Application.Dto.ReportOptions.CollisionPolicy.get -> Surveyor.Application.Dto.ReportCollisionPolicy
+Surveyor.Application.Dto.ReportOptions.CollisionPolicy.init -> void
+Surveyor.Application.Dto.ReportOptions.GeneratedAtUtc.get -> System.DateTimeOffset
+Surveyor.Application.Dto.ReportOptions.GeneratedAtUtc.init -> void
+Surveyor.Application.Dto.ReportOptions.ReportOptions(System.DateTimeOffset GeneratedAtUtc, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.ReportArtifactRequest!>! Artifacts, Surveyor.Application.Dto.ReportCollisionPolicy CollisionPolicy) -> void
+Surveyor.Application.Dto.ReportRequest
+Surveyor.Application.Dto.ReportRequest.ConfidentialityDecision.get -> Surveyor.Application.Ports.ConfidentialityDecision!
+Surveyor.Application.Dto.ReportRequest.ConfidentialityDecision.init -> void
+Surveyor.Application.Dto.ReportRequest.Options.get -> Surveyor.Application.Dto.ReportOptions!
+Surveyor.Application.Dto.ReportRequest.Options.init -> void
+Surveyor.Application.Dto.ReportRequest.ReportRequest(Surveyor.Application.Dto.RunId! RunId, Surveyor.Application.Dto.AnalysisRunResult! SanitizedRunResult, Surveyor.Application.Dto.ReportOptions! Options, Surveyor.Application.Ports.ConfidentialityDecision! ConfidentialityDecision) -> void
+Surveyor.Application.Dto.ReportRequest.RunId.get -> Surveyor.Application.Dto.RunId!
+Surveyor.Application.Dto.ReportRequest.RunId.init -> void
+Surveyor.Application.Dto.ReportRequest.SanitizedRunResult.get -> Surveyor.Application.Dto.AnalysisRunResult!
+Surveyor.Application.Dto.ReportRequest.SanitizedRunResult.init -> void
+Surveyor.Application.Dto.ReportResult
+Surveyor.Application.Dto.ReportResult.Artifacts.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.GeneratedReportArtifact!>!
+Surveyor.Application.Dto.ReportResult.Artifacts.init -> void
+Surveyor.Application.Dto.ReportResult.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
+Surveyor.Application.Dto.ReportResult.Diagnostics.init -> void
+Surveyor.Application.Dto.ReportResult.ReportResult(Surveyor.Application.Dto.OperationStatus Status, Surveyor.Application.Dto.RunId! RunId, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.GeneratedReportArtifact!>! Artifacts, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.ReportResult.RunId.get -> Surveyor.Application.Dto.RunId!
+Surveyor.Application.Dto.ReportResult.RunId.init -> void
+Surveyor.Application.Dto.ReportResult.Status.get -> Surveyor.Application.Dto.OperationStatus
+Surveyor.Application.Dto.ReportResult.Status.init -> void
+Surveyor.Application.Dto.RunId
+Surveyor.Application.Dto.RunId.RunId(string! value) -> void
+Surveyor.Application.Dto.RunId.Value.get -> string!
+Surveyor.Application.Dto.SafeArtifactReference
+Surveyor.Application.Dto.SafeArtifactReference.ArtifactId.get -> string!
+Surveyor.Application.Dto.SafeArtifactReference.ArtifactId.init -> void
+Surveyor.Application.Dto.SafeArtifactReference.IsProtected.get -> bool
+Surveyor.Application.Dto.SafeArtifactReference.IsProtected.init -> void
+Surveyor.Application.Dto.SafeArtifactReference.IsShareableExport.get -> bool
+Surveyor.Application.Dto.SafeArtifactReference.IsShareableExport.init -> void
+Surveyor.Application.Dto.SafeArtifactReference.Kind.get -> Surveyor.Application.Dto.ArtifactKind
+Surveyor.Application.Dto.SafeArtifactReference.Kind.init -> void
+Surveyor.Application.Dto.SafeArtifactReference.RelativeSafePath.get -> string!
+Surveyor.Application.Dto.SafeArtifactReference.RelativeSafePath.init -> void
+Surveyor.Application.Dto.SafeArtifactReference.SafeArtifactReference(string! ArtifactId, Surveyor.Application.Dto.ArtifactKind Kind, string! RelativeSafePath, bool IsProtected, bool IsShareableExport) -> void
+Surveyor.Application.Ports.IReportGenerationPort
+Surveyor.Application.Ports.IReportGenerationPort.GenerateAsync(Surveyor.Application.Dto.ReportRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.ReportResult!>!
