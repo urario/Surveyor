@@ -254,9 +254,9 @@ public sealed class ArchitectureProjectGraphTests
     }
 
     [Fact]
-    public void DomainAndApplicationStayFreeOfWindowsFrameworkReferences()
+    public void CoreOutputProjectsStayFreeOfWindowsFrameworkReferences()
     {
-        string[] coreProjectNames = ["Surveyor.Domain", "Surveyor.Application"];
+        string[] coreProjectNames = ["Surveyor.Domain", "Surveyor.Application", "Surveyor.Reports"];
 
         foreach (string projectName in coreProjectNames)
         {

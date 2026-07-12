@@ -12,7 +12,12 @@ internal static class ReportJsonDocumentFactory
         ArgumentNullException.ThrowIfNull(request);
 
         AnalysisRunResult run = request.SanitizedRunResult;
-        if (run.ScreenModel is null || run.ScoreResult is null || run.ConfidentialityDecision is null)
+        if (run.ScreenModel is null
+            || run.ScoreResult is null
+            || run.ConfidentialityDecision is null
+            || request.RunId != run.RunId
+            || request.ConfidentialityDecision != run.ConfidentialityDecision
+            || run.ScreenModel.Key != run.ScoreResult.ScreenKey)
         {
             document = null;
             return false;

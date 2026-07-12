@@ -127,10 +127,29 @@ internal static class ReportFixture
 
     internal static ReportRequest CreateJsonRequest(string destinationPath)
     {
+        return CreateRequest(
+            new ReportArtifactRequest(ReportFormat.Json, new ReportDestination(destinationPath)));
+    }
+
+    internal static ReportRequest CreateRequest(string destinationPath, AnalysisRunResult run)
+    {
+        return CreateRequest(
+            run,
+            new ReportArtifactRequest(ReportFormat.Json, new ReportDestination(destinationPath)));
+    }
+
+    internal static ReportRequest CreateRequest(params ReportArtifactRequest[] artifacts)
+    {
         AnalysisRunResult run = CreateRun();
+
+        return CreateRequest(run, artifacts);
+    }
+
+    private static ReportRequest CreateRequest(AnalysisRunResult run, params ReportArtifactRequest[] artifacts)
+    {
         ReportOptions options = new(
             new DateTimeOffset(2026, 07, 01, 12, 01, 00, TimeSpan.Zero),
-            [new ReportArtifactRequest(ReportFormat.Json, new ReportDestination(destinationPath))],
+            artifacts,
             ReportCollisionPolicy.FailIfDestinationExists);
 
         return new ReportRequest(run.RunId, run, options, run.ConfidentialityDecision!);

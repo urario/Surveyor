@@ -23,6 +23,6 @@ internal static class ReportArtifactFactory
                 decision.Mode == ConfidentialityMode.ProtectedLocal,
                 decision.Mode == ConfidentialityMode.MaskedShareableExport),
             ReportConstants.SchemaVersion,
-            Convert.ToHexString(SHA256.HashData(bytes)));
+            Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant());
     }
 }

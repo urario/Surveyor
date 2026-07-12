@@ -40,13 +40,17 @@ internal static class AtomicReportFileWriter
         {
             return false;
         }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
         finally
         {
             TryDelete(tempPath);
         }
     }
 
-    private static void TryDelete(string path)
+    internal static bool TryDelete(string path)
     {
         try
         {
@@ -54,12 +58,16 @@ internal static class AtomicReportFileWriter
             {
                 File.Delete(path);
             }
+
+            return true;
         }
         catch (IOException)
         {
+            return false;
         }
         catch (UnauthorizedAccessException)
         {
+            return false;
         }
     }
 }

@@ -15,9 +15,9 @@ timestamp: 2026-07-12T00:00:00+09:00
 | Artifact | `UT-0006`, report JSON unit-test evidence |
 | Upstream | [DES-0012](../design/des-0012-report-schema-and-deterministic-serialization.md); [UT-0010](ut-0010-clock-determinism-evidence.md); `RQ-031`, `RQ-051`, `RQ-052`, `RQ-054`; Issue #45 |
 | Downstream | `tests/Surveyor.Reports.Tests/ReportJsonBehaviorTests.cs`; `tests/Surveyor.Reports.Tests/ReportFixture.cs`; `tests/fixtures/reports/des-0012/golden/report-v1.happy.json`; [IMP-0008](imp-0008-report-writer-implementation.md) |
-| Evidence | The UT-0006 suite pins the v1 JSON bytes against the governed DES-0012 golden, verifies UTF-8 without BOM, LF-only newlines, exact byte equality after repeat generation, byte-stable output under `tr-TR`, and byte-stable output from a fresh `dotnet test` process. It also verifies destination collision returns a failure result and leaves the existing file bytes unchanged. |
-| Verification | `dotnet test tests\Surveyor.Reports.Tests\Surveyor.Reports.Tests.csproj --no-restore --filter UT0006 /p:CollectCoverage=false` passed 2 tests after the governed golden extraction. `dotnet test tests\Surveyor.Reports.Tests\Surveyor.Reports.Tests.csproj --no-restore -v minimal` passed 2 tests with `Surveyor.Reports` line coverage 95.55%. |
-| Residual Risk | `UT-0006` currently covers the JSON writer happy path and destination-collision no-partial write. DES-0012 cancellation, timeout, schema-invalid, and multi-format all-or-none branches remain follow-up report-writer test slices unless covered by a later issue. |
+| Evidence | The UT-0006 suite pins the v1 JSON bytes against the governed DES-0012 golden, verifies UTF-8 without BOM, LF-only newlines, exact byte equality after repeat generation, byte-stable output under `tr-TR`, and byte-stable output from a fresh `dotnet test` process. It also verifies destination collision preserves existing bytes, multi-format requests leave no partial JSON artifact, later JSON write failure cleans already written artifacts, DES-0012 invariant mismatches return `SchemaInvalid`, and not-writable-as-file destinations return `IoError` instead of leaking an exception. |
+| Verification | Review-response verification: `dotnet test tests\Surveyor.Reports.Tests\Surveyor.Reports.Tests.csproj --no-restore --filter UT0006 /p:CollectCoverage=false` passed 6 tests; `dotnet test tests\Surveyor.Reports.Tests\Surveyor.Reports.Tests.csproj --no-restore -v minimal` passed 6 tests with `Surveyor.Reports` line coverage 96.94% and branch coverage 78.57%; golden semantic compare and golden regeneration scripts both passed. |
+| Residual Risk | `UT-0006` now covers the JSON writer happy path, collision/no-partial, multi-format no-partial, invariant mismatch, and representative IO failure behavior. DES-0012 cancellation/timeout race injection and richer projection variants remain follow-up hardening scope. |
 
 ## Protected Golden Meaning
 
@@ -30,3 +30,17 @@ timestamp: 2026-07-12T00:00:00+09:00
 - LF newline normalization and UTF-8 no-BOM bytes.
 
 Golden regeneration must follow the DES-0012 governance rule: review the semantic diff, confirm the upstream contract change, then update this trace or the PR evidence.
+
+## Golden Governance Commands
+
+Regenerate the governed JSON golden from the production writer:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\reports\Update-GoldenReports.ps1
+```
+
+Compare semantic equivalence between two report JSON files before reviewing byte-level golden changes:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\reports\Compare-ReportSemantics.ps1 -ExpectedPath .\tests\fixtures\reports\des-0012\golden\report-v1.happy.json -ActualPath <candidate.json>
+```

@@ -47,9 +47,10 @@ public sealed record RunId
     }
 
     /// <summary>
-    /// 実行 ID の文字列表現を返します。
+    /// 実行 ID に使える安全な文字かどうかを返します。
     /// </summary>
-    /// <returns>安全な実行 ID 文字列。</returns>
+    /// <param name="character">検査する文字。</param>
+    /// <returns>安全な文字なら <see langword="true"/>。</returns>
     private static bool IsSafe(char character)
     {
         return char.IsAsciiLetterOrDigit(character)

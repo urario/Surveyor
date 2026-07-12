@@ -13,26 +13,29 @@ internal sealed class DeterministicReportWriter : IReportGenerationPort
             return new ReportResult(OperationStatus.SchemaInvalid, request.RunId, [], []);
         }
 
+        if (request.Options.Artifacts.Any(static artifact => artifact.Format != ReportFormat.Json))
+        {
+            return new ReportResult(OperationStatus.SchemaInvalid, request.RunId, [], []);
+        }
+
         List<GeneratedReportArtifact> artifacts = [];
+        List<string> writtenPaths = [];
+        byte[] bytes = JsonReportSerialization.Serialize(document!);
 
         foreach (ReportArtifactRequest artifact in request.Options.Artifacts.OrderBy(static item => item.Format))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (artifact.Format != ReportFormat.Json)
-            {
-                return new ReportResult(OperationStatus.SchemaInvalid, request.RunId, [], []);
-            }
-
-            byte[] bytes = JsonReportSerialization.Serialize(document!);
             bool wrote = await AtomicReportFileWriter
                 .TryWriteAsync(artifact.Destination.AbsolutePathForWrite, bytes, cancellationToken)
                 .ConfigureAwait(false);
             if (!wrote)
             {
+                TryDeleteWrittenArtifacts(writtenPaths);
                 return new ReportResult(OperationStatus.IoError, request.RunId, [], []);
             }
 
+            writtenPaths.Add(artifact.Destination.AbsolutePathForWrite);
             artifacts.Add(
                 ReportArtifactFactory.CreateJsonArtifact(
                     artifact,
@@ -41,5 +44,13 @@ internal sealed class DeterministicReportWriter : IReportGenerationPort
         }
 
         return new ReportResult(OperationStatus.Ok, request.RunId, artifacts, []);
+    }
+
+    private static void TryDeleteWrittenArtifacts(IEnumerable<string> writtenPaths)
+    {
+        foreach (string path in writtenPaths)
+        {
+            AtomicReportFileWriter.TryDelete(path);
+        }
     }
 }
