@@ -170,6 +170,23 @@ public sealed class ReportJsonBehaviorTests
         Assert.True(Directory.Exists(destinationDirectory));
     }
 
+    [Fact(DisplayName = "UT0006 report writer propagates cancellation without partial artifact")]
+    public async Task UT0006ReportWriterPropagatesCancellationWithoutPartialArtifact()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), $"surveyor-report-cancel-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        string destinationPath = Path.Combine(directory, "report.json");
+        DeterministicReportWriter writer = new();
+        ReportRequest request = ReportFixture.CreateJsonRequest(destinationPath);
+        using CancellationTokenSource cancellation = new();
+        await cancellation.CancelAsync().ConfigureAwait(true);
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => writer.GenerateAsync(request, cancellation.Token)).ConfigureAwait(true);
+
+        Assert.False(File.Exists(destinationPath));
+    }
+
     private static Process StartProbeProcess(string outputPath)
     {
         ProcessStartInfo startInfo = new("dotnet")
