@@ -14,7 +14,7 @@ internal sealed class StoreStageRunner
 
     internal async Task RunAsync(AnalysisRunContext context, CancellationToken cancellationToken)
     {
-        StoreResult result = await port.SaveAsync(context.BuildResult(), cancellationToken).ConfigureAwait(false);
+        StoreResult result = await port.SaveAsync(context.BuildStoreRequest(), cancellationToken).ConfigureAwait(false);
         context.RecordStore(result);
     }
 }

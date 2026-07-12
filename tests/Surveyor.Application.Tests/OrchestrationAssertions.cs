@@ -67,4 +67,27 @@ internal static class OrchestrationAssertions
             calls.Where(static stage => stage is RunStage.ConfidentialityPolicy or RunStage.Store));
         Assert.Equal(policy.Decision, result.ConfidentialityDecision);
     }
+
+    internal static void StoreSnapshotWasPersistedBeforeStoreStage(OrchestrationFixture fixture, AnalysisRunResult result)
+    {
+        Assert.NotNull(fixture.Store.Request);
+        Assert.Equal(RunOutcome.Succeeded, fixture.Store.Request!.Outcome);
+        Assert.DoesNotContain(fixture.Store.Request.Stages, static stage => stage.Stage == RunStage.Store);
+        Assert.Equal(fixture.Policy.Decision, fixture.Store.Request.ConfidentialityDecision);
+        Assert.Equal(RunOutcome.SucceededWithPartialResult, result.Outcome);
+        Assert.Equal(OperationStatus.Timeout, result.Store!.Status);
+        Assert.Equal(result.StartedAtUtc.AddSeconds(1), result.CompletedAtUtc);
+    }
+
+    internal static void CaptureFailureIsFatalWhenRequired(AnalysisRunResult result)
+    {
+        Assert.Equal(RunOutcome.FailedUnexpected, result.Outcome);
+        Assert.Contains(result.Stages, stage => stage.Stage == RunStage.Capture && stage.Status == OperationStatus.Timeout);
+    }
+
+    internal static void CancelledAcquisitionStatusEndsTheRun(OrchestrationFixture fixture, AnalysisRunResult result)
+    {
+        Assert.Equal(RunOutcome.Cancelled, result.Outcome);
+        Assert.Equal([RunStage.TreeAcquisition], fixture.Calls);
+    }
 }

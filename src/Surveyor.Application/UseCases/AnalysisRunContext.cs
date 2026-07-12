@@ -41,7 +41,9 @@ internal sealed class AnalysisRunContext
         AddStage(RunStage.TreeAcquisition, result.Status, result.Diagnostics);
         if (result.ScreenModel is null)
         {
-            terminalOutcome = RunOutcome.FailedUnexpected;
+            terminalOutcome = result.Status == OperationStatus.Cancelled
+                ? RunOutcome.Cancelled
+                : RunOutcome.FailedUnexpected;
         }
     }
 
@@ -80,14 +82,26 @@ internal sealed class AnalysisRunContext
         terminalOutcome = RunOutcome.Cancelled;
     }
 
+    internal StoreRequest BuildStoreRequest()
+    {
+        RunDiagnostic[] orderedDiagnostics = BuildOrderedDiagnostics();
+
+        return new StoreRequest(
+            StartedAtUtc,
+            DeriveOutcome(),
+            Request.Target,
+            Request.ScreenSelectionMetadata,
+            ScreenModel,
+            scoreResult,
+            captureResult,
+            decision,
+            stages.ToArray(),
+            orderedDiagnostics);
+    }
+
     internal AnalysisRunResult BuildResult()
     {
-        RunDiagnostic[] orderedDiagnostics = diagnostics
-            .OrderBy(static item => item.Stage)
-            .ThenByDescending(static item => item.Severity)
-            .ThenBy(static item => item.Code, StringComparer.Ordinal)
-            .ThenBy(static item => item.ElementKey?.ToString(), StringComparer.Ordinal)
-            .ToArray();
+        RunDiagnostic[] orderedDiagnostics = BuildOrderedDiagnostics();
 
         return new AnalysisRunResult(
             StartedAtUtc,
@@ -102,6 +116,16 @@ internal sealed class AnalysisRunContext
             decision,
             stages.ToArray(),
             orderedDiagnostics);
+    }
+
+    private RunDiagnostic[] BuildOrderedDiagnostics()
+    {
+        return diagnostics
+            .OrderBy(static item => item.Stage)
+            .ThenByDescending(static item => item.Severity)
+            .ThenBy(static item => item.Code, StringComparer.Ordinal)
+            .ThenBy(static item => item.ElementKey?.ToString(), StringComparer.Ordinal)
+            .ToArray();
     }
 
     private RunOutcome DeriveOutcome()

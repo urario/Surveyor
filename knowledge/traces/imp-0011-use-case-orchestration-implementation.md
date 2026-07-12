@@ -25,6 +25,8 @@ tags: [surveyor, implementation, application, orchestration, rq-046, rq-048, rq-
 - Added immutable Application-owned request/result, stage, capture, store, and screen-selection DTOs plus capture/store/scoring-config ports. All boundary APIs carry Japanese XML documentation and are tracked in `PublicAPI.Unshipped.txt`.
 - `AnalyzeScreenUseCase` executes a UI-independent pipeline over inward-facing ports. The Application assembly contains no WinUI, UIA, capture API, or file-system implementation dependency (`RQ-054`).
 - Acquisition cancellation stops all later work; recoverable acquisition/capture/store statuses aggregate to a partial run; required-capture failure maps to unexpected failure.
+- The store port now accepts `StoreRequest`, a pre-store snapshot DTO. The snapshot intentionally excludes the `Store` stage's own status so persistence does not receive a self-referential `AnalysisRunResult` whose `Store` or post-save completion data would be unknowable before `SaveAsync` returns.
+- `AcquisitionResult(Status: Cancelled, ScreenModel: null)` is treated as a run cancellation instead of an unexpected failure, matching the DTO contract note in `DES-0011`.
 - `ScreenSelectionMetadata` is copied unchanged into `AnalysisRunResult` and mapped without ranking/recomputation to Domain `PriorityBasis` (`RD-016`).
 - The existing `IConfidentialityPolicy.Decide` contract is the pre-store egress gate. Full sanitize/protected-store transformation stays with `IMP-0010` rather than being duplicated here.
 - Diagnostics are sorted by stage, severity, code, and element key. Timestamps come only from injected `IClock`.
@@ -40,13 +42,13 @@ tags: [surveyor, implementation, application, orchestration, rq-046, rq-048, rq-
 | Command | Result |
 | --- | --- |
 | `dotnet build Surveyor.slnx --no-restore` | PASS: 0 warnings, 0 errors; Public API, CA and metrics gates included |
-| `dotnet test eng\Surveyor.Unit.slnf --no-restore` | PASS: Architecture 8, Application 28, Domain 59, Policy 45 |
-| Application coverage | PASS: line 94.71%, branch 65%, method 96.66%; line target >= 80% |
+| `dotnet test eng\Surveyor.Unit.slnf --no-restore` | PASS: Architecture 8, Application 31, Domain 59, Policy 45 |
+| Application coverage | PASS: line 95.85%, branch 76.19%, method 93.23%; line target >= 80% |
 | `dotnet format Surveyor.slnx --verify-no-changes --no-restore` | PASS |
 
 ## Residual Risk
 
 - Capture/store ports in this slice are contracts exercised by fakes; real Windows capture and protected persistence are downstream adapter work.
 - Full `IConfidentialityPolicy.Apply` / protected model consistency depends on `IMP-0010`; this slice intentionally does not invent its DTOs.
+- Although the decision gate runs before store, this slice still does not execute `RequiresTextMasking`; returned and persisted data-shape masking remains the dedicated `IMP-0010` / `DES-0013` responsibility.
 - Live read-only state invariance remains the human/Windows integration gate (`IT-0001`).
-

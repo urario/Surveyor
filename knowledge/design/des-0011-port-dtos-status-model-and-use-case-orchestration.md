@@ -559,6 +559,8 @@ public sealed record ExportRunRequest(
 
 `ConfidentialityRequest`, `PolicyApplicationRequest`, `PolicyApplicationResult`, `ExportSanitizationRequest`, `StoredRunSnapshot`, `ExportProfile`, `ExportDestination`, and `ExportOptions` are application-layer DTOs because they appear on application-owned ports. Their field-level definitions are owned by [DES-0013](des-0013-confidentiality-storage-and-export.md), which is the confidentiality/storage detailed-design package.
 
+> **Implementation slice note (2026-07-12, PR #107 review follow-up, per DES-0007 §5.3):** the current `IMP-0011` MVP implementation narrows the store input to a pre-store snapshot DTO (`StoreRequest`) instead of passing a final `AnalysisRunResult` into the save port. The snapshot intentionally excludes the `Store` stage's own status and `CompletedAtUtc`, because those values are not knowable until `SaveAsync` returns and would otherwise create a self-referential mismatch between persisted and returned results. The full `SaveRunAsync(StoreRunRequest)` / `ProtectedRunModel` / load-export symmetry remains the target contract and is still completed by `IMP-0010` / `IMP-0015`. The same implementation slice also defers the additive `IProgress<StageResult>` and `IStageTimeoutController` seams to the downstream contract-closure work; their behavior remains normative in this design even though the current MVP code does not expose them yet.
+
 Port result DTO records:
 
 ```csharp

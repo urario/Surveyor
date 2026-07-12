@@ -180,6 +180,28 @@ Surveyor.Application.Dto.StoreResult.Diagnostics.init -> void
 Surveyor.Application.Dto.StoreResult.Status.get -> Surveyor.Application.Dto.OperationStatus
 Surveyor.Application.Dto.StoreResult.Status.init -> void
 Surveyor.Application.Dto.StoreResult.StoreResult(Surveyor.Application.Dto.OperationStatus Status, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.StoreRequest
+Surveyor.Application.Dto.StoreRequest.Capture.get -> Surveyor.Application.Dto.CaptureResult?
+Surveyor.Application.Dto.StoreRequest.Capture.init -> void
+Surveyor.Application.Dto.StoreRequest.ConfidentialityDecision.get -> Surveyor.Application.Ports.ConfidentialityDecision?
+Surveyor.Application.Dto.StoreRequest.ConfidentialityDecision.init -> void
+Surveyor.Application.Dto.StoreRequest.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
+Surveyor.Application.Dto.StoreRequest.Diagnostics.init -> void
+Surveyor.Application.Dto.StoreRequest.Outcome.get -> Surveyor.Application.Dto.RunOutcome
+Surveyor.Application.Dto.StoreRequest.Outcome.init -> void
+Surveyor.Application.Dto.StoreRequest.ScoreResult.get -> Surveyor.Domain.Scoring.ScoreResult?
+Surveyor.Application.Dto.StoreRequest.ScoreResult.init -> void
+Surveyor.Application.Dto.StoreRequest.ScreenModel.get -> Surveyor.Domain.Model.ScreenModel?
+Surveyor.Application.Dto.StoreRequest.ScreenModel.init -> void
+Surveyor.Application.Dto.StoreRequest.ScreenSelectionMetadata.get -> Surveyor.Application.Dto.ScreenSelectionMetadata?
+Surveyor.Application.Dto.StoreRequest.ScreenSelectionMetadata.init -> void
+Surveyor.Application.Dto.StoreRequest.Stages.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.StageResult!>!
+Surveyor.Application.Dto.StoreRequest.Stages.init -> void
+Surveyor.Application.Dto.StoreRequest.StartedAtUtc.get -> System.DateTimeOffset
+Surveyor.Application.Dto.StoreRequest.StartedAtUtc.init -> void
+Surveyor.Application.Dto.StoreRequest.StoreRequest(System.DateTimeOffset StartedAtUtc, Surveyor.Application.Dto.RunOutcome Outcome, Surveyor.Application.Dto.TargetReference! Target, Surveyor.Application.Dto.ScreenSelectionMetadata? ScreenSelectionMetadata, Surveyor.Domain.Model.ScreenModel? ScreenModel, Surveyor.Domain.Scoring.ScoreResult? ScoreResult, Surveyor.Application.Dto.CaptureResult? Capture, Surveyor.Application.Ports.ConfidentialityDecision? ConfidentialityDecision, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.StageResult!>! Stages, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
+Surveyor.Application.Dto.StoreRequest.Target.get -> Surveyor.Application.Dto.TargetReference!
+Surveyor.Application.Dto.StoreRequest.Target.init -> void
 Surveyor.Application.Dto.TargetCandidate
 Surveyor.Application.Dto.TargetCandidate.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>!
 Surveyor.Application.Dto.TargetCandidate.Diagnostics.init -> void
@@ -235,7 +257,7 @@ Surveyor.Application.Dto.TargetResolveResult.Target.get -> Surveyor.Application.
 Surveyor.Application.Dto.TargetResolveResult.Target.init -> void
 Surveyor.Application.Dto.TargetResolveResult.TargetResolveResult(Surveyor.Application.Dto.OperationStatus Status, Surveyor.Application.Dto.TargetReference? Target, System.Collections.Generic.IReadOnlyList<Surveyor.Application.Dto.RunDiagnostic!>! Diagnostics) -> void
 Surveyor.Application.Ports.IResultStorePort
-Surveyor.Application.Ports.IResultStorePort.SaveAsync(Surveyor.Application.Dto.AnalysisRunResult! result, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.StoreResult!>!
+Surveyor.Application.Ports.IResultStorePort.SaveAsync(Surveyor.Application.Dto.StoreRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Application.Dto.StoreResult!>!
 Surveyor.Application.Ports.IScoringConfigProvider
 Surveyor.Application.Ports.IScoringConfigProvider.ResolveAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Domain.Scoring.ScoringConfig!>!
 Surveyor.Application.Ports.IScreenCapturePort
