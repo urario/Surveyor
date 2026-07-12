@@ -37,6 +37,7 @@ public sealed class ArchitectureProjectGraphTests
             ["Surveyor.Application.Tests"] = ["Surveyor.Application", "Surveyor.TestSupport"],
             ["Surveyor.Domain.Tests"] = ["Surveyor.Domain"],
             ["Surveyor.Reports.Tests"] = ["Surveyor.Reports", "Surveyor.TestSupport"],
+            ["Surveyor.Presentation.Tests"] = ["Surveyor.Application", "Surveyor.Domain", "Surveyor.Presentation"],
             ["Surveyor.Adapters.Uia.Tests"] = ["Surveyor.Adapters.Uia", "Surveyor.Adapters.Uia.Audit", "Surveyor.Application"],
         };
 
@@ -95,6 +96,7 @@ public sealed class ArchitectureProjectGraphTests
         "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj",
         "tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj",
         "tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj",
+        "tests/Surveyor.Presentation.Tests/Surveyor.Presentation.Tests.csproj",
         "tests/Surveyor.Reports.Tests/Surveyor.Reports.Tests.csproj",
     ];
 
