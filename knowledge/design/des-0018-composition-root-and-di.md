@@ -137,7 +137,7 @@ flowchart TB
 
 - **`SurveyorCoreRegistration.AddSurveyorCore(IServiceCollection)`** (in `Surveyor.Application`, headless) registers only the adapter-agnostic services: the four use cases, the `TestabilityScorer` domain scorer, `IStageTimeoutController`, and `IScoringConfigProvider`. It **does not register any `IClock`, any adapter, or any presentation type** — those are supplied by the caller. This is the single piece `UT-0013` exercises.
 - **Per-assembly registration seams** (below) each add their own concrete provider. `Surveyor.App` calls the production set; `Surveyor.Application.Tests` calls fakes.
-- **`CompositionInvariants.Validate(IServiceCollection)`** (in `Surveyor.Application`, headless) runs the four invariant checks over the assembled `ServiceCollection` before `BuildServiceProvider`. Both the production root and the test composition call it, so the same guard protects both.
+- **`CompositionInvariants.Validate(IServiceCollection, CompositionMode)`** (in `Surveyor.Application`, headless) runs the four invariant checks over the assembled `ServiceCollection` before `BuildServiceProvider`. Both the production root (`CompositionMode.Production`) and the test composition (`CompositionMode.Test`) call it, so the same guard protects both.
 - **`SurveyorHost.BuildProductionProvider()`** (in `Surveyor.App`) is the only WinUI-bound piece: it composes core + production adapter seams + presentation, calls `Validate`, builds the `ServiceProvider`, and hands it to the WinUI shell for first-page resolution.
 
 ### Per-assembly public registration seams
@@ -179,6 +179,9 @@ public sealed record CompositionDiagnostic(
 
 public enum CompositionSeverity { Error, Warning }
 
+// Which composition is being validated. Test tightens Invariant D.
+public enum CompositionMode { Production, Test }
+
 public sealed class CompositionValidationException : Exception
 {
     public IReadOnlyList<CompositionDiagnostic> Diagnostics { get; }
@@ -186,8 +189,9 @@ public sealed class CompositionValidationException : Exception
 
 public static class CompositionInvariants
 {
-    // Throws CompositionValidationException (fail-fast) if any Error invariant is violated.
-    public static void Validate(IServiceCollection services);
+    // Collects every Error violation, then throws CompositionValidationException
+    // (fail-fast) if any exists, so one build reports all wiring defects at once.
+    public static void Validate(IServiceCollection services, CompositionMode mode);
 }
 
 public static class SurveyorCoreRegistration
@@ -196,6 +200,26 @@ public static class SurveyorCoreRegistration
     // IScoringConfigProvider. Registers NO IClock, NO adapter, NO presentation type.
     public static IServiceCollection AddSurveyorCore(this IServiceCollection services);
 }
+```
+
+`CompositionInvariants` and `SurveyorCoreRegistration` live in `Surveyor.Application` and therefore reference **no concrete adapter or clock type** — a hard constraint, since coupling the guard to a concrete (e.g. `SystemClock`, whose physical home is in flux — see [Observed source deviations](#observed-source-deviations)) would break the inward rule the moment that concrete moves outward. The guard reasons only over service *types* on `IServiceCollection` and over the layer-safe markers below. Every assembly that exposes a registration seam (`Surveyor.Application`, `Surveyor.Policy`, `Surveyor.Reports`, `Surveyor.Presentation`, and each `Surveyor.Adapters.*`) references only `Microsoft.Extensions.DependencyInjection.Abstractions` for it — the OS-agnostic abstraction, never the container implementation — so no seam pulls the container into an inner layer.
+
+Two layer-safe marker **interfaces** support the guard without naming any concrete. Both are declared in `Surveyor.Application.Composition` so the guard (also in `Surveyor.Application`) can reference them inward-safely; only their *implementations* live in `Surveyor.TestSupport` (`FakeClock` and the mutation-capable fake), which the guard never references:
+
+```csharp
+namespace Surveyor.Application.Composition;
+
+// Interface declared here (Surveyor.Application) so the guard can reference it inward-safely.
+// A registered service the composition guard treats as a deliberate test double.
+// FakeClock / fake adapters in Surveyor.TestSupport implement it; no src/** type does.
+public interface ISurveyorCompositionTestDouble { }
+
+// Interface declared here (Surveyor.Application) for the same reason.
+// A capability that mutates the inspected target. NO production adapter implements it;
+// only a UT-0013 counter-example fake (in Surveyor.TestSupport) implements it, so the
+// read-only-only guard can be proven to bite. It is NOT the DES-0014 runtime read-only
+// audit (a COM-call spy) — it is a wiring-time marker used only by the guard + counter-example.
+public interface ITargetMutationCapability { }
 ```
 
 `CompositionDiagnostic` carries only a code, a severity, a short service *type name*, and allowlisted `SafeArgs` (counts, expected/actual multiplicities) — it reuses the [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md#diagnostics-model)/[DES-0013](des-0013-confidentiality-storage-and-export.md#diagnostics-and-exception-sanitization) sanitization posture. There is no target, screen, or file in scope at composition time, so there is nothing sensitive to leak beyond assembly/type identifiers, which are safe.
@@ -259,10 +283,10 @@ Each invariant is stated as (a) what it forbids, (b) how `CompositionInvariants.
 
 ### Invariant D: no real clock in a test configuration
 
-- **Forbids**: the production `SystemClock` appearing in any headless/test composition.
-- **Structural guarantee (primary)**: `AddSurveyorCore` **never registers an `IClock`**. The clock is a required input supplied by the composer — `SurveyorHost` (production) registers `SystemClock`; `Surveyor.Application.Tests` registers `FakeClock`. Because core never knows `SystemClock`, a test built on core + fakes *cannot* pull the real clock. The [DES-0008](des-0008-project-structure-and-test-harness.md) architecture test independently enforces "only `Surveyor.App` references concrete adapters," and the banned-API analyzer forbids ambient time in `Surveyor.Application`, so the real clock is boxed at the production edge.
-- **Detection (defense-in-depth)**: `Validate` accepts a `CompositionMode` (`Production`/`Test`); in `Test` mode it asserts the registered `IClock` implementation type is not `SystemClock`, else `Composition.Clock.RealClockInTest` Error.
-- **`UT-0013` counter-example**: in `Test` mode, deliberately register `SystemClock` → `Validate` throws `Composition.Clock.RealClockInTest`; the normal `FakeClock` composition passes.
+- **Forbids**: a real (non-test-double) clock appearing in any headless/test composition.
+- **Structural guarantee (primary)**: `AddSurveyorCore` **never registers an `IClock`**. The clock is a required input supplied by the composer — `SurveyorHost` (production) registers the real clock; `Surveyor.Application.Tests` registers `FakeClock`. Because core never knows any concrete clock, a test built on core + fakes *cannot* pull the real clock. The [DES-0008](des-0008-project-structure-and-test-harness.md) architecture test independently enforces "only `Surveyor.App` references concrete adapters," and the banned-API analyzer forbids ambient time in `Surveyor.Application`, so the real clock is boxed at the production edge.
+- **Detection (defense-in-depth), concrete-free**: in `CompositionMode.Test`, `Validate` asserts the single `IClock` registration's implementation type carries the `ISurveyorCompositionTestDouble` marker; a production clock never carries it, so a real clock in a test config trips `Composition.Clock.RealClockInTest`. The guard names **no** concrete clock type, so it is unaffected by where `SystemClock` physically lives (the finding this design deliberately avoids). In `CompositionMode.Production` the marker is not required, so the real clock is valid.
+- **`UT-0013` counter-example**: in `Test` mode, deliberately register a non-marked clock (a stand-in for the real clock, without `ISurveyorCompositionTestDouble`) → `Validate` throws `Composition.Clock.RealClockInTest`; the normal `FakeClock` (marked) composition passes.
 
 ## Contract Closure
 
@@ -373,7 +397,7 @@ sequenceDiagram
 | Two `IClock` registrations | `Validate` fails fast with `Composition.Clock.Duplicate` (Invariant B); app does not start |
 | No `IClock` registered | `Composition.Clock.Missing`; app does not start (a run with no clock would break `RQ-051`) |
 | Two `IConfidentialityPolicy` registrations | `Composition.Policy.Duplicate` (Invariant C); app does not start |
-| Real `SystemClock` in a test composition | `Composition.Clock.RealClockInTest` in `Test` mode (Invariant D); structurally prevented because core never registers it |
+| A real (non-test-double) clock in a test composition | `Composition.Clock.RealClockInTest` in `Test` mode (Invariant D, detected via the `ISurveyorCompositionTestDouble` marker — no concrete clock named); structurally prevented because core never registers a clock |
 | A target-facing service outside the read-only allowlist (or one tagged `ITargetMutationCapability`) | `Composition.ReadOnly.ForbiddenTargetFacingService` (Invariant A); app does not start |
 | An application port has no registration | `BuildServiceProvider(validateOnBuild: true)` (plus a required-port check in `Validate`) fails fast, naming the missing port type — never a null-injection at first run |
 | A singleton captures a transient/shorter-lived service (e.g. `ShellViewModel` holds a screen ViewModel) | prevented by the lifetime table (single source of truth) + `validateScopes: true`; screen ViewModels are reached via `INavigationService`, never injected into the shell singleton |
@@ -402,7 +426,7 @@ This package emits diagnostics only at **composition time**, before any target i
 | Read-only-only (Invariant A) | a mutating/rogue target-facing adapter enters the graph (`RQ-048`) | valid composition + a fake `IUiTreeAcquisitionPort` tagged `ITargetMutationCapability` | `Validate` throws `Composition.ReadOnly.ForbiddenTargetFacingService` | remove the tag → passes | testing that the port "has no mutate method" (that is [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md)'s contract) instead of the wiring guard |
 | Single clock (Invariant B) | two clocks / nondeterministic time source (`RQ-051`) | valid composition + a second `IClock` | `Validate` throws `Composition.Clock.Duplicate` | single clock → passes | asserting a specific clock instance rather than the multiplicity |
 | Single policy (Invariant C) | two confidentiality policies (`RQ-052`) | valid composition + a second `IConfidentialityPolicy` | `Validate` throws `Composition.Policy.Duplicate` | single policy → passes | over-asserting policy identity |
-| No real clock in test (Invariant D) | `SystemClock` leaks into a test/headless config (`RQ-051`) | `AddSurveyorCore` + fakes, `CompositionMode.Test` | resolved `IClock` is the fake, never `SystemClock`; adding `SystemClock` throws `Composition.Clock.RealClockInTest` | production mode with `SystemClock` is valid | proving the fake works but never proving the real clock is excluded |
+| No real clock in test (Invariant D) | a real clock leaks into a test/headless config (`RQ-051`) | `AddSurveyorCore` + fakes, `CompositionMode.Test` | the sole `IClock` impl carries `ISurveyorCompositionTestDouble`; adding a non-marked clock throws `Composition.Clock.RealClockInTest` | production mode with a real (unmarked) clock is valid | proving the fake works but never proving the real clock is excluded; naming a concrete clock type in the guard |
 | Diagnostic is sanitized | composition diagnostic leaks a path/internal (`RQ-052`) | a violation composition | `CompositionDiagnostic` contains only code/severity/short type name/safe args | inject a path-bearing arg → assertion catches it | trusting the diagnostic shape without asserting the absence of unsafe content |
 
 Determinism: all `UT-0013` cases are pure over `IServiceCollection` — no time, culture, file system, or process dependence — so they are byte-stable across a fresh process and machine ([DES-0008](des-0008-project-structure-and-test-harness.md) unit lane).
