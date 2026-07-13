@@ -27,7 +27,7 @@ tags: [surveyor, unit-test, presentation, viewmodel, rq-046, rq-052, rq-054]
 - Run state/activity pair: progress drives `Analyzing` -> `Capturing` -> `Exporting` while `RunActivityKind` stays `AnalysisRun`, so in-run `Exporting` is distinguishable from post-review export.
 - Cancel behavior: analysis-run cancel records `ConfirmRunCancel`, cancels the token, and resets to `Idle`; post-review report cancel keeps session results, does not show the run-cancel dialog, and reflects the terminal report status instead of forcing success.
 - SCR-05/SCR-06 selection sync: finding and region selection synchronize by `FindingId`/`RegionId`, preserve carried order, and keep uncapturable regions visible as markers.
-- Confidentiality behavior: local opt-out requires a confirmed dialog and `opt-out-reason-v1` allowlisted reason code; dismissal keeps `ProtectedLocal`; the Shell report command now routes through `ReportExportViewModel`; plaintext preview under `ExplicitLocalOptOut` requires `ConfirmPlaintextPreview` before `IHtmlPreviewHost.OpenAsync`.
+- Confidentiality behavior: normal Shell report generation stays `ProtectedLocal` and shows no opt-out dialog; SCR-08-style session opt-out requires a confirmed dialog and `opt-out-reason-v1` allowlisted reason code, then subsequent report generation reuses the session-held opt-out without re-prompting; dismissal keeps `ProtectedLocal`; plaintext preview under `ExplicitLocalOptOut` requires `ConfirmPlaintextPreview` before `IHtmlPreviewHost.OpenAsync`.
 
 ## TDD and Counter-Example Evidence
 
@@ -42,9 +42,9 @@ tags: [surveyor, unit-test, presentation, viewmodel, rq-046, rq-052, rq-054]
 
 | Command | Result |
 | --- | --- |
-| `dotnet test tests\Surveyor.Presentation.Tests\Surveyor.Presentation.Tests.csproj --filter UT0011 --no-restore` | PASS: 11 tests |
+| `dotnet test tests\Surveyor.Presentation.Tests\Surveyor.Presentation.Tests.csproj --filter UT0011 --no-restore` | PASS: 13 tests |
 | `dotnet test tests\Surveyor.Architecture.Tests\Surveyor.Architecture.Tests.csproj --no-restore` | PASS: 8 tests |
-| `dotnet test eng\Surveyor.Unit.slnf --no-build --logger trx --results-directory artifacts\test-results` | PASS: Architecture 8, Presentation 11, Application 31, Domain 59, Policy 45, Reports 7 |
+| `dotnet test eng\Surveyor.Unit.slnf --no-build --logger trx --results-directory artifacts\test-results` | PASS: Architecture 8, Presentation 13, Application 31, Domain 59, Policy 45, Reports 7 |
 | `dotnet build Surveyor.slnx --no-restore` | PASS: 0 warnings, 0 errors |
 | `git diff --check` | PASS |
 

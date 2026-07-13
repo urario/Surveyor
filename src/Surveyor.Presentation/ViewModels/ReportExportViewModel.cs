@@ -4,10 +4,11 @@ using Surveyor.Presentation.Ports;
 namespace Surveyor.Presentation.ViewModels;
 
 /// <summary>
-/// レポート出力と機密 opt-out の command 状態を提供します。
+/// レポート出力時の機密性判断とプレビュー確認を調整します。
 /// </summary>
 /// <remarks>
-/// opt-out は確認された場合のみ記録し、外部プレビュー前に平文 egress を確認します (RQ-052)。
+/// 明示的なローカル opt-out は SCR-08 の選択変更時だけ確認します。
+/// 通常のレポート生成は既定で保護ローカルのまま扱います (RQ-052)。
 /// </remarks>
 internal sealed class ReportExportViewModel
 {
@@ -22,10 +23,10 @@ internal sealed class ReportExportViewModel
     private readonly IHtmlPreviewHost previewHost;
 
     /// <summary>
-    /// 依存ポートを指定して初期化します。
+    /// presentation port を指定して初期化します。
     /// </summary>
-    /// <param name="dialogService">ダイアログポートです。</param>
-    /// <param name="previewHost">HTML プレビューポートです。</param>
+    /// <param name="dialogService">ダイアログ port です。</param>
+    /// <param name="previewHost">HTML プレビュー host port です。</param>
     public ReportExportViewModel(IDialogService dialogService, IHtmlPreviewHost previewHost)
     {
         this.dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
@@ -33,20 +34,30 @@ internal sealed class ReportExportViewModel
     }
 
     /// <summary>
-    /// ローカル成果物向けの機密要求を作成します。
+    /// ローカル成果物向けの安全な既定機密性要求を作成します。
     /// </summary>
-    /// <param name="reasonCode">opt-out 理由コードです。</param>
+    /// <param name="requestedAtUtc">要求 UTC 時刻です。</param>
+    /// <returns>保護ローカルの機密性要求です。</returns>
+    public static ConfidentialityRequest CreateProtectedLocalArtifactRequest(DateTimeOffset requestedAtUtc)
+    {
+        return new ConfidentialityRequest(requestedAtUtc, ConfidentialityMode.ProtectedLocal, "Default", null);
+    }
+
+    /// <summary>
+    /// ローカル成果物向けの明示 opt-out 要求を確認します。
+    /// </summary>
+    /// <param name="reasonCode">利用者が選択した allowlist 済みの opt-out 理由コードです。</param>
     /// <param name="requestedAtUtc">要求 UTC 時刻です。</param>
     /// <param name="cancellationToken">確認を中断するトークンです。</param>
-    /// <returns>機密要求です。</returns>
-    public async Task<ConfidentialityRequest> CreateLocalArtifactRequestAsync(
+    /// <returns>確認済みの場合は明示 opt-out、未確認の場合は保護ローカルの機密性要求です。</returns>
+    public async Task<ConfidentialityRequest> ConfirmLocalArtifactOptOutAsync(
         string reasonCode,
         DateTimeOffset requestedAtUtc,
         CancellationToken cancellationToken)
     {
         if (!AllowedOptOutReasons.Contains(reasonCode))
         {
-            return new ConfidentialityRequest(requestedAtUtc, ConfidentialityMode.ProtectedLocal, "Default", null);
+            return CreateProtectedLocalArtifactRequest(requestedAtUtc);
         }
 
         DialogOutcome outcome = await dialogService.ShowAsync(
@@ -55,7 +66,7 @@ internal sealed class ReportExportViewModel
 
         if (outcome != DialogOutcome.Confirmed)
         {
-            return new ConfidentialityRequest(requestedAtUtc, ConfidentialityMode.ProtectedLocal, "Default", null);
+            return CreateProtectedLocalArtifactRequest(requestedAtUtc);
         }
 
         return new ConfidentialityRequest(
@@ -66,11 +77,11 @@ internal sealed class ReportExportViewModel
     }
 
     /// <summary>
-    /// HTML レポートをプレビューします。
+    /// 生成済み HTML レポートをプレビュー host で開きます。
     /// </summary>
-    /// <param name="absolutePathSuppliedBySession">同一 session で保持した出力先です。</param>
-    /// <param name="decision">対象成果物の機密判断です。</param>
-    /// <param name="cancellationToken">確認またはプレビューを中断するトークンです。</param>
+    /// <param name="absolutePathSuppliedBySession">session が保持している HTML の絶対パスです。</param>
+    /// <param name="decision">対象成果物の機密性判断です。</param>
+    /// <param name="cancellationToken">プレビュー確認と起動を中断するトークンです。</param>
     /// <returns>プレビュー結果です。</returns>
     public async Task<PreviewOutcome> PreviewAsync(
         string absolutePathSuppliedBySession,

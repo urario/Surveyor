@@ -25,6 +25,7 @@ internal sealed class ShellViewModel
     private readonly Func<DateTimeOffset> utcNow;
     private CancellationTokenSource? activeCommandCancellation;
     private ScreenSelectionMetadata? recordedMetadata;
+    private ConfidentialityRequest? sessionLocalArtifactOptOut;
 
     internal ShellViewModel(
         IAnalysisRunner analysisRunner,
@@ -105,6 +106,30 @@ internal sealed class ShellViewModel
     }
 
     /// <summary>
+    /// session 中に適用するローカル成果物 opt-out を確認して保持します。
+    /// </summary>
+    /// <param name="reasonCode">利用者が選択した allowlist 済みの opt-out 理由コードです。</param>
+    /// <param name="cancellationToken">確認を中断するトークンです。</param>
+    /// <returns>opt-out が確認され保持された場合は <see langword="true"/>、保護既定に戻った場合は <see langword="false"/> です。</returns>
+    public async Task<bool> ConfirmLocalArtifactOptOutAsync(string reasonCode, CancellationToken cancellationToken)
+    {
+        ConfidentialityRequest request = await reportExport.ConfirmLocalArtifactOptOutAsync(
+            reasonCode,
+            utcNow(),
+            cancellationToken).ConfigureAwait(false);
+        sessionLocalArtifactOptOut = request.RequestedMode == ConfidentialityMode.ExplicitLocalOptOut ? request : null;
+        return sessionLocalArtifactOptOut is not null;
+    }
+
+    /// <summary>
+    /// session 中のローカル成果物 opt-out を解除します。
+    /// </summary>
+    public void ClearLocalArtifactOptOut()
+    {
+        sessionLocalArtifactOptOut = null;
+    }
+
+    /// <summary>
     /// 指定画面へ遷移します。
     /// </summary>
     /// <param name="intent">遷移意図です。</param>
@@ -176,10 +201,8 @@ internal sealed class ShellViewModel
         try
         {
             SetState(RunUiState.Reporting, RunActivityKind.ReportCommand);
-            ConfidentialityRequest confidentialityRequest = await reportExport.CreateLocalArtifactRequestAsync(
-                "LocalPlaintextReview",
-                utcNow(),
-                linked.Token).ConfigureAwait(false);
+            ConfidentialityRequest confidentialityRequest = sessionLocalArtifactOptOut
+                ?? ReportExportViewModel.CreateProtectedLocalArtifactRequest(utcNow());
             ReportCommandRequest request = new(
                 result,
                 absoluteDestinationPath,

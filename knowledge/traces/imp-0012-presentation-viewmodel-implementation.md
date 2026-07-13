@@ -25,7 +25,7 @@ tags: [surveyor, implementation, presentation, viewmodel, rq-046, rq-052, rq-054
 - Added presentation ports for navigation, dialogs, UI dispatch, and HTML preview. Only these assembly-boundary contracts are public; ViewModel implementations remain internal until concrete App composition requires a wider surface.
 - Added a WinUI-independent `ShellViewModel` reducer covering metadata gating, run state/activity transitions, navigation blocking, analysis cancel, post-review report cancel, metadata reset after terminal runs, exception cleanup, and report-result status propagation.
 - Added deterministic `FindingSelectionState` using IDs rather than list indexes and preserving incoming result order.
-- Added `ReportExportViewModel` for `opt-out-reason-v1` allowlisted opt-out request creation and plaintext-preview confirmation before external preview host invocation. `ShellViewModel.GenerateReportAsync` now routes through this ViewModel instead of fabricating a protected-local request.
+- Added `ReportExportViewModel` for `opt-out-reason-v1` allowlisted session opt-out confirmation and plaintext-preview confirmation before external preview host invocation. `ShellViewModel.GenerateReportAsync` defaults to `ProtectedLocal` without showing an opt-out dialog, applies a previously confirmed session opt-out when present, and no longer fabricates a Unix-epoch protected-local request.
 - Registered `Surveyor.Presentation.Tests` in `Surveyor.slnx`, `eng/Surveyor.Unit.slnf`, and architecture project-graph expectations. `Surveyor.Presentation` and its tests stay on `net10.0` so the Ubuntu headless unit lane can restore and run them; WinUI-facing projects remain on the Windows TFM.
 
 ## Design and Quality Notes
@@ -41,9 +41,9 @@ tags: [surveyor, implementation, presentation, viewmodel, rq-046, rq-052, rq-054
 | --- | --- |
 | `dotnet restore Surveyor.slnx` | PASS |
 | `dotnet build Surveyor.slnx --no-restore` | PASS: 0 warnings, 0 errors |
-| `dotnet test tests\Surveyor.Presentation.Tests\Surveyor.Presentation.Tests.csproj --filter UT0011 --no-restore` | PASS: 11 tests |
+| `dotnet test tests\Surveyor.Presentation.Tests\Surveyor.Presentation.Tests.csproj --filter UT0011 --no-restore` | PASS: 13 tests |
 | `dotnet test tests\Surveyor.Architecture.Tests\Surveyor.Architecture.Tests.csproj --no-restore` | PASS: 8 tests |
-| `dotnet test eng\Surveyor.Unit.slnf --no-build --logger trx --results-directory artifacts\test-results` | PASS: Architecture 8, Presentation 11, Application 31, Domain 59, Policy 45, Reports 7 |
+| `dotnet test eng\Surveyor.Unit.slnf --no-build --logger trx --results-directory artifacts\test-results` | PASS: Architecture 8, Presentation 13, Application 31, Domain 59, Policy 45, Reports 7 |
 | `git diff --check` | PASS |
 
 ## Residual Risk

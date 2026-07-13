@@ -141,7 +141,32 @@ public sealed class UT0011ShellViewModelBehaviorTests
     }
 
     [Fact]
-    public async Task GenerateReportUsesConfidentialityOptOutFlowAndPropagatesReportStatus()
+    public async Task GenerateReportDefaultsProtectedLocalWithoutOptOutDialogAndPropagatesReportStatus()
+    {
+        RecordingReportRunner report = new();
+        RecordingDialogService dialogs = new();
+        ShellViewModel viewModel = CreateShell(
+            report: report,
+            dialogs: dialogs,
+            utcNow: () => new DateTimeOffset(2026, 7, 13, 0, 0, 0, TimeSpan.Zero));
+        viewModel.LoadCompletedResult(PresentationTestData.Result());
+
+        Task reportTask = viewModel.GenerateReportAsync(@"C:\safe\report.html", CancellationToken.None);
+
+        Assert.Equal(ConfidentialityMode.ProtectedLocal, report.CapturedRequest?.ConfidentialityRequest.RequestedMode);
+        Assert.Null(report.CapturedRequest?.ConfidentialityRequest.OptOut);
+        Assert.Equal(new DateTimeOffset(2026, 7, 13, 0, 0, 0, TimeSpan.Zero), report.CapturedRequest?.ConfidentialityRequest.RequestedAtUtc);
+        Assert.DoesNotContain(dialogs.Requests, request => request.Intent == DialogIntent.ConfirmConfidentialityOptOut);
+
+        report.Complete(new ReportResult(OperationStatus.IoError, new RunId("run-001"), [], []));
+        await reportTask.ConfigureAwait(true);
+
+        Assert.Equal(RunUiState.Failed, viewModel.RunState);
+        Assert.Equal(RunActivityKind.None, viewModel.ActivityKind);
+    }
+
+    [Fact]
+    public async Task ConfirmedSessionOptOutIsAppliedToReportWithoutReprompting()
     {
         RecordingReportRunner report = new();
         RecordingDialogService dialogs = new();
@@ -152,18 +177,40 @@ public sealed class UT0011ShellViewModelBehaviorTests
         viewModel.LoadCompletedResult(PresentationTestData.Result());
         dialogs.Script(DialogIntent.ConfirmConfidentialityOptOut, DialogOutcome.Confirmed);
 
+        bool confirmed = await viewModel.ConfirmLocalArtifactOptOutAsync("DebuggingMaskedContent", CancellationToken.None)
+            .ConfigureAwait(true);
         Task reportTask = viewModel.GenerateReportAsync(@"C:\safe\report.html", CancellationToken.None);
 
+        Assert.True(confirmed);
         Assert.Equal(ConfidentialityMode.ExplicitLocalOptOut, report.CapturedRequest?.ConfidentialityRequest.RequestedMode);
-        Assert.Equal("LocalPlaintextReview", report.CapturedRequest?.ConfidentialityRequest.OptOut?.ReasonCode);
-        Assert.Equal(new DateTimeOffset(2026, 7, 13, 0, 0, 0, TimeSpan.Zero), report.CapturedRequest?.ConfidentialityRequest.RequestedAtUtc);
-        Assert.Contains(dialogs.Requests, request => request.Intent == DialogIntent.ConfirmConfidentialityOptOut);
+        Assert.Equal("DebuggingMaskedContent", report.CapturedRequest?.ConfidentialityRequest.OptOut?.ReasonCode);
+        Assert.Single(dialogs.Requests, request => request.Intent == DialogIntent.ConfirmConfidentialityOptOut);
 
-        report.Complete(new ReportResult(OperationStatus.IoError, new RunId("run-001"), [], []));
+        report.Complete(new ReportResult(OperationStatus.Ok, new RunId("run-001"), [], []));
         await reportTask.ConfigureAwait(true);
 
-        Assert.Equal(RunUiState.Failed, viewModel.RunState);
-        Assert.Equal(RunActivityKind.None, viewModel.ActivityKind);
+        Assert.Equal(RunUiState.Completed, viewModel.RunState);
+    }
+
+    [Fact]
+    public async Task DismissedSessionOptOutKeepsReportProtectedLocal()
+    {
+        RecordingReportRunner report = new();
+        RecordingDialogService dialogs = new();
+        ShellViewModel viewModel = CreateShell(report: report, dialogs: dialogs);
+        viewModel.LoadCompletedResult(PresentationTestData.Result());
+        dialogs.Script(DialogIntent.ConfirmConfidentialityOptOut, DialogOutcome.Dismissed);
+
+        bool confirmed = await viewModel.ConfirmLocalArtifactOptOutAsync("LocalPlaintextReview", CancellationToken.None)
+            .ConfigureAwait(true);
+        Task reportTask = viewModel.GenerateReportAsync(@"C:\safe\report.html", CancellationToken.None);
+
+        Assert.False(confirmed);
+        Assert.Equal(ConfidentialityMode.ProtectedLocal, report.CapturedRequest?.ConfidentialityRequest.RequestedMode);
+        Assert.Null(report.CapturedRequest?.ConfidentialityRequest.OptOut);
+
+        report.Complete(new ReportResult(OperationStatus.Ok, new RunId("run-001"), [], []));
+        await reportTask.ConfigureAwait(true);
     }
 
     [Fact]

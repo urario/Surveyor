@@ -14,7 +14,7 @@ public sealed class UT0011ReportAndConfidentialityBehaviorTests
         dialogs.Script(DialogIntent.ConfirmConfidentialityOptOut, DialogOutcome.Dismissed);
         ReportExportViewModel viewModel = new(dialogs, new RecordingPreviewHost());
 
-        ConfidentialityRequest request = await viewModel.CreateLocalArtifactRequestAsync(
+        ConfidentialityRequest request = await viewModel.ConfirmLocalArtifactOptOutAsync(
             "LocalPlaintextReview",
             new DateTimeOffset(2026, 7, 13, 0, 0, 0, TimeSpan.Zero),
             CancellationToken.None);
@@ -33,17 +33,17 @@ public sealed class UT0011ReportAndConfidentialityBehaviorTests
         dialogs.Script(DialogIntent.ConfirmPlaintextPreview, DialogOutcome.Dismissed);
         ReportExportViewModel viewModel = new(dialogs, preview);
 
-        ConfidentialityRequest request = await viewModel.CreateLocalArtifactRequestAsync(
-            "LocalPlaintextReview",
+        ConfidentialityRequest request = await viewModel.ConfirmLocalArtifactOptOutAsync(
+            "FixtureAuthoring",
             new DateTimeOffset(2026, 7, 13, 0, 0, 0, TimeSpan.Zero),
             CancellationToken.None);
 
         Assert.Equal(ConfidentialityMode.ExplicitLocalOptOut, request.RequestedMode);
-        Assert.Equal("LocalPlaintextReview", request.OptOut?.ReasonCode);
+        Assert.Equal("FixtureAuthoring", request.OptOut?.ReasonCode);
 
         PreviewOutcome outcome = await viewModel.PreviewAsync(
             @"C:\safe\report.html",
-            new ConfidentialityDecision(ConfidentialityMode.ExplicitLocalOptOut, "policy", request.RequestedAtUtc, "UserConfirmed", "local-debug-artifacts", []),
+            new ConfidentialityDecision(ConfidentialityMode.ExplicitLocalOptOut, "policy", request.RequestedAtUtc, "UserConfirmed", "FixtureAuthoring", []),
             CancellationToken.None);
 
         Assert.Equal(PreviewOutcome.Unavailable, outcome);
