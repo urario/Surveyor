@@ -79,6 +79,11 @@ internal sealed class RecordingAnalysisRunner : IAnalysisRunner
     {
         completion.SetResult(result);
     }
+
+    internal void Fail(Exception failure)
+    {
+        completion.SetException(failure);
+    }
 }
 
 internal sealed class RecordingReportRunner : IReportRunner
@@ -99,5 +104,10 @@ internal sealed class RecordingReportRunner : IReportRunner
     internal void Complete(ReportResult result)
     {
         completion.SetResult(result);
+    }
+
+    internal void Fail(Exception failure)
+    {
+        completion.SetException(failure);
     }
 }

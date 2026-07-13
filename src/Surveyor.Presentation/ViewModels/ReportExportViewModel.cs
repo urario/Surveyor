@@ -13,7 +13,9 @@ internal sealed class ReportExportViewModel
 {
     private static readonly HashSet<string> AllowedOptOutReasons = new(StringComparer.Ordinal)
     {
-        "local-debug-artifacts",
+        "DebuggingMaskedContent",
+        "FixtureAuthoring",
+        "LocalPlaintextReview",
     };
 
     private readonly IDialogService dialogService;

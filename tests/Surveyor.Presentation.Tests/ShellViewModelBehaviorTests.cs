@@ -37,6 +37,49 @@ public sealed class UT0011ShellViewModelBehaviorTests
     }
 
     [Fact]
+    public async Task CompletedAndFailedRunsClearRecordedMetadataBeforeNextRun()
+    {
+        RecordingAnalysisRunner succeededAnalysis = new();
+        ShellViewModel succeeded = CreateRunnableShell(succeededAnalysis);
+
+        Task succeededTask = succeeded.RunAsync(CancellationToken.None);
+        succeededAnalysis.Complete(PresentationTestData.Result());
+        await succeededTask.ConfigureAwait(true);
+
+        Assert.False(succeeded.CanRun);
+        Assert.Equal(RunUiState.Completed, succeeded.RunState);
+
+        RecordingAnalysisRunner failedAnalysis = new();
+        ShellViewModel failed = CreateRunnableShell(failedAnalysis);
+
+        Task failedTask = failed.RunAsync(CancellationToken.None);
+        failedAnalysis.Complete(PresentationTestData.Result(RunOutcome.FailedUnexpected));
+        await failedTask.ConfigureAwait(true);
+
+        Assert.False(failed.CanRun);
+        Assert.Equal(RunUiState.Idle, failed.RunState);
+        Assert.Equal(RunActivityKind.None, failed.ActivityKind);
+    }
+
+    [Fact]
+    public async Task AnalysisRunnerExceptionReleasesActiveCommandAndClearsMetadata()
+    {
+        RecordingAnalysisRunner analysis = new();
+        ShellViewModel viewModel = CreateRunnableShell(analysis);
+
+        Task runTask = viewModel.RunAsync(CancellationToken.None);
+        analysis.Fail(new InvalidOperationException("runner failed"));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => runTask).ConfigureAwait(true);
+
+        Assert.Equal(RunUiState.Failed, viewModel.RunState);
+        Assert.Equal(RunActivityKind.None, viewModel.ActivityKind);
+        Assert.False(viewModel.CanRun);
+
+        await viewModel.CancelActiveCommandAsync(CancellationToken.None).ConfigureAwait(true);
+    }
+
+    [Fact]
     public async Task ProgressAndCancelUseStateActivityPair()
     {
         RecordingAnalysisRunner analysis = new();
@@ -73,7 +116,7 @@ public sealed class UT0011ShellViewModelBehaviorTests
     }
 
     [Fact]
-    public async Task PostReviewReportCancelKeepsCompletedSessionWithoutRunCancelDialog()
+    public async Task PostReviewReportCancelKeepsSessionAndShowsCancelledWithoutRunCancelDialog()
     {
         RecordingReportRunner report = new();
         RecordingDialogService dialogs = new();
@@ -92,21 +135,74 @@ public sealed class UT0011ShellViewModelBehaviorTests
 
         report.Complete(new ReportResult(OperationStatus.Cancelled, new RunId("run-001"), [], []));
         await reportTask.ConfigureAwait(true);
-        Assert.Equal(RunUiState.Completed, viewModel.RunState);
+        Assert.Equal(RunUiState.Cancelled, viewModel.RunState);
         Assert.Equal(RunActivityKind.None, viewModel.ActivityKind);
         Assert.Single(viewModel.Session.Results);
+    }
+
+    [Fact]
+    public async Task GenerateReportUsesConfidentialityOptOutFlowAndPropagatesReportStatus()
+    {
+        RecordingReportRunner report = new();
+        RecordingDialogService dialogs = new();
+        ShellViewModel viewModel = CreateShell(
+            report: report,
+            dialogs: dialogs,
+            utcNow: () => new DateTimeOffset(2026, 7, 13, 0, 0, 0, TimeSpan.Zero));
+        viewModel.LoadCompletedResult(PresentationTestData.Result());
+        dialogs.Script(DialogIntent.ConfirmConfidentialityOptOut, DialogOutcome.Confirmed);
+
+        Task reportTask = viewModel.GenerateReportAsync(@"C:\safe\report.html", CancellationToken.None);
+
+        Assert.Equal(ConfidentialityMode.ExplicitLocalOptOut, report.CapturedRequest?.ConfidentialityRequest.RequestedMode);
+        Assert.Equal("LocalPlaintextReview", report.CapturedRequest?.ConfidentialityRequest.OptOut?.ReasonCode);
+        Assert.Equal(new DateTimeOffset(2026, 7, 13, 0, 0, 0, TimeSpan.Zero), report.CapturedRequest?.ConfidentialityRequest.RequestedAtUtc);
+        Assert.Contains(dialogs.Requests, request => request.Intent == DialogIntent.ConfirmConfidentialityOptOut);
+
+        report.Complete(new ReportResult(OperationStatus.IoError, new RunId("run-001"), [], []));
+        await reportTask.ConfigureAwait(true);
+
+        Assert.Equal(RunUiState.Failed, viewModel.RunState);
+        Assert.Equal(RunActivityKind.None, viewModel.ActivityKind);
+    }
+
+    [Fact]
+    public async Task ReportRunnerExceptionReleasesActiveCommand()
+    {
+        RecordingReportRunner report = new();
+        ShellViewModel viewModel = CreateShell(report: report);
+        viewModel.LoadCompletedResult(PresentationTestData.Result());
+
+        Task reportTask = viewModel.GenerateReportAsync(@"C:\safe\report.html", CancellationToken.None);
+        report.Fail(new InvalidOperationException("report failed"));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => reportTask).ConfigureAwait(true);
+
+        Assert.Equal(RunUiState.Failed, viewModel.RunState);
+        Assert.Equal(RunActivityKind.None, viewModel.ActivityKind);
+        await viewModel.CancelActiveCommandAsync(CancellationToken.None).ConfigureAwait(true);
     }
 
     private static ShellViewModel CreateShell(
         RecordingAnalysisRunner? analysis = null,
         RecordingReportRunner? report = null,
-        RecordingDialogService? dialogs = null)
+        RecordingDialogService? dialogs = null,
+        Func<DateTimeOffset>? utcNow = null)
     {
         return new ShellViewModel(
             analysis ?? new RecordingAnalysisRunner(),
             report ?? new RecordingReportRunner(),
             new RecordingNavigationService(),
             dialogs ?? new RecordingDialogService(),
-            new RecordingPreviewHost());
+            new RecordingPreviewHost(),
+            utcNow);
+    }
+
+    private static ShellViewModel CreateRunnableShell(RecordingAnalysisRunner analysis)
+    {
+        ShellViewModel viewModel = CreateShell(analysis: analysis);
+        viewModel.ResolveTarget(PresentationTestData.Target());
+        viewModel.RecordMetadata(PresentationTestData.Metadata());
+        return viewModel;
     }
 }

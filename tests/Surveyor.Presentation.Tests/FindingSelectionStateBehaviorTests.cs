@@ -14,6 +14,7 @@ public sealed class UT0011FindingSelectionStateBehaviorTests
         ],
         [
             new SnapshotRegionViewModel("region-ok", "finding-b", CaptureStatus.Ok),
+            new SnapshotRegionViewModel("region-other", "finding-c", CaptureStatus.Ok),
             new SnapshotRegionViewModel("region-unavailable", "finding-a", CaptureStatus.Unavailable),
         ]);
 

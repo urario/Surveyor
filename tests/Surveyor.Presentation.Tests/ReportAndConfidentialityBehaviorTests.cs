@@ -15,7 +15,7 @@ public sealed class UT0011ReportAndConfidentialityBehaviorTests
         ReportExportViewModel viewModel = new(dialogs, new RecordingPreviewHost());
 
         ConfidentialityRequest request = await viewModel.CreateLocalArtifactRequestAsync(
-            "local-debug-artifacts",
+            "LocalPlaintextReview",
             new DateTimeOffset(2026, 7, 13, 0, 0, 0, TimeSpan.Zero),
             CancellationToken.None);
 
@@ -34,12 +34,12 @@ public sealed class UT0011ReportAndConfidentialityBehaviorTests
         ReportExportViewModel viewModel = new(dialogs, preview);
 
         ConfidentialityRequest request = await viewModel.CreateLocalArtifactRequestAsync(
-            "local-debug-artifacts",
+            "LocalPlaintextReview",
             new DateTimeOffset(2026, 7, 13, 0, 0, 0, TimeSpan.Zero),
             CancellationToken.None);
 
         Assert.Equal(ConfidentialityMode.ExplicitLocalOptOut, request.RequestedMode);
-        Assert.Equal("local-debug-artifacts", request.OptOut?.ReasonCode);
+        Assert.Equal("LocalPlaintextReview", request.OptOut?.ReasonCode);
 
         PreviewOutcome outcome = await viewModel.PreviewAsync(
             @"C:\safe\report.html",

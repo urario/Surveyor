@@ -21,6 +21,8 @@ internal sealed class ShellViewModel
     private readonly IReportRunner reportRunner;
     private readonly INavigationService navigationService;
     private readonly IDialogService dialogService;
+    private readonly ReportExportViewModel reportExport;
+    private readonly Func<DateTimeOffset> utcNow;
     private CancellationTokenSource? activeCommandCancellation;
     private ScreenSelectionMetadata? recordedMetadata;
 
@@ -29,13 +31,16 @@ internal sealed class ShellViewModel
         IReportRunner reportRunner,
         INavigationService navigationService,
         IDialogService dialogService,
-        IHtmlPreviewHost previewHost)
+        IHtmlPreviewHost previewHost,
+        Func<DateTimeOffset>? utcNow = null)
     {
         this.analysisRunner = analysisRunner ?? throw new ArgumentNullException(nameof(analysisRunner));
         this.reportRunner = reportRunner ?? throw new ArgumentNullException(nameof(reportRunner));
         this.navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         this.dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
         ArgumentNullException.ThrowIfNull(previewHost);
+        reportExport = new ReportExportViewModel(this.dialogService, previewHost);
+        this.utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
     }
 
     /// <summary>
@@ -130,14 +135,26 @@ internal sealed class ShellViewModel
 
         using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         activeCommandCancellation = linked;
-        SetState(RunUiState.Analyzing, RunActivityKind.AnalysisRun);
-        ImmediateProgress progress = new(ApplyProgress);
-        AnalysisRunRequest request = new(Session.ResolvedTarget, recordedMetadata, AnalysisRunOptions.Default);
+        try
+        {
+            SetState(RunUiState.Analyzing, RunActivityKind.AnalysisRun);
+            ImmediateProgress progress = new(ApplyProgress);
+            AnalysisRunRequest request = new(Session.ResolvedTarget, recordedMetadata, AnalysisRunOptions.Default);
 
-        AnalysisRunResult result = await analysisRunner.ExecuteAsync(request, progress, linked.Token).ConfigureAwait(false);
+            AnalysisRunResult result = await analysisRunner.ExecuteAsync(request, progress, linked.Token).ConfigureAwait(false);
 
-        activeCommandCancellation = null;
-        ApplyAnalysisResult(result, linked.IsCancellationRequested);
+            ApplyAnalysisResult(result, linked.IsCancellationRequested);
+        }
+        catch
+        {
+            recordedMetadata = null;
+            SetState(RunUiState.Failed, RunActivityKind.None);
+            throw;
+        }
+        finally
+        {
+            activeCommandCancellation = null;
+        }
     }
 
     /// <summary>
@@ -148,24 +165,39 @@ internal sealed class ShellViewModel
     /// <returns>完了を表すタスクです。</returns>
     public async Task GenerateReportAsync(string absoluteDestinationPath, CancellationToken cancellationToken)
     {
-        AnalysisRunResult result = Session.Results.Count == 0 ? null! : Session.Results[Session.Results.Count - 1];
-        if (result is null)
+        if (Session.Results.Count == 0)
         {
             throw new InvalidOperationException("Report command requires a completed result.");
         }
 
+        AnalysisRunResult result = Session.Results[^1];
         using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         activeCommandCancellation = linked;
-        SetState(RunUiState.Reporting, RunActivityKind.ReportCommand);
-        ReportCommandRequest request = new(
-            result,
-            absoluteDestinationPath,
-            new ConfidentialityRequest(DateTimeOffset.UnixEpoch, ConfidentialityMode.ProtectedLocal, "Default", null));
+        try
+        {
+            SetState(RunUiState.Reporting, RunActivityKind.ReportCommand);
+            ConfidentialityRequest confidentialityRequest = await reportExport.CreateLocalArtifactRequestAsync(
+                "LocalPlaintextReview",
+                utcNow(),
+                linked.Token).ConfigureAwait(false);
+            ReportCommandRequest request = new(
+                result,
+                absoluteDestinationPath,
+                confidentialityRequest);
 
-        await reportRunner.GenerateAsync(request, linked.Token).ConfigureAwait(false);
+            ReportResult reportResult = await reportRunner.GenerateAsync(request, linked.Token).ConfigureAwait(false);
 
-        activeCommandCancellation = null;
-        SetState(RunUiState.Completed, RunActivityKind.None);
+            ApplyReportResult(reportResult);
+        }
+        catch
+        {
+            SetState(RunUiState.Failed, RunActivityKind.None);
+            throw;
+        }
+        finally
+        {
+            activeCommandCancellation = null;
+        }
     }
 
     /// <summary>
@@ -219,6 +251,7 @@ internal sealed class ShellViewModel
         if (result.Outcome is RunOutcome.Succeeded or RunOutcome.SucceededWithPartialResult)
         {
             Session.AddResult(result);
+            recordedMetadata = null;
             SetState(RunUiState.Completed, RunActivityKind.None);
             return;
         }
@@ -233,7 +266,19 @@ internal sealed class ShellViewModel
         }
 
         SetState(RunUiState.Failed, RunActivityKind.None);
+        recordedMetadata = null;
         SetState(RunUiState.Idle, RunActivityKind.None);
+    }
+
+    private void ApplyReportResult(ReportResult result)
+    {
+        RunUiState nextState = result.Status switch
+        {
+            OperationStatus.Ok or OperationStatus.PartialResult => RunUiState.Completed,
+            OperationStatus.Cancelled => RunUiState.Cancelled,
+            _ => RunUiState.Failed,
+        };
+        SetState(nextState, RunActivityKind.None);
     }
 
     private bool IsBlocked(NavigationIntent intent)
