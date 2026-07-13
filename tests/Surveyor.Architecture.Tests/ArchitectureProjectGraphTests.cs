@@ -37,6 +37,7 @@ public sealed class ArchitectureProjectGraphTests
             ["Surveyor.Application.Tests"] = ["Surveyor.Application", "Surveyor.TestSupport"],
             ["Surveyor.Domain.Tests"] = ["Surveyor.Domain"],
             ["Surveyor.Reports.Tests"] = ["Surveyor.Reports", "Surveyor.TestSupport"],
+            ["Surveyor.Presentation.Tests"] = ["Surveyor.Application", "Surveyor.Domain", "Surveyor.Presentation"],
             ["Surveyor.Adapters.Uia.Tests"] = ["Surveyor.Adapters.Uia", "Surveyor.Adapters.Uia.Audit", "Surveyor.Application"],
         };
 
@@ -69,7 +70,6 @@ public sealed class ArchitectureProjectGraphTests
         "Surveyor.Adapters.Uia",
         "Surveyor.Adapters.Capture",
         "Surveyor.Adapters.Store",
-        "Surveyor.Presentation",
         "Surveyor.App",
     ];
 
@@ -95,6 +95,7 @@ public sealed class ArchitectureProjectGraphTests
         "tests/Surveyor.Architecture.Tests/Surveyor.Architecture.Tests.csproj",
         "tests/Surveyor.Domain.Tests/Surveyor.Domain.Tests.csproj",
         "tests/Surveyor.Policy.Tests/Surveyor.Policy.Tests.csproj",
+        "tests/Surveyor.Presentation.Tests/Surveyor.Presentation.Tests.csproj",
         "tests/Surveyor.Reports.Tests/Surveyor.Reports.Tests.csproj",
     ];
 
@@ -256,7 +257,7 @@ public sealed class ArchitectureProjectGraphTests
     [Fact]
     public void CoreOutputProjectsStayFreeOfWindowsFrameworkReferences()
     {
-        string[] coreProjectNames = ["Surveyor.Domain", "Surveyor.Application", "Surveyor.Reports"];
+        string[] coreProjectNames = ["Surveyor.Domain", "Surveyor.Application", "Surveyor.Reports", "Surveyor.Presentation"];
 
         foreach (string projectName in coreProjectNames)
         {

@@ -1,1 +1,41 @@
-
+#nullable enable
+Surveyor.Presentation.Ports.DialogIntent
+Surveyor.Presentation.Ports.DialogIntent.ConfirmConfidentialityOptOut = 2 -> Surveyor.Presentation.Ports.DialogIntent
+Surveyor.Presentation.Ports.DialogIntent.ConfirmPlaintextPreview = 3 -> Surveyor.Presentation.Ports.DialogIntent
+Surveyor.Presentation.Ports.DialogIntent.ConfirmRunCancel = 0 -> Surveyor.Presentation.Ports.DialogIntent
+Surveyor.Presentation.Ports.DialogIntent.ConfidentialityHandlingNotice = 1 -> Surveyor.Presentation.Ports.DialogIntent
+Surveyor.Presentation.Ports.DialogIntent.UnexpectedFault = 4 -> Surveyor.Presentation.Ports.DialogIntent
+Surveyor.Presentation.Ports.DialogOutcome
+Surveyor.Presentation.Ports.DialogOutcome.Confirmed = 0 -> Surveyor.Presentation.Ports.DialogOutcome
+Surveyor.Presentation.Ports.DialogOutcome.Dismissed = 1 -> Surveyor.Presentation.Ports.DialogOutcome
+Surveyor.Presentation.Ports.DialogRequest
+Surveyor.Presentation.Ports.DialogRequest.BodyResourceKey.get -> string!
+Surveyor.Presentation.Ports.DialogRequest.BodyResourceKey.init -> void
+Surveyor.Presentation.Ports.DialogRequest.DialogRequest(Surveyor.Presentation.Ports.DialogIntent Intent, string! BodyResourceKey, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! SafeArgs) -> void
+Surveyor.Presentation.Ports.DialogRequest.Intent.get -> Surveyor.Presentation.Ports.DialogIntent
+Surveyor.Presentation.Ports.DialogRequest.Intent.init -> void
+Surveyor.Presentation.Ports.DialogRequest.SafeArgs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Surveyor.Presentation.Ports.DialogRequest.SafeArgs.init -> void
+Surveyor.Presentation.Ports.IDialogService
+Surveyor.Presentation.Ports.IDialogService.ShowAsync(Surveyor.Presentation.Ports.DialogRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Presentation.Ports.DialogOutcome>!
+Surveyor.Presentation.Ports.IHtmlPreviewHost
+Surveyor.Presentation.Ports.IHtmlPreviewHost.OpenAsync(string! absolutePathSuppliedByCaller, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Presentation.Ports.PreviewOutcome>!
+Surveyor.Presentation.Ports.INavigationService
+Surveyor.Presentation.Ports.INavigationService.NavigateAsync(Surveyor.Presentation.Ports.NavigationIntent intent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Surveyor.Presentation.Ports.NavigationOutcome>!
+Surveyor.Presentation.Ports.IUiDispatcher
+Surveyor.Presentation.Ports.IUiDispatcher.RunOnUiThreadAsync(System.Action! action, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Surveyor.Presentation.Ports.NavigationIntent
+Surveyor.Presentation.Ports.NavigationIntent.ConfidentialityChoices = 7 -> Surveyor.Presentation.Ports.NavigationIntent
+Surveyor.Presentation.Ports.NavigationIntent.ElementFindings = 4 -> Surveyor.Presentation.Ports.NavigationIntent
+Surveyor.Presentation.Ports.NavigationIntent.ReportExport = 6 -> Surveyor.Presentation.Ports.NavigationIntent
+Surveyor.Presentation.Ports.NavigationIntent.ResultOverview = 3 -> Surveyor.Presentation.Ports.NavigationIntent
+Surveyor.Presentation.Ports.NavigationIntent.RunProgress = 2 -> Surveyor.Presentation.Ports.NavigationIntent
+Surveyor.Presentation.Ports.NavigationIntent.SelectionMetadata = 1 -> Surveyor.Presentation.Ports.NavigationIntent
+Surveyor.Presentation.Ports.NavigationIntent.SnapshotViewer = 5 -> Surveyor.Presentation.Ports.NavigationIntent
+Surveyor.Presentation.Ports.NavigationIntent.TargetSelection = 0 -> Surveyor.Presentation.Ports.NavigationIntent
+Surveyor.Presentation.Ports.NavigationOutcome
+Surveyor.Presentation.Ports.NavigationOutcome.Blocked = 1 -> Surveyor.Presentation.Ports.NavigationOutcome
+Surveyor.Presentation.Ports.NavigationOutcome.Navigated = 0 -> Surveyor.Presentation.Ports.NavigationOutcome
+Surveyor.Presentation.Ports.PreviewOutcome
+Surveyor.Presentation.Ports.PreviewOutcome.Opened = 0 -> Surveyor.Presentation.Ports.PreviewOutcome
+Surveyor.Presentation.Ports.PreviewOutcome.Unavailable = 1 -> Surveyor.Presentation.Ports.PreviewOutcome
