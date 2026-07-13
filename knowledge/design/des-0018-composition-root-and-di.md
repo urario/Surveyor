@@ -92,7 +92,7 @@ The current scaffold under `src/` differs from prior design assumptions in ways 
 | Axis | Hand-written `new` graph | MEDI + assembly-scanning | MEDI + explicit registrations (chosen) |
 | -- | -- | -- | -- |
 | Determinism (`RQ-051`) | Deterministic but drifts as the graph grows | Scanning discovers types in a non-guaranteed order; hides what is registered | Every registration is an explicit, reviewable line; resolution order is irrelevant because all lifetimes are singleton/transient with no ordering effect |
-| Invariant enforcement (`R-ARC-01`) | No uniform registration model to inspect; each invariant hand-coded per graph | Scanning actively *fights* the read-only-only invariant (it may auto-register an unaudited type) | `IServiceCollection` is a reflectable `ServiceDescriptor` list — the guard inspects it uniformly for "single `IClock`", "single policy", and "target-facing ⊆ read-only allowlist" |
+| Invariant enforcement (`R-ARC-01`) | No uniform registration model to inspect; each invariant hand-coded per graph | Scanning actively *fights* the read-only-only invariant (it may auto-register an unaudited type) | `IServiceCollection` is a reflectable `ServiceDescriptor` list — the guard inspects it uniformly for "single `IClock`", "single policy", and "exactly one audited adapter per target-facing port" |
 | Testability (`RQ-054`) | Core graph not separable from WinUI without discipline | Same | The core registration is a headless method over `IServiceCollection`; `UT-0013` calls it with fake-adapter registrations, no WinUI |
 | Internal-default (CS-02) | `App` must reach internals or types go public | Scanning needs types discoverable (often public) | Each assembly's own extension method registers its `internal` type from *inside* that assembly; only the extension method + port are public |
 | WinUI 3 hosting | Native fit (manual `App.xaml.cs`) | Works but adds a heavier host | MEDI's `ServiceCollection`/`ServiceProvider` integrates with a manually built provider held on `App`; no Generic Host required |
@@ -155,9 +155,9 @@ public static class ReportsRegistration
 
 | Assembly | Public seam | Registers (service → internal impl) | Notes |
 | -- | -- | -- | -- |
-| `Surveyor.Adapters.Discovery` | `AddSurveyorDiscovery` | `ITargetDiscoveryPort` → discovery adapter | scaffold today; created by the discovery slice |
-| `Surveyor.Adapters.Uia` | `AddSurveyorUiaAcquisition` | `IUiTreeAcquisitionPort` → `UiaTreeAcquisitionAdapter`, plus its `UiaTargetHandleRegistry` and the read-only audit (`Surveyor.Adapters.Uia.Audit`) it composes internally | owns the MTA acquisition thread → singleton (see lifetimes) |
-| `Surveyor.Adapters.Capture` | `AddSurveyorCapture` | `IScreenCapturePort` → capture adapter (WGC device + PrintWindow fallback composed internally) | scaffold today; `IMP-0014` |
+| `Surveyor.Adapters.Discovery` | `AddSurveyorDiscovery` | `ITargetDiscoveryPort` → discovery adapter | scaffold today; target-facing seam stamps `IReadOnlyAuditedTargetAdapter` |
+| `Surveyor.Adapters.Uia` | `AddSurveyorUiaAcquisition` | `IUiTreeAcquisitionPort` → `UiaTreeAcquisitionAdapter`, plus its `UiaTargetHandleRegistry` and the read-only audit (`Surveyor.Adapters.Uia.Audit`) it composes internally | owns the MTA acquisition thread → singleton; target-facing seam stamps `IReadOnlyAuditedTargetAdapter` |
+| `Surveyor.Adapters.Capture` | `AddSurveyorCapture` | `IScreenCapturePort` → capture adapter (WGC device + PrintWindow fallback composed internally) | scaffold today; `IMP-0014`; target-facing seam stamps `IReadOnlyAuditedTargetAdapter` |
 | `Surveyor.Adapters.Store` | `AddSurveyorResultStore` | `IResultStorePort` → store adapter, composing its `IDataProtector`/`IAccessControlService`/`IStoreFileSystem`/`IExportBundleWriter` internal seams | scaffold today; store slice |
 | `Surveyor.Policy` | `AddSurveyorConfidentialityPolicy` | `IConfidentialityPolicy` → `ConfidentialityPolicy`, composing `ISensitiveValueSanitizer`/`IFallbackKeyExportMapper` internally | implemented today |
 | `Surveyor.Reports` | `AddSurveyorReports` | `IReportGenerationPort` → `DeterministicReportWriter` | implemented today (internal) |
@@ -204,7 +204,7 @@ public static class SurveyorCoreRegistration
 
 `CompositionInvariants` and `SurveyorCoreRegistration` live in `Surveyor.Application` and therefore reference **no concrete adapter or clock type** — a hard constraint, since coupling the guard to a concrete (e.g. `SystemClock`, whose physical home is in flux — see [Observed source deviations](#observed-source-deviations)) would break the inward rule the moment that concrete moves outward. The guard reasons only over service *types* on `IServiceCollection` and over the layer-safe markers below. Every assembly that exposes a registration seam (`Surveyor.Application`, `Surveyor.Policy`, `Surveyor.Reports`, `Surveyor.Presentation`, and each `Surveyor.Adapters.*`) references only `Microsoft.Extensions.DependencyInjection.Abstractions` for it — the OS-agnostic abstraction, never the container implementation — so no seam pulls the container into an inner layer.
 
-Two layer-safe marker **interfaces** support the guard without naming any concrete. Both are declared in `Surveyor.Application.Composition` so the guard (also in `Surveyor.Application`) can reference them inward-safely; only their *implementations* live in `Surveyor.TestSupport` (`FakeClock` and the mutation-capable fake), which the guard never references:
+Two layer-safe marker **interfaces** support the guard without naming any concrete. Both are declared in `Surveyor.Application.Composition` so the guard (also in `Surveyor.Application`) can reference them inward-safely; only their *implementations* live in the adapter assemblies (production) and `Surveyor.TestSupport` (fakes), which the guard never references:
 
 ```csharp
 namespace Surveyor.Application.Composition;
@@ -214,13 +214,16 @@ namespace Surveyor.Application.Composition;
 // FakeClock / fake adapters in Surveyor.TestSupport implement it; no src/** type does.
 public interface ISurveyorCompositionTestDouble { }
 
-// Interface declared here (Surveyor.Application) for the same reason.
-// A capability that mutates the inspected target. NO production adapter implements it;
-// only a UT-0013 counter-example fake (in Surveyor.TestSupport) implements it, so the
-// read-only-only guard can be proven to bite. It is NOT the DES-0014 runtime read-only
-// audit (a COM-call spy) — it is a wiring-time marker used only by the guard + counter-example.
-public interface ITargetMutationCapability { }
+// POSITIVE read-only proof, declared here so the guard can require it inward-safely.
+// A target-facing adapter registered through a sanctioned seam carries this marker to
+// attest it is the DES-0014 read-only-audited adapter (covered by the UT-0005 read-only
+// spy). Production audited adapters implement it; TestSupport read-only fakes implement it;
+// a rogue/unaudited/mistaken adapter does NOT, so the guard rejects it by DEFAULT
+// (Invariant A is a positive check, not a "reject if self-declares mutating" negative one).
+public interface IReadOnlyAuditedTargetAdapter { }
 ```
+
+The marker is a *claim*; the *proof* that the claim is honest is the [DES-0014](des-0014-discovery-uia-msaa-acquisition-and-read-only-audit.md) `UT-0005` read-only spy at the adapter seam plus code review of where the marker is applied. The composition guard's contribution is to make the **default outcome rejection**: an adapter must positively present the audited marker (and be the sole registration for its port) to pass, so an unaudited or duplicate registration can no longer slip through by merely *not* declaring itself mutating.
 
 `CompositionDiagnostic` carries only a code, a severity, a short service *type name*, and allowlisted `SafeArgs` (counts, expected/actual multiplicities) — it reuses the [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md#diagnostics-model)/[DES-0013](des-0013-confidentiality-storage-and-export.md#diagnostics-and-exception-sanitization) sanitization posture. There is no target, screen, or file in scope at composition time, so there is nothing sensitive to leak beyond assembly/type identifiers, which are safe.
 
@@ -235,10 +238,10 @@ The complete v1 wiring. "Selection key" is the mechanism that chooses the provid
 | `TestabilityScorer` (domain type) | `TestabilityScorer` (`Surveyor.Domain`) | `AddSurveyorCore` | Singleton | pure deterministic scorer; no per-run state |
 | `IScoringConfigProvider` | application default (`Surveyor.Application`) | `AddSurveyorCore` | Singleton | config resolution; deferred impl per [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md), supplied at `IMP-0015` |
 | `IStageTimeoutController` | application default (`Surveyor.Application`) | `AddSurveyorCore` | Singleton | stateless per-call controller; deferred impl per [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) |
-| `ITargetDiscoveryPort` | discovery adapter (`Surveyor.Adapters.Discovery`) | `AddSurveyorDiscovery` | Singleton | read-only target-facing seam |
-| `IUiTreeAcquisitionPort` | `UiaTreeAcquisitionAdapter` (`Surveyor.Adapters.Uia`) | `AddSurveyorUiaAcquisition` | Singleton | **owns the dedicated MTA acquisition thread** ([DES-0014](des-0014-discovery-uia-msaa-acquisition-and-read-only-audit.md)) — a long-lived resource; one instance avoids repeated thread creation |
+| `ITargetDiscoveryPort` | discovery adapter (`Surveyor.Adapters.Discovery`) | `AddSurveyorDiscovery` | Singleton | target-facing; seam stamps `IReadOnlyAuditedTargetAdapter` (Invariant A positive proof) |
+| `IUiTreeAcquisitionPort` | `UiaTreeAcquisitionAdapter` (`Surveyor.Adapters.Uia`) | `AddSurveyorUiaAcquisition` | Singleton | **owns the dedicated MTA acquisition thread** ([DES-0014](des-0014-discovery-uia-msaa-acquisition-and-read-only-audit.md)); target-facing → seam stamps `IReadOnlyAuditedTargetAdapter` (Invariant A) |
 | `UiaTargetHandleRegistry` | `UiaTargetHandleRegistry` (`Surveyor.Adapters.Uia`) | `AddSurveyorUiaAcquisition` | Singleton | session-scoped opaque-handle registry |
-| `IScreenCapturePort` | capture adapter (`Surveyor.Adapters.Capture`) | `AddSurveyorCapture` | Singleton | owns the WGC device/frame-pool ([DES-0015](des-0015-capture-and-snapshot-correspondence.md)); one instance amortizes device warm-up |
+| `IScreenCapturePort` | capture adapter (`Surveyor.Adapters.Capture`) | `AddSurveyorCapture` | Singleton | owns the WGC device/frame-pool ([DES-0015](des-0015-capture-and-snapshot-correspondence.md)); target-facing → seam stamps `IReadOnlyAuditedTargetAdapter` (Invariant A) |
 | `IResultStorePort` | store adapter (`Surveyor.Adapters.Store`) | `AddSurveyorResultStore` | Singleton | stateless over `%LOCALAPPDATA%`; internal DPAPI/ACL/fs seams composed inside |
 | `IReportGenerationPort` | `DeterministicReportWriter` (`Surveyor.Reports`) | `AddSurveyorReports` | Singleton | stateless deterministic writer |
 | `SelectTargetUseCase` | `Surveyor.Application` | `AddSurveyorCore` | Transient | stateless orchestrator; transient avoids accidental cross-invocation state |
@@ -262,12 +265,15 @@ The complete v1 wiring. "Selection key" is the mechanism that chooses the provid
 
 Each invariant is stated as (a) what it forbids, (b) how `CompositionInvariants.Validate` detects the violation over `IServiceCollection`, and (c) the `UT-0013` counter-example that must go red. All four map to the [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md) `UT-0013` obligation and the `RQ-054`/`RQ-051`/`RQ-052` guardrails.
 
-### Invariant A: read-only adapters only
+### Invariant A: read-only adapters only (positive proof)
 
-- **Forbids**: registering any target-facing service other than the three sanctioned read-only ports, or a second implementation of one of them that is not the audited adapter.
-- **Basis, not re-litigated**: [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md#read-only-guardrail) already guarantees the application surface has *no* target-mutating method, and [DES-0014](des-0014-discovery-uia-msaa-acquisition-and-read-only-audit.md) proves the acquisition adapter's read-only behavior at the adapter seam (`UT-0005` spy). `M13`'s narrower job is that the *wiring* introduces no target-facing service outside that set.
-- **Detection**: the guard holds a canonical **read-only target-facing allowlist** `{ ITargetDiscoveryPort, IUiTreeAcquisitionPort, IScreenCapturePort }`. It asserts every registered `ServiceDescriptor` whose service type is target-facing is in the allowlist, and that no registration carries the `ITargetMutationCapability` marker (a marker interface defined only for the read-only audit and the counter-example fake; production adapters never implement it). Violation → `Composition.ReadOnly.ForbiddenTargetFacingService` Error.
-- **`UT-0013` counter-example**: register a fake `IUiTreeAcquisitionPort` that also implements `ITargetMutationCapability` (or register a fictitious `ITargetControlPort`) → `Validate` throws; removing it makes the suite green. This proves the guard discriminates, not just that a clean graph passes.
+- **Forbids**: registering a target-facing service outside the sanctioned set; registering an *unaudited* implementation under a sanctioned target-facing port; or registering more than one implementation for any target-facing port.
+- **Basis, not re-litigated**: [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md#read-only-guardrail) already guarantees the application surface has *no* target-mutating method, and [DES-0014](des-0014-discovery-uia-msaa-acquisition-and-read-only-audit.md) proves the acquisition adapter's read-only behavior at the adapter seam (`UT-0005` spy). `M13`'s job is to make the *wiring* prove — positively — that the resolved target-facing adapter is that audited one, so production can never resolve a non-audited adapter.
+- **Detection (positive check)**: the guard holds the canonical **target-facing port set** `{ ITargetDiscoveryPort, IUiTreeAcquisitionPort, IScreenCapturePort }`. For **each** port in that set it asserts:
+  1. **exactly one** registration exists (zero → `Composition.ReadOnly.MissingTargetAdapter`; more than one → `Composition.ReadOnly.DuplicateTargetAdapter` — this closes the silent second/replacement-registration gap);
+  2. that registration's implementation carries the `IReadOnlyAuditedTargetAdapter` marker (absent → `Composition.ReadOnly.UnauditedTargetAdapter`).
+  It also asserts no *other* registered service type is target-facing outside the set (`Composition.ReadOnly.ForbiddenTargetFacingService`). Because the default outcome for an unmarked or duplicate registration is **rejection**, a rogue or mistaken adapter no longer passes by merely failing to self-identify as mutating — it must positively present the audited marker and be the sole registration for its port.
+- **`UT-0013` counter-examples** (each confirmed red): (i) register an **unaudited** fake `IUiTreeAcquisitionPort` (no `IReadOnlyAuditedTargetAdapter`) → `Composition.ReadOnly.UnauditedTargetAdapter`; (ii) register **two** audited `IUiTreeAcquisitionPort` implementations → `Composition.ReadOnly.DuplicateTargetAdapter`; (iii) register a fictitious target-facing `ITargetControlPort` → `Composition.ReadOnly.ForbiddenTargetFacingService`; the valid composition (exactly one audited adapter per port) passes.
 
 ### Invariant B: single `IClock`
 
@@ -398,7 +404,9 @@ sequenceDiagram
 | No `IClock` registered | `Composition.Clock.Missing`; app does not start (a run with no clock would break `RQ-051`) |
 | Two `IConfidentialityPolicy` registrations | `Composition.Policy.Duplicate` (Invariant C); app does not start |
 | A real (non-test-double) clock in a test composition | `Composition.Clock.RealClockInTest` in `Test` mode (Invariant D, detected via the `ISurveyorCompositionTestDouble` marker — no concrete clock named); structurally prevented because core never registers a clock |
-| A target-facing service outside the read-only allowlist (or one tagged `ITargetMutationCapability`) | `Composition.ReadOnly.ForbiddenTargetFacingService` (Invariant A); app does not start |
+| An unaudited adapter registered under a target-facing port (no `IReadOnlyAuditedTargetAdapter`) | `Composition.ReadOnly.UnauditedTargetAdapter` (Invariant A positive proof); app does not start |
+| A second/replacement registration for a target-facing port | `Composition.ReadOnly.DuplicateTargetAdapter` (Invariant A); app does not start — the silent-replacement gap is closed |
+| A target-facing service type outside the sanctioned set | `Composition.ReadOnly.ForbiddenTargetFacingService` (Invariant A); app does not start |
 | An application port has no registration | `BuildServiceProvider(validateOnBuild: true)` (plus a required-port check in `Validate`) fails fast, naming the missing port type — never a null-injection at first run |
 | A singleton captures a transient/shorter-lived service (e.g. `ShellViewModel` holds a screen ViewModel) | prevented by the lifetime table (single source of truth) + `validateScopes: true`; screen ViewModels are reached via `INavigationService`, never injected into the shell singleton |
 | Adapter singleton owns an OS resource (UIA MTA thread, WGC device) | registered `Singleton` so the thread/device is created once; disposed exactly once at provider disposal ([DES-0014](des-0014-discovery-uia-msaa-acquisition-and-read-only-audit.md)/[DES-0015](des-0015-capture-and-snapshot-correspondence.md)) |
@@ -413,7 +421,7 @@ This package emits diagnostics only at **composition time**, before any target i
 ## Fixture Strategy
 
 - **Fake adapter registrations** live in `Surveyor.TestSupport` ([DES-0008](des-0008-project-structure-and-test-harness.md)) as the same port fakes `UT-0011`/`UT-0012` reuse, exposed through a `AddSurveyorFakeAdapters(IServiceCollection)` test seam so `UT-0013` composes `AddSurveyorCore` + fakes + `FakeClock` with no WinUI, no Windows, and no live target.
-- **Counter-example fixtures** are first-class: each invariant test has a paired "mis-wired" collection (duplicate clock, duplicate policy, real clock in test, forbidden target-facing service) that must throw. A green `UT-0013` is only credited after the counter-example is confirmed red (`R-QA-01`).
+- **Counter-example fixtures** are first-class: each invariant test has a paired "mis-wired" collection (duplicate clock, duplicate policy, real/unmarked clock in test, unaudited target adapter, duplicate target adapter, forbidden target-facing service) that must throw. The valid fixtures require the `Surveyor.TestSupport` read-only fakes to carry both `ISurveyorCompositionTestDouble` and `IReadOnlyAuditedTargetAdapter`; the read-only counter-example fakes deliberately omit the audited marker. A green `UT-0013` is only credited after the counter-example is confirmed red (`R-QA-01`).
 - No golden files; composition has no serialized output. The oracle is the thrown/absent `CompositionValidationException` and the resolved graph shape.
 
 ## Unit-Test Intent (`UT-0013`)
@@ -423,7 +431,7 @@ This package emits diagnostics only at **composition time**, before any target i
 | Behavior | Risk guarded | Fixture | Oracle | Counter-example (confirmed red) | Anti-pattern avoided |
 | -- | -- | -- | -- | -- | -- |
 | Valid core+fake composition builds and resolves the four use cases | wiring completeness (`RQ-054`) | `AddSurveyorCore` + fake adapters + `FakeClock` | `ServiceProvider` resolves each use case with all ports non-null | remove one adapter registration → resolve/validate fails naming the missing port | asserting `BuildServiceProvider()` merely does not throw, without resolving the graph |
-| Read-only-only (Invariant A) | a mutating/rogue target-facing adapter enters the graph (`RQ-048`) | valid composition + a fake `IUiTreeAcquisitionPort` tagged `ITargetMutationCapability` | `Validate` throws `Composition.ReadOnly.ForbiddenTargetFacingService` | remove the tag → passes | testing that the port "has no mutate method" (that is [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md)'s contract) instead of the wiring guard |
+| Read-only-only, positive proof (Invariant A) | an unaudited/rogue/duplicate target-facing adapter is resolved in production (`RQ-048`) | valid composition, then three mis-wirings: (i) unaudited fake acquisition adapter (no `IReadOnlyAuditedTargetAdapter`), (ii) two audited acquisition adapters, (iii) a fictitious `ITargetControlPort` | `Validate` throws `Composition.ReadOnly.UnauditedTargetAdapter` / `DuplicateTargetAdapter` / `ForbiddenTargetFacingService` respectively; the single-audited-adapter composition passes | relying on a rogue adapter to self-declare as mutating (negative check); testing the port's "no mutate method" contract (that is [DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md)'s job) instead of the wiring proof |
 | Single clock (Invariant B) | two clocks / nondeterministic time source (`RQ-051`) | valid composition + a second `IClock` | `Validate` throws `Composition.Clock.Duplicate` | single clock → passes | asserting a specific clock instance rather than the multiplicity |
 | Single policy (Invariant C) | two confidentiality policies (`RQ-052`) | valid composition + a second `IConfidentialityPolicy` | `Validate` throws `Composition.Policy.Duplicate` | single policy → passes | over-asserting policy identity |
 | No real clock in test (Invariant D) | a real clock leaks into a test/headless config (`RQ-051`) | `AddSurveyorCore` + fakes, `CompositionMode.Test` | the sole `IClock` impl carries `ISurveyorCompositionTestDouble`; adding a non-marked clock throws `Composition.Clock.RealClockInTest` | production mode with a real (unmarked) clock is valid | proving the fake works but never proving the real clock is excluded; naming a concrete clock type in the guard |
