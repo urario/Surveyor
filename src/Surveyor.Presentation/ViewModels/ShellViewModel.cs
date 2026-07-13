@@ -35,11 +35,16 @@ internal sealed class ShellViewModel
         IHtmlPreviewHost previewHost,
         Func<DateTimeOffset>? utcNow = null)
     {
-        this.analysisRunner = analysisRunner ?? throw new ArgumentNullException(nameof(analysisRunner));
-        this.reportRunner = reportRunner ?? throw new ArgumentNullException(nameof(reportRunner));
-        this.navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
-        this.dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        ArgumentNullException.ThrowIfNull(analysisRunner);
+        ArgumentNullException.ThrowIfNull(reportRunner);
+        ArgumentNullException.ThrowIfNull(navigationService);
+        ArgumentNullException.ThrowIfNull(dialogService);
         ArgumentNullException.ThrowIfNull(previewHost);
+
+        this.analysisRunner = analysisRunner;
+        this.reportRunner = reportRunner;
+        this.navigationService = navigationService;
+        this.dialogService = dialogService;
         reportExport = new ReportExportViewModel(this.dialogService, previewHost);
         this.utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
     }
@@ -69,7 +74,7 @@ internal sealed class ShellViewModel
     /// <summary>
     /// 読み取り専用姿勢の表示状態を取得します。
     /// </summary>
-    public static bool IsReadOnlyIndicatorVisible => true;
+    public bool IsReadOnlyIndicatorVisible { get; } = true;
 
     /// <summary>
     /// 対象を解決済みとして記録します。

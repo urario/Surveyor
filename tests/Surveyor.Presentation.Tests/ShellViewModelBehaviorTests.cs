@@ -37,6 +37,16 @@ public sealed class UT0011ShellViewModelBehaviorTests
     }
 
     [Fact]
+    public async Task RunThrowsWhenMetadataGateIsIncomplete()
+    {
+        ShellViewModel viewModel = CreateShell();
+        viewModel.ResolveTarget(PresentationTestData.Target());
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => viewModel.RunAsync(CancellationToken.None))
+            .ConfigureAwait(true);
+    }
+
+    [Fact]
     public async Task CompletedAndFailedRunsClearRecordedMetadataBeforeNextRun()
     {
         RecordingAnalysisRunner succeededAnalysis = new();
@@ -87,23 +97,29 @@ public sealed class UT0011ShellViewModelBehaviorTests
         ShellViewModel viewModel = CreateShell(analysis: analysis, dialogs: dialogs);
         viewModel.ResolveTarget(PresentationTestData.Target());
         viewModel.RecordMetadata(PresentationTestData.Metadata());
+        Assert.True(viewModel.IsReadOnlyIndicatorVisible);
 
         Task runTask = viewModel.RunAsync(CancellationToken.None);
+        Assert.True(viewModel.IsReadOnlyIndicatorVisible);
 
         analysis.CapturedProgress?.Report(new StageResult(RunStage.Scoring, OperationStatus.Ok, []));
         Assert.Equal(RunUiState.Analyzing, viewModel.RunState);
         Assert.Equal(RunActivityKind.AnalysisRun, viewModel.ActivityKind);
+        Assert.True(viewModel.IsReadOnlyIndicatorVisible);
 
         analysis.CapturedProgress?.Report(new StageResult(RunStage.Capture, OperationStatus.Ok, []));
         Assert.Equal(RunUiState.Capturing, viewModel.RunState);
         Assert.Equal(RunActivityKind.AnalysisRun, viewModel.ActivityKind);
+        Assert.True(viewModel.IsReadOnlyIndicatorVisible);
 
         analysis.CapturedProgress?.Report(new StageResult(RunStage.Store, OperationStatus.Ok, []));
         Assert.Equal(RunUiState.Exporting, viewModel.RunState);
         Assert.Equal(RunActivityKind.AnalysisRun, viewModel.ActivityKind);
+        Assert.True(viewModel.IsReadOnlyIndicatorVisible);
 
         dialogs.Script(DialogIntent.ConfirmRunCancel, DialogOutcome.Confirmed);
         await viewModel.CancelActiveCommandAsync(CancellationToken.None).ConfigureAwait(true);
+        Assert.True(viewModel.IsReadOnlyIndicatorVisible);
 
         Assert.True(analysis.CapturedCancellationToken.IsCancellationRequested);
         Assert.Contains(dialogs.Requests, request => request.Intent == DialogIntent.ConfirmRunCancel);
@@ -112,7 +128,16 @@ public sealed class UT0011ShellViewModelBehaviorTests
         await runTask.ConfigureAwait(true);
         Assert.Equal(RunUiState.Idle, viewModel.RunState);
         Assert.Equal(RunActivityKind.None, viewModel.ActivityKind);
-        Assert.True(ShellViewModel.IsReadOnlyIndicatorVisible);
+        Assert.True(viewModel.IsReadOnlyIndicatorVisible);
+    }
+
+    [Fact]
+    public async Task GenerateReportThrowsWithoutCompletedResult()
+    {
+        ShellViewModel viewModel = CreateShell();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => viewModel.GenerateReportAsync(@"C:\safe\report.html", CancellationToken.None))
+            .ConfigureAwait(true);
     }
 
     [Fact]
@@ -190,6 +215,28 @@ public sealed class UT0011ShellViewModelBehaviorTests
         await reportTask.ConfigureAwait(true);
 
         Assert.Equal(RunUiState.Completed, viewModel.RunState);
+    }
+
+    [Fact]
+    public async Task ClearedSessionOptOutReturnsNextReportToProtectedLocal()
+    {
+        RecordingReportRunner report = new();
+        RecordingDialogService dialogs = new();
+        ShellViewModel viewModel = CreateShell(report: report, dialogs: dialogs);
+        viewModel.LoadCompletedResult(PresentationTestData.Result());
+        dialogs.Script(DialogIntent.ConfirmConfidentialityOptOut, DialogOutcome.Confirmed);
+
+        bool confirmed = await viewModel.ConfirmLocalArtifactOptOutAsync("FixtureAuthoring", CancellationToken.None)
+            .ConfigureAwait(true);
+        viewModel.ClearLocalArtifactOptOut();
+        Task reportTask = viewModel.GenerateReportAsync(@"C:\safe\report.html", CancellationToken.None);
+
+        Assert.True(confirmed);
+        Assert.Equal(ConfidentialityMode.ProtectedLocal, report.CapturedRequest?.ConfidentialityRequest.RequestedMode);
+        Assert.Null(report.CapturedRequest?.ConfidentialityRequest.OptOut);
+
+        report.Complete(new ReportResult(OperationStatus.Ok, new RunId("run-001"), [], []));
+        await reportTask.ConfigureAwait(true);
     }
 
     [Fact]

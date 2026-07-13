@@ -29,8 +29,11 @@ internal sealed class ReportExportViewModel
     /// <param name="previewHost">HTML プレビュー host port です。</param>
     public ReportExportViewModel(IDialogService dialogService, IHtmlPreviewHost previewHost)
     {
-        this.dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
-        this.previewHost = previewHost ?? throw new ArgumentNullException(nameof(previewHost));
+        ArgumentNullException.ThrowIfNull(dialogService);
+        ArgumentNullException.ThrowIfNull(previewHost);
+
+        this.dialogService = dialogService;
+        this.previewHost = previewHost;
     }
 
     /// <summary>
