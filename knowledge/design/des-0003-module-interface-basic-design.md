@@ -4,7 +4,7 @@ title: DES-0003 Module Interface Basic Design
 description: Basic-design contracts for every Surveyor module boundary - ports and use cases - with direction, I/O, result/error model, cancellation, read-only/determinism/confidentiality constraints, fake strategy, open items, and RQ/RD/UT/IT trace.
 resource: ../../docs/gui-testability-analyzer-requirements.md
 tags: [basic-design, interfaces, ports, contracts, rq-048, rq-051, rq-052, rq-054]
-timestamp: 2026-07-01T00:00:00+09:00
+timestamp: 2026-07-14T00:00:00+09:00
 ---
 
 # DES-0003 Module Interface Basic Design
@@ -12,6 +12,8 @@ timestamp: 2026-07-01T00:00:00+09:00
 This artifact raises the port candidates in [DES-0001](../architecture/des-0001-initial-architecture.md) to basic-design contracts. Its purpose is to fix, at a review-grade granularity, the contract and responsibility boundary of every module interface so that detailed design, implementation, unit test, and integration test do not get lost. It fixes the **contract** (direction, I/O shape, result/error model, cancellation, guardrail obligations, fake strategy), not the internal implementation, algorithm, schema, or Windows-API sequence — those are detailed design.
 
 Module responsibilities are in [DES-0002](des-0002-module-responsibility-basic-design.md); run orchestration is in [DES-0004](des-0004-analysis-flow-basic-design.md); the V-model phase mapping and the planned `UT-xxxx`/`IT-xxxx` obligations referenced below are catalogued in [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md).
+
+> **Version note (2026-07-14, target-facing category closure, per DES-0007 §5.3):** the three Application-owned ports that inspect a live target (`ITargetDiscoveryPort`, `IUiTreeAcquisitionPort`, `IScreenCapturePort`) now inherit the Application-owned marker `ITargetFacingPort`. This adds no callable operation and changes no I/O contract; it gives `DES-0018` a mechanically enumerable category for the `RQ-048` read-only composition invariant. Adapter-internal HWND resolution remains outside the Application port surface and is owned by `DES-0014`.
 
 ## Trace Block
 
@@ -32,6 +34,7 @@ These conventions apply to every contract below unless a boundary states otherwi
 - **Cancellation/timeout.** All potentially long-running boundaries (`M05`–`M07`, `M10`, `M12`, and the use cases) are `async` and accept a `CancellationToken`. Each also has a per-operation timeout (concrete default values are detailed design; `RQ-050`/`RD-024`). A timeout produces a `Timeout` status (an expected result), while an external cancel produces `OperationCanceledException`.
 - **Determinism (`RQ-051`).** Output ordering is input-derived (structural traversal then key), never hash-iteration or arrival order. Timestamps come only from `IClock`. Scoring never crosses a port.
 - **Read-only (`RQ-048`).** No port exposes a mutation operation on the target. The absence of state-changing operations from the type surface is the primary enforcement; `M06` additionally must not call state-changing UIA patterns.
+- **Target-facing category (`RQ-048`, `RQ-054`).** `ITargetDiscoveryPort`, `IUiTreeAcquisitionPort`, and `IScreenCapturePort` inherit the methodless `ITargetFacingPort` marker. A future Application port that directly inspects a live target must inherit the marker and pass the `DES-0018` sanctioned-set review before registration; non-target ports must not inherit it.
 - **Confidentiality (`RQ-052`).** Images and extracted text are confidential by default. Nothing is emitted or persisted before passing through `IConfidentialityPolicy`. Raw sensitive text (window title, `Name`) never enters keys, paths, or machine-readable ids.
 - **WinUI/Core separation (`RQ-054`).** Application-owned ports and domain types carry no WinUI/UIA/capture/filesystem types in their signatures. Presentation ports (`INavigationService`/`IDialogService`/`IUiDispatcher`) are owned by presentation and implemented by WinUI; they never appear in application or domain signatures.
 
@@ -45,7 +48,7 @@ DTO names (`DiscoveryQuery`, `TargetCandidate`, `TargetRef`, `AcquisitionResult`
 
 | Aspect | Contract |
 | -- | -- |
-| Boundary / owner | Application-owned port; implemented by `M05` Target Discovery |
+| Boundary / owner | Application-owned `ITargetFacingPort`; implemented by `M05` Target Discovery |
 | Direction | `SelectTargetUseCase` (M03) → port; adapter → process/window API (outward) |
 | Purpose | Read-only enumeration of candidate windows/processes, `HWND` resolution, permission/integrity check for a target |
 | Input | `DiscoveryQuery` (scope hint: top-level windows vs process-scoped; optional filter) |
@@ -67,7 +70,7 @@ DTO names (`DiscoveryQuery`, `TargetCandidate`, `TargetRef`, `AcquisitionResult`
 
 | Aspect | Contract |
 | -- | -- |
-| Boundary / owner | Application-owned port; implemented by `M06` UIA/MSAA Acquisition |
+| Boundary / owner | Application-owned `ITargetFacingPort`; implemented by `M06` UIA/MSAA Acquisition |
 | Direction | `AnalyzeScreenUseCase` (M03) → port; adapter → UIA COM/library (outward) |
 | Purpose | Read a target window's UIA/MSAA tree into the element model with confidence and unavailable markers |
 | Input | `TargetRef` + acquisition options (element-count/time caps) |
@@ -89,7 +92,7 @@ DTO names (`DiscoveryQuery`, `TargetCandidate`, `TargetRef`, `AcquisitionResult`
 
 | Aspect | Contract |
 | -- | -- |
-| Boundary / owner | Application-owned port; implemented by `M07` Screen Capture |
+| Boundary / owner | Application-owned `ITargetFacingPort`; implemented by `M07` Screen Capture |
 | Direction | `AnalyzeScreenUseCase` (M03) → port; adapter → capture API (outward) |
 | Purpose | DPI-aware image capture of a window/region with metadata for offscreen/occluded/unavailable |
 | Input | `CaptureRequest` (target window / region of interest, bounds) |

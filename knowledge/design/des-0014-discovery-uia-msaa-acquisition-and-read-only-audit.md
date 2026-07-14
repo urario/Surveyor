@@ -13,7 +13,7 @@ This is detailed-design package 7 from [DES-0007](des-0007-detailed-design-execu
 
 Canonical requirements stay in [gui-testability-analyzer-requirements.md](../../docs/gui-testability-analyzer-requirements.md) (`RQ-xxx`) and derived requirements in [requirements-definition.md](../requirements/requirements-definition.md) (`RD-xxx`).
 
-> **Version note (2026-07-14, DES-0018 implementation handoff reconciliation):** discovery remains the single writer/owner of opaque target tokens and raw HWND entries, but the earlier "internal-only type never crosses an assembly" wording could not connect the separately deployed `Surveyor.Adapters.Discovery` and `Surveyor.Adapters.Uia` assemblies. The closed boundary is now an outward-only resolver contract owned by Discovery: UIA may resolve a selected opaque token to a raw handle through that contract, while Application/Domain still see only `TargetReference`. This deliberately permits `Surveyor.Adapters.Uia` → `Surveyor.Adapters.Discovery`; no inward project gains a Windows dependency.
+> **Version note (2026-07-14, per [DES-0007](des-0007-detailed-design-execution-strategy.md) §5.3, DES-0018 implementation handoff reconciliation):** discovery remains the single writer/owner of opaque target tokens and raw HWND entries, but the earlier "internal-only type never crosses an assembly" wording could not connect the separately deployed `Surveyor.Adapters.Discovery` and `Surveyor.Adapters.Uia` assemblies. The closed boundary is now a public, methodless `DiscoveryUiaBridge` carrier owned by Discovery; its raw writer/resolver/result members remain `internal` and are visible to the sole production friend `Surveyor.Adapters.Uia`. UIA may resolve a selected opaque token internally, while App/Application/Domain and every other adapter cannot name or invoke that capability and still see only `TargetReference`. This deliberately permits the one-way `Surveyor.Adapters.Uia` → `Surveyor.Adapters.Discovery` project edge and Discovery → UIA friend edge; no inward project gains a Windows dependency.
 
 ## Trace Block
 
@@ -23,9 +23,9 @@ Canonical requirements stay in [gui-testability-analyzer-requirements.md](../../
 | Upstream | [ADR-0002](../decisions/adr-0002-adapter-technology-selection.md) (UIA raw COM, capture, packaging, minimal-privilege); [DES-0002](des-0002-module-responsibility-basic-design.md) `M05`/`M06`; [DES-0003](des-0003-module-interface-basic-design.md) `ITargetDiscoveryPort`/`IUiTreeAcquisitionPort`; [DES-0004](des-0004-analysis-flow-basic-design.md) Stages 1/2; [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md) `UT-0003`/`UT-0004`/`UT-0005`/`IT-0001`/`IT-0002`/`IT-0005`/`IT-0006`; [DES-0007](des-0007-detailed-design-execution-strategy.md) package 7, `R-WIN-02`, `R-WIN-03`, `R-GTA-02`, `R-SEC-02`; [DES-0008](des-0008-project-structure-and-test-harness.md) project homes and banned-API guards; [DES-0009](des-0009-domain-model-stable-keys-and-availability.md) identity-source ladder (rung-1 detection delegated here), `Availability`/`AcquisitionConfidence` semantics, `IdentityMaterial` and `IFallbackKeyDerivation` seam; **[DES-0011](des-0011-port-dtos-status-model-and-use-case-orchestration.md) (binding, not merely referenced): `ITargetDiscoveryPort.ListTargetsAsync`/`ResolveAsync` and `IUiTreeAcquisitionPort.AcquireAsync` method signatures, `TargetReference`/`TargetCandidate`/`TargetDiscoveryResult`/`TargetResolveResult`/`AcquisitionResult`/`OperationStatus`/`RunDiagnostic` shapes, and `IStageTimeoutController`-owned stage timeout/cancellation precedence — this package fixes only the field detail DES-0011 left open and adapter-internal mechanics, and does not rename methods or redefine already-fixed DTOs** |
 | Requirements | `RQ-048`, `RQ-049`, `RQ-050`; `RQ-017`, `RQ-026`, `RQ-054`; derived `RD-001`, `RD-003`, `RD-004`, `RD-023`, `RD-024`, `RD-026`, `RD-032` |
 | Downstream | Design review issue #36; `UT-0003` issue #42; `UT-0004` issue #43; `UT-0005` issue #44; `IMP-0005` issue #63; `IMP-0006` issue #64; `IMP-0007` issue #65; `IMP-0013` issue #71; `IT-0001` issue #53; `IT-0002` issue #54; `IT-0005` issue #57; `IT-0006` (UIA cancellation/timeout on a large legacy tree, `R-WIN-02`; no issue tracked yet in this bundle); `DES-0015` (capture shares `TargetReference`/DPI context); `DES-0017` (perf caps calibration); `DES-0018` (adapter provider wiring) |
-| Evidence | Discovery/acquisition field detail conforming to the DES-0011-fixed port/DTO shapes, the adapter-internal `Win32TargetHandle` opaque-boundary mechanism, within-session ordering key, UIA apartment/threading model with COM-level timeout enforcement and cooperative cancellation, `RD-032` prohibited-pattern→COM-method audit mapping with a concrete read-only allow-list and spy, legacy acquisition edge table, virtualized-tree `NotRealized` handling, confidence rubric with a misclassification counter-example, rung-1 runtime-id detection rules, minimal-privilege policy, Mermaid class/sequence diagrams, contract-closure tables, edge cases, fixture strategy with counter-examples, `UT-0003`/`UT-0004`/`UT-0005` intents, integration assumptions |
+| Evidence | Discovery/acquisition field detail conforming to the DES-0011-fixed port/DTO shapes, the Discovery-owned methodless bridge plus internal `Win32TargetHandle` registry/resolver boundary, within-session ordering key, UIA apartment/threading model with COM-level timeout enforcement and cooperative cancellation, `RD-032` prohibited-pattern→COM-method audit mapping with a concrete read-only allow-list and spy, raw-handle diagnostic-leak counter-example, legacy acquisition edge table, virtualized-tree `NotRealized` handling, confidence rubric with a misclassification counter-example, rung-1 runtime-id detection rules, minimal-privilege policy, Mermaid class/sequence diagrams, contract-closure tables, edge cases, fixture strategy with counter-examples, `UT-0003`/`UT-0004`/`UT-0005` intents, integration assumptions |
 | Verification | `tools/okf/Validate-Okf.ps1`; `git diff --check`; author-side `DRP-01`–`DRP-10` + DES-0007 §9 self-review (below), re-swept after the `R-ARC-01` boundary-reshaping fix; future `dotnet test tests/Surveyor.Adapters.Discovery.Tests --filter UT0003`, `dotnet test tests/Surveyor.Adapters.Uia.Tests --filter "UT0004|UT0005"` once source exists; live `IT-0001`/`IT-0002`/`IT-0005`/`IT-0006` on the manual Windows gate |
-| Residual Risk | `RSK-RD-001` closes for UIA client selection but live legacy-edge coverage stays incremental (`DES-0015` capture edges + IT fixture app built out over time); rung-1 runtime-id pattern set is versioned and may need tuning against real frameworks; `WM_GETTEXT` is a documented read-only exception (query message, no state change) carried as a named risk with both reactive and proactive mitigation; cross-run `TargetReference.SessionTargetId` identity is within-session only by design; the read-only guarantee is defense-in-depth (structural + build-time + test-time) but not a cryptographic proof against a determined caller using unsafe interop against the raw COM objects the wrapper never exposes |
+| Residual Risk | `RSK-RD-001` closes for UIA client selection but live legacy-edge coverage stays incremental (`DES-0015` capture edges + IT fixture app built out over time); rung-1 runtime-id pattern set is versioned and may need tuning against real frameworks; `WM_GETTEXT` is a documented read-only exception (query message, no state change) carried as a named risk with both reactive and proactive mitigation; cross-run `TargetReference.SessionTargetId` identity is within-session only by design; the read-only guarantee is defense-in-depth (structural + build-time + test-time) but not a cryptographic proof against a determined caller using unsafe interop against the raw COM objects the wrapper never exposes; the narrow production friend edge is mechanically allowlisted but remains assembly coupling; the historical UIA-owned registry remains source debt until prerequisite `IMP-0018` #113 completes |
 
 ## Module Coverage
 
@@ -40,7 +40,7 @@ Not covered here: capture/DPI (`M07` → `DES-0015`); scoring of the acquired mo
 
 In scope:
 
-1. Discovery DTO field detail not already fixed by `DES-0011` (`DiscoveryQuery`, `TargetProcessInfo`, `TargetIntegrityHint`), the adapter-internal `Win32TargetHandle` mechanism behind the `DES-0011`-fixed `TargetReference`, and the within-session ordering key (`RQ-051` scoped to live selection, not report determinism).
+1. Discovery DTO field detail not already fixed by `DES-0011` (`DiscoveryQuery`, `TargetProcessInfo`, `TargetIntegrityHint`), the Discovery-owned methodless bridge and internal `Win32TargetHandle` registry/resolver mechanism behind the `DES-0011`-fixed `TargetReference`, and the within-session ordering key (`RQ-051` scoped to live selection, not report determinism).
 2. UIA client concretization on ADR-0002's raw COM, the thin Surveyor-owned wrapper boundary, and the MSAA / `WM_GETTEXT` fallback rules.
 3. UIA apartment/threading model, cooperative cancellation, a COM-level per-call timeout budget, and the reentrancy/thread-abandon fallback (`R-WIN-01`, `R-WIN-02`, `R-WIN-03`, `RQ-050`).
 4. The `RD-032` prohibited-pattern read-only audit: pattern→COM-method mapping, banned-API enforcement, and the acquisition spy (`RQ-048`, `UT-0005`).
@@ -79,9 +79,11 @@ Non-goals (owned elsewhere):
 - `TargetProcessInfo` (field detail not fixed elsewhere, referenced by `TargetCandidate.Process`) — `string ProcessImageName` (file name only, non-sensitive), `int ProcessId` (diagnostics-lane only, never key material).
 - `TargetCandidate` (`DES-0011`, consumed as-is) — `TargetReference Reference`, `string SafeName`, `TargetProcessInfo Process`, `bool IsLikelyLegacyGui`, `OperationStatus Status`, `IReadOnlyList<RunDiagnostic> Diagnostics`. Single writer: the discovery adapter. `Status` is the `DES-0011` `OperationStatus` value directly (`Ok`, `Unavailable`, `PermissionDenied`, `IntegrityMismatch`, `Timeout`); this package does not define a parallel discovery-only status enum.
 
-**Outward-only handle registry (closes `R-ARC-02`).** Inside `Surveyor.Adapters.Discovery`, each live candidate is tracked by one session registry keyed by an adapter-minted opaque token; `TargetReference.SessionTargetId` **is** that token (for example `"tgt-" + <session-scoped ulong counter>` — no title, path, or `HWND` bits encoded). Discovery owns the writer interface `IWindowTargetHandleRegistry`; UIA consumes the read-only `IWindowTargetHandleResolver`. `TryResolve(TargetReference, out ResolvedWindowTarget)` returns `ResolvedWindowTarget(nint WindowHandle, string ProcessImageName)` only across the outward Discovery→UIA adapter boundary. The contract and result type are public solely because they cross those two outer assemblies; Application/Domain cannot reference them, and no inward-facing method accepts or returns them. The registry remains the only writer and UIA receives no enumeration/mutation method.
+**Discovery-owned handle bridge (`RQ-054`, `RD-025` boundary closure).** Inside `Surveyor.Adapters.Discovery`, each live candidate is tracked by one session registry keyed by an adapter-minted opaque token; `TargetReference.SessionTargetId` **is** that token (for example `"tgt-" + <session-scoped ulong counter>` — no title, path, or `HWND` bits encoded). The only public cross-assembly carrier is `DiscoveryUiaBridge`, a sealed type with **no public raw-handle method or property**. The writer interface `IWindowTargetHandleRegistry`, read-only `IWindowTargetHandleResolver`, result `ResolvedWindowTarget`, their members, and `Win32TargetHandle` are `internal` to Discovery. `Surveyor.Adapters.Discovery` grants its sole production `InternalsVisibleTo` to `Surveyor.Adapters.Uia`, so only the UIA adapter can invoke `TryResolve(TargetReference, out ResolvedWindowTarget)`; App/Application/Domain, Presentation/Reports/Policy, Capture/Store, and external callers cannot compile a raw-resolution call. The registry remains the only writer and UIA receives no enumeration/mutation method.
 
-`AddSurveyorDiscovery` registers one singleton implementation for both `IWindowTargetHandleRegistry` and `IWindowTargetHandleResolver`; `AddSurveyorUiaAcquisition` consumes that same resolver. The required project dependency is `Surveyor.Adapters.Uia` → `Surveyor.Adapters.Discovery`. The reverse dependency is forbidden, preventing a cycle. Registry tokens are session-only and the resolver never persists or logs raw handles.
+`AddSurveyorDiscovery` creates one `DiscoveryUiaBridge` singleton containing one internal `WindowTargetHandleRegistry` core. The internal core implements the internal writer/resolver interfaces; the public bridge itself does **not** implement a less-accessible interface (avoiding an inconsistent-accessibility API) and only delegates through internal `Register`/`TryResolve` members. Discovery calls the writer delegate, and `AddSurveyorUiaAcquisition` receives the same bridge instance and calls the friend-visible resolver delegate. The raw interfaces/core/result are **not DI service types**, so `SurveyorHost` cannot resolve them as a bypass around Invariant A. The required project dependency is `Surveyor.Adapters.Uia` → `Surveyor.Adapters.Discovery`; the reverse dependency and every other adapter→Discovery edge are forbidden. Architecture tests also require Discovery→UIA to be the only production friend, reject a public raw registry/resolver/result surface, and scan metadata type/member references from App/Application/Domain/Presentation/Reports/Policy/Capture/Store so the already-permitted App→Discovery assembly reference cannot hide a raw-member bypass.
+
+The current source predates this closure: `src/Surveyor.Adapters.Uia/UiaTargetHandleRegistry.cs` owns token minting (`uia-target-`) and the raw table under UIA. That historical `IMP-0013` implementation is migrated by `IMP-0018` #113 before `IMP-0015` #73 production composition; #113 may proceed in parallel with headless `UT-0013` #52, and both must complete before #73. The migration is not silently absorbed into #73. Registry tokens are session-only, and neither bridge role persists or logs raw handles.
 
 **Within-session ordering key** (`RQ-051`, live-selection scope): before returning `TargetDiscoveryResult.Candidates` (which `DES-0011` requires the producer to pre-sort), the discovery adapter orders candidates by the ordinal tuple `(ProcessImageName, WindowClass, WithinSessionOrdinal)`, where `WithinSessionOrdinal` is the ascending index in the deterministic top-level enumeration of that (process, class) group. Raw `HWND` and z-order are never ordering inputs, and `WithinSessionOrdinal` itself never leaves the adapter (`Win32TargetHandle`-only). This ordering is *not* report/`ScreenKey` material — report determinism is owned by `M04` keys (`DES-0009`).
 
@@ -121,8 +123,9 @@ Rationale: a too-permissive rung-1 rule silently destabilizes keys across runs (
 | -- | -- | -- |
 | `ITargetDiscoveryPort.ListTargetsAsync(DiscoveryQuery, ct)` | `DiscoveryQuery` = caller (`SelectTargetUseCase`) input; window/process facts = outward OS enumeration | `TargetDiscoveryResult.Candidates` → `SelectTargetUseCase` for user choice; each candidate's `TargetReference` → `ResolveAsync` |
 | `ITargetDiscoveryPort.ResolveAsync(TargetReference, ct)` | `TargetReference` = a candidate chosen by the caller; `SessionTargetId` resolves via the Discovery-owned registry | `TargetResolveResult.Target` (+ status) → `AnalyzeScreenUseCase` as Stage-2 input |
-| `IWindowTargetHandleResolver.TryResolve(TargetReference, out ResolvedWindowTarget)` | selected opaque reference from Stage 1; table owned by Discovery | outward-only raw handle/process image → `UiaTreeAcquisitionAdapter`; never an inward DTO |
-| `IUiTreeAcquisitionPort.AcquireAsync(TargetReference, AcquisitionOptions, ct)` | `TargetReference` = Stage-1 output and is resolved through `IWindowTargetHandleResolver`; `AcquisitionOptions` caps = caller input; tree facts = outward UIA/MSAA reads; fallback token = `IFallbackKeyDerivation` (`M09`) | `AcquisitionResult` → `AnalyzeScreenUseCase` → `M08` scoring (`ScreenModel`) and `DES-0011` diagnostics (status/provenance via `SafeArgs`) |
+| internal `IWindowTargetHandleRegistry.Register` | raw window facts from Discovery enumeration; methodless `DiscoveryUiaBridge` instance owned by Discovery | opaque `TargetReference` plus internal registry entry → selection/resolve and later friend-only UIA lookup |
+| internal `IWindowTargetHandleResolver.TryResolve(TargetReference, out ResolvedWindowTarget)` | selected opaque reference from Stage 1; table owned by Discovery; callable only from Discovery and production friend UIA | raw handle/process image → `UiaTreeAcquisitionAdapter`; never a public, DI-resolvable, or inward DTO |
+| `IUiTreeAcquisitionPort.AcquireAsync(TargetReference, AcquisitionOptions, ct)` | `TargetReference` = Stage-1 output and is resolved through the bridge's friend-visible resolver role; `AcquisitionOptions` caps = caller input; tree facts = outward UIA/MSAA reads; fallback token = `IFallbackKeyDerivation` (`M09`) | `AcquisitionResult` → `AnalyzeScreenUseCase` → `M08` scoring (`ScreenModel`) and `DES-0011` diagnostics (status/provenance via `SafeArgs`) |
 
 Every input is derivable from caller input, a prior-stage output, or an outward read through a defined contract; every output has a named inward consumer. No inward method needs a value it cannot obtain (guards `DRP-03`).
 
@@ -132,7 +135,7 @@ Every input is derivable from caller input, a prior-stage output, or an outward 
 | -- | -- | -- | -- |
 | `TargetCandidate.Status` | discovery adapter | during enumeration | consumers never fabricate a status; `OperationStatus.Unavailable`/other non-`Ok` values are explicit, never silently upgraded |
 | `TargetReference.SessionTargetId` | discovery adapter | at candidate creation | opaque adapter-minted token; the raw entry crosses only the outward resolver boundary to UIA, is never persisted, logged, or key material |
-| `ResolvedWindowTarget` | Discovery registry | on UIA resolver call | outward adapter value only; UIA consumes it immediately and never copies it to Application/Domain models or diagnostics |
+| internal `ResolvedWindowTarget` | Discovery bridge | on friend-only UIA resolver call | UIA consumes it immediately; it is not public, not container-resolvable, and never copied to Application/Domain models or diagnostics |
 | `Win32TargetHandle.WithinSessionOrdinal` | discovery adapter | at candidate creation | adapter-internal ordering only; never inward, never report/`ScreenKey` input |
 | `UiElement.Availability` / `.Confidence` | acquisition adapter | during node read | per rubric/legacy table; `Unavailable` never rewritten to a score by consumers |
 | `AcquisitionResult.Status` / `.HitElementCap` | acquisition adapter | at run completion | recorded, never converted to a score (`DES-0004` Stage 2) |
@@ -143,7 +146,7 @@ Every input is derivable from caller input, a prior-stage output, or an outward 
 ### Round-trip inventory
 
 - **Fixture tree ⇄ model**: the UT fixture serializer and `IUiTreeAcquisitionPort` fake read the same `.tree` schema into the same `ScreenModel`/`UiElement` types the live adapter produces — symmetric types, so a fixture-passing test exercises the real model shape (shared with `DES-0009` `IMP-0001` reader).
-- **`TargetReference` opaque projection**: outward (`ResolvedWindowTarget`, including HWND/process image) vs inward (`TargetReference.SessionTargetId` opaque token plus optional `SafeDisplayHint`) are distinct types. The only raw direction is Discovery resolver → UIA consumer; there is no raw-handle field or conversion in Application/Domain.
+- **`TargetReference` opaque projection**: outward (internal `ResolvedWindowTarget`, including HWND/process image) vs inward (`TargetReference.SessionTargetId` opaque token plus optional `SafeDisplayHint`) are distinct types. The only raw direction is the Discovery bridge's friend-visible resolver → UIA consumer; there is no public raw method, DI service, raw-handle field, or conversion in App/Application/Domain or any other adapter.
 - No persistence round-trip is introduced here (store/export symmetry is `DES-0013`).
 
 ## UIA Threading And Apartment Model (`R-WIN-01`, `R-WIN-02`, `R-WIN-03`, `RQ-050`)
@@ -258,6 +261,27 @@ classDiagram
       +string WindowClass
       +int WithinSessionOrdinal
     }
+    class DiscoveryUiaBridge {
+      <<public sealed carrier; no public raw members>>
+      -Register(Win32TargetHandle) TargetReference
+      -TryResolve(TargetReference, out ResolvedWindowTarget) bool
+    }
+    class IWindowTargetHandleRegistry {
+      <<internal, Surveyor.Adapters.Discovery>>
+      +Register(Win32TargetHandle) TargetReference
+    }
+    class IWindowTargetHandleResolver {
+      <<internal; friend-visible only to Surveyor.Adapters.Uia>>
+      +TryResolve(TargetReference, out ResolvedWindowTarget) bool
+    }
+    class WindowTargetHandleRegistry {
+      <<internal registry core>>
+    }
+    class ResolvedWindowTarget {
+      <<internal, friend-visible result>>
+      +nint WindowHandle
+      +string ProcessImageName
+    }
     class UiaTreeAcquisitionAdapter {
       <<Surveyor.Adapters.Uia / M06>>
       -RunOnMtaThread(work)
@@ -280,8 +304,14 @@ classDiagram
       +DeriveFallbackToken(scope, rawText) IdentityMaterial
     }
     ITargetDiscoveryPort <|.. Win32WindowDiscoveryAdapter
-    Win32WindowDiscoveryAdapter --> Win32TargetHandle
+    Win32WindowDiscoveryAdapter --> DiscoveryUiaBridge : internal Register delegate
+    DiscoveryUiaBridge *-- WindowTargetHandleRegistry : contains
+    IWindowTargetHandleRegistry <|.. WindowTargetHandleRegistry
+    IWindowTargetHandleResolver <|.. WindowTargetHandleRegistry
+    DiscoveryUiaBridge *-- Win32TargetHandle
+    IWindowTargetHandleResolver ..> ResolvedWindowTarget
     IUiTreeAcquisitionPort <|.. UiaTreeAcquisitionAdapter
+    UiaTreeAcquisitionAdapter --> DiscoveryUiaBridge : friend-visible TryResolve delegate
     IUiaComReader <|.. RawComUiaClient
     UiaTreeAcquisitionAdapter --> IUiaComReader
     UiaTreeAcquisitionAdapter ..> IFallbackKeyDerivation : rung-3 only
@@ -294,22 +324,30 @@ sequenceDiagram
     participant UC as AnalyzeScreenUseCase
     participant STC as IStageTimeoutController
     participant ACQ as UiaTreeAcquisitionAdapter (MTA)
+    participant Bridge as DiscoveryUiaBridge
     participant COM as IUiaComReader
     participant M09 as IFallbackKeyDerivation
     UC->>STC: RunAsync(TreeAcquisition, AcquisitionTimeout, AcquireAsync, callerToken)
     STC->>ACQ: AcquireAsync(TargetReference, options, ct)
-    ACQ->>ACQ: dispatch to MTA acquisition thread
-    loop per node (fixed traversal order)
-        ACQ->>ACQ: ct.ThrowIfCancellationRequested()
-        ACQ->>COM: read properties/patterns (COM-level ConnectionTimeout/TransactionTimeout bounds the call itself)
-        COM-->>ACQ: role, name?, bounds?, patterns
-        alt no non-sensitive identity
-            ACQ->>M09: DeriveFallbackToken("elm", rawName)
-            M09-->>ACQ: IdentityMaterial (IsFallback)
+    ACQ->>Bridge: TryResolve(TargetReference) [internal friend call]
+    alt unresolved or stale token
+        Bridge-->>ACQ: false (no raw value)
+        ACQ-->>STC: AcquisitionResult(Unavailable, sanitized diagnostic)
+    else resolved
+        Bridge-->>ACQ: ResolvedWindowTarget [internal]
+        ACQ->>ACQ: dispatch to MTA acquisition thread
+        loop per node (fixed traversal order)
+            ACQ->>ACQ: ct.ThrowIfCancellationRequested()
+            ACQ->>COM: read properties/patterns (COM-level ConnectionTimeout/TransactionTimeout bounds the call itself)
+            COM-->>ACQ: role, name?, bounds?, patterns
+            alt no non-sensitive identity
+                ACQ->>M09: DeriveFallbackToken("elm", rawName)
+                M09-->>ACQ: IdentityMaterial (IsFallback)
+            end
+            ACQ->>ACQ: assign Availability + Confidence + provenance (SafeArgs only)
         end
-        ACQ->>ACQ: assign Availability + Confidence + provenance (SafeArgs only)
+        ACQ-->>STC: AcquisitionResult(ScreenModel, Status, ElementCount, HitElementCap, Diagnostics)
     end
-    ACQ-->>STC: AcquisitionResult(ScreenModel, Status, ElementCount, HitElementCap, Diagnostics)
     STC-->>UC: StageCallResult(Value, TimedOut, CancelledByCaller, Diagnostics) per DES-0011 race rule
 ```
 
@@ -329,13 +367,13 @@ sequenceDiagram
 
 ## Diagnostics And Logging
 
-This package **emits** run-level diagnostics as `DES-0011`-owned `RunDiagnostic` entries (`Code`, `Stage = TreeAcquisition`/`TargetDiscovery`, `Severity`, `Status`, `ScreenKey?`/`ElementKey?`, `MessageTemplateId`, `SafeArgs`): counts of nodes by provenance/confidence, cap/timeout hits, per-subtree `Unavailable` reasons, and the `runtime-id-rules` version applied. **Sanitizer call-site (`R-SEC-02`)**: `Win32WindowDiscoveryAdapter`/`UiaTreeAcquisitionAdapter` never call `ISensitiveValueSanitizer`/`DES-0013`'s sanitizer directly and never need to — every `RunDiagnostic.SafeArgs` value this package writes is already restricted, by construction, to the `DES-0011`-fixed allow-listed shape (enum names, counts, durations in milliseconds, config/`runtime-id-rules` versions, and stable keys already non-reversible); raw window title, `Name`, or path are never assigned to a diagnostic field in the first place, so there is nothing for a sanitizer to intercept at this layer. Sanitizing the *emitted* `DisplayLabel`/report content for the end user remains `DES-0013`'s Stage-5 job, downstream of this package; `UT-0004`/`UT-0005` assert that every `SafeArgs` value produced by this adapter matches the allow-listed shape (regex/enum-membership check), so an accidental raw-text diagnostic fails a test rather than only a code review. COM `HRESULT`s map to modeled statuses; raw fault text is never surfaced to logs or exceptions crossing inward.
+This package **emits** run-level diagnostics as `DES-0011`-owned `RunDiagnostic` entries (`Code`, `Stage = TreeAcquisition`/`TargetDiscovery`, `Severity`, `Status`, `ScreenKey?`/`ElementKey?`, `MessageTemplateId`, `SafeArgs`): counts of nodes by provenance/confidence, cap/timeout hits, per-subtree `Unavailable` reasons, and the `runtime-id-rules` version applied. **Sanitizer call-site (`R-SEC-02`)**: `Win32WindowDiscoveryAdapter`/`UiaTreeAcquisitionAdapter` never call `ISensitiveValueSanitizer`/`DES-0013`'s sanitizer directly and never need to — every `RunDiagnostic.SafeArgs` value this package writes is already restricted, by construction, to the `DES-0011`-fixed allow-listed shape (enum names, counts, durations in milliseconds, config/`runtime-id-rules` versions, and stable keys already non-reversible). Raw window title, `Name`, path, and the raw `HWND` in **both decimal and hexadecimal form** are prohibited from every diagnostic/log field; unresolved-target diagnostics carry only a stable reason code and opaque-token validity class, never the token value or handle. Sanitizing the *emitted* `DisplayLabel`/report content for the end user remains `DES-0013`'s Stage-5 job, downstream of this package; `UT-0004`/`UT-0005` assert that every `SafeArgs` value produced by this adapter matches the allow-listed shape and that a seeded raw handle's decimal/hex representations are absent, so accidental raw data fails a test rather than only a code review. COM `HRESULT`s map to modeled statuses; raw fault text is never surfaced to logs or exceptions crossing inward.
 
 ## Fixture Strategy
 
 - **UT (synthetic, deterministic)** under `tests/fixtures/uia-trees/` (schema shared with `DES-0009` `IMP-0001`): trees seeded with each `IdentitySource` rung, `Unavailable` reasons, virtualized placeholders, MSAA-proxy/owner-draw/`WM_GETTEXT` provenance markers, and duplicate ids.
 - **Fake `IUiaComReader`** (`R-TEST-01`/`R-TEST-02`): a test double implementing the seam interface with a configurable per-call delay and an explicit cancellation-injection point, so `UT-0004`/a dedicated cancel-vs-timeout test can deterministically drive "cancel fires mid-node-read," "COM-level timeout fires mid-node-read," and "cap reached before either" without a real Windows target or real-time sleeps — mirroring the `IStageTimeoutController` fake pattern DES-0011 already uses for `UT-0012`. This same fake is the substitution point for `UT-0004`/`UT-0005`, so tests exercise `UiaTreeAcquisitionAdapter`'s real rung-selection/confidence logic (not a re-implementation of it) against controlled reader behavior.
-- **Counter-example fixtures** (per behavior, `R-QA-01`): (a) a mutating fake UIA provider that calls a prohibited pattern → must turn the `UT-0005` spy red; (b) a fixture whose AutomationId is runtime-generated but *incorrectly* accepted as rung-1 → must turn a key-stability test red; (c) a virtualized subtree mislabeled `NotExposed` instead of `NotRealized` → must fail the availability-distinction test; (d) discovery candidates in scrambled order → must fail the within-session ordering test; (e) a node with rung-1/2 identity and `UiaNative` provenance but a missing required property (no bounds) *incorrectly* classified `High` → must fail the confidence-rubric-ordering test (`R-TEST-03`).
+- **Counter-example fixtures** (per behavior, `R-QA-01`): (a) a mutating fake UIA provider that calls a prohibited pattern → must turn the `UT-0005` spy red; (b) a fixture whose AutomationId is runtime-generated but *incorrectly* accepted as rung-1 → must turn a key-stability test red; (c) a virtualized subtree mislabeled `NotExposed` instead of `NotRealized` → must fail the availability-distinction test; (d) discovery candidates in scrambled order → must fail the within-session ordering test; (e) a node with rung-1/2 identity and `UiaNative` provenance but a missing required property (no bounds) *incorrectly* classified `High` → must fail the confidence-rubric-ordering test (`R-TEST-03`); (f) a seeded raw handle whose decimal or hexadecimal representation is copied into `RunDiagnostic.SafeArgs`/log output → must fail the raw-handle absence oracle.
 - **IT (real, incremental)**: the mixed IT fixture app (`DES-0008` `Surveyor.ITFixture.Win32` / `Surveyor.ITFixture.WinForms`) supplies authentic legacy edges (owner-draw, MSAA-only, MDI, windowless, `WM_GETTEXT`); built out incrementally as `DES-0015` and real targets land. The same app hosts a deliberately unresponsive control for `IT-0006` cancellation/timeout response-time verification.
 
 ## Unit-Test Intent
@@ -344,7 +382,7 @@ This package **emits** run-level diagnostics as `DES-0011`-owned `RunDiagnostic`
 | -- | -- | -- | -- | -- |
 | `UT-0003` | Discovery candidate ordering and status mapping are stable and honest | Seeded candidates (incl. `PermissionDenied`/`IntegrityMismatch`) return the fixed within-session order and modeled statuses; raw `HWND`/z-order do not affect order | Mocking the adapter to echo one DTO and asserting it returned | scrambled-input order must fail |
 | `UT-0004` | Acquisition fixture → model with confidence/unavailable/provenance markers, over the `IUiaComReader` fake | Fixture with missing ids, virtualized nodes, MSAA/owner-draw yields the expected `UiElement` states, rung selection, `NotRealized` vs `NotExposed`, and confidence tiers; a fake-reader delay + cancellation-injection scenario asserts cancel-vs-COM-timeout-vs-cap precedence (`R-TEST-01`) | Testing only the happy path where every UIA field is present; faking at a level that bypasses `UiaTreeAcquisitionAdapter`'s own rung/confidence logic (`R-TEST-02`) | virtualized-as-`NotExposed` fixture must fail; rubric-misorder fixture (e) must fail |
-| `UT-0005` | Read-only enforcement at the adapter seam | Spy over a full acquisition asserts the invoked COM method set is a subset of the concrete allow-list in [Read-Only Audit](#read-only-audit-rq-048-rd-032-ut-0005); any state-changing pattern, bare `SendMessage`, or `WM_SETTEXT` fails; every emitted `RunDiagnostic.SafeArgs` value matches the allow-listed shape (`R-SEC-02`) | Merely checking the port type has no mutation method | mutating fake provider must turn the spy red |
+| `UT-0005` | Read-only enforcement and raw-target confidentiality at the adapter seam | Spy over a full acquisition asserts the invoked COM method set is a subset of the concrete allow-list in [Read-Only Audit](#read-only-audit-rq-048-rd-032-ut-0005); any state-changing pattern, bare `SendMessage`, or `WM_SETTEXT` fails; every emitted `RunDiagnostic.SafeArgs` value matches the allow-listed shape and excludes a seeded raw handle's decimal/hex forms (`R-SEC-02`, `RQ-052`) | Merely checking the port type has no mutation method or checking only window-title leakage | mutating fake provider and raw-handle diagnostic fixture (f) must each turn the intended oracle red |
 
 ## Integration Assumptions
 
@@ -357,29 +395,29 @@ This package **emits** run-level diagnostics as `DES-0011`-owned `RunDiagnostic`
 
 - **Candidate project area**: `Surveyor.Adapters.Discovery` (`M05`), `Surveyor.Adapters.Uia` (`M06`, thin raw-COM wrapper behind the `IUiaComReader` seam), ports already in `Surveyor.Application.Ports`; tests in `Surveyor.Adapters.Discovery.Tests` / `Surveyor.Adapters.Uia.Tests`; fixtures under `tests/fixtures/uia-trees/`; live edges in `tests/it-fixtures/*`.
 - **First failing tests**: `UT-0003` "discovery returns the fixed within-session order with modeled statuses"; `UT-0005` "acquisition invokes no state-changing UIA pattern" (spy, asserted against the concrete allow-list) — both written red before adapter code.
-- **Implementation slices**: `IMP-0005` (discovery port + fake, #63), `IMP-0006` (acquisition port + fixture loader over the shared model, plus the `IUiaComReader` fake, #64), `IMP-0007` (read-only spy audit + banned-API extension, #65), then `IMP-0013` (real raw-COM UIA adapter implementing `IUiaComReader` with `ConnectionTimeout`/`TransactionTimeout` wired, #71) on the live gate.
+- **Implementation slices**: `IMP-0005` (discovery port + fake, #63), `IMP-0006` (acquisition port + fixture loader over the shared model, plus the `IUiaComReader` fake, #64), `IMP-0007` (read-only spy audit + banned-API extension, #65), then historical `IMP-0013` (real raw-COM UIA adapter implementing `IUiaComReader`, #71). `IMP-0018` (#113) migrates the UIA-owned registry/token minting to the Discovery-owned methodless bridge and supplies the architecture/raw-diagnostic counter-examples in parallel with headless `UT-0013` #52; both are prerequisites to `IMP-0015` #73 production wiring.
 - **Verification command**: `dotnet test tests/Surveyor.Adapters.Discovery.Tests`, `dotnet test tests/Surveyor.Adapters.Uia.Tests`, plus the `Surveyor.Architecture.Tests` banned-API check; `IT-0001`/`IT-0002`/`IT-0005`/`IT-0006` on the manual Windows gate.
-- **Minimal context bundle** for the implementing agent: this package's [Data And Contract Design](#data-and-contract-design), [UIA Threading And Apartment Model](#uia-threading-and-apartment-model-r-win-01-r-win-02-r-win-03-rq-050), [Read-Only Audit](#read-only-audit-rq-048-rd-032-ut-0005), [Legacy Acquisition Edge Table](#legacy-acquisition-edge-table-r-win-03), and [Confidence Rubric](#acquisition-confidence-rubric); `RQ-048`/`RQ-049`/`RQ-050` from the requirement source; `DES-0009` identity ladder and `Availability`/`AcquisitionConfidence` types; `DES-0011`'s fixed `TargetReference`/`TargetCandidate`/`AcquisitionResult`/`OperationStatus`/`IStageTimeoutController`; ADR-0002 §Decision; the `IUiTreeAcquisitionPort`/`ITargetDiscoveryPort` rows of `DES-0003`. Reading `DES-0001`/`DES-0004` in full is not required.
+- **Minimal context bundle** for the implementing agent: this package's [Data And Contract Design](#data-and-contract-design), [UIA Threading And Apartment Model](#uia-threading-and-apartment-model-r-win-01-r-win-02-r-win-03-rq-050), [Read-Only Audit](#read-only-audit-rq-048-rd-032-ut-0005), [Legacy Acquisition Edge Table](#legacy-acquisition-edge-table-r-win-03), and [Confidence Rubric](#acquisition-confidence-rubric); [DES-0018](des-0018-composition-root-and-di.md)'s Discovery/UIA seam, source-deviation, and architecture-test rules; `RQ-048`/`RQ-049`/`RQ-050`/`RQ-052`/`RQ-054` from the requirement source; `DES-0009` identity ladder and `Availability`/`AcquisitionConfidence` types; `DES-0011`'s fixed `TargetReference`/`TargetCandidate`/`AcquisitionResult`/`OperationStatus`/`IStageTimeoutController`; ADR-0002 §Decision; the `IUiTreeAcquisitionPort`/`ITargetDiscoveryPort` rows of `DES-0003`. Reading `DES-0001`/`DES-0004` in full is not required.
 - **Unblocks**: `DES-0015` (shares `TargetReference`/DPI context), `DES-0017` (cap calibration), `DES-0018` (adapter provider wiring), and the `IT` live-Windows track.
 
 ## Self-Review Evidence (author-side, DES-0007 §5 step 8)
 
-**2026-07-14 boundary re-sweep:** the outward resolver clarification preserves the canonical inward DTOs and read-only behavior. `DRP-02`–`DRP-05` were re-run: all registry/resolver/result types now have definitions and homes; Discovery remains the single writer; UIA is the sole raw-handle consumer; the only raw data flow is Discovery→UIA; no persistence or inward round trip was added. `DRP-09` is closed by the one-way `Surveyor.Adapters.Uia`→`Surveyor.Adapters.Discovery` dependency, and `DRP-10` is satisfied by this whole-boundary re-sweep.
+**2026-07-14 boundary re-sweep:** the methodless-bridge clarification preserves the canonical inward DTOs and read-only behavior. `DRP-02`–`DRP-05` were re-run: `DiscoveryUiaBridge` is public but methodless; all registry/resolver/result types and members are internal with explicit homes; Discovery remains the single writer; UIA is the sole raw-handle consumer through the only production friend edge; the only raw data flow is Discovery→UIA; no public/container-visible resolver, persistence, or inward round trip was added. `DRP-09` is closed by the one-way `Surveyor.Adapters.Uia`→`Surveyor.Adapters.Discovery` dependency plus the single Discovery→UIA friend allowlist, and `DRP-10` is satisfied by the whole-boundary diagrams, diagnostics counter-example, source-debt, and handoff re-sweep.
 
 Re-swept twice: after the `R-ARC-01` boundary-reshaping fix, and again after the follow-up verification pass found the first `DRP-05` sweep had missed `AcquisitionResult.Availability` (`DRP-10`), per the DES-0007 §5.3 fix-loop convention.
 
 | Pattern | Result |
 | -- | -- |
 | `DRP-01` Upstream drift | fix applied. The initial version had silently redefined `ITargetDiscoveryPort`/`IUiTreeAcquisitionPort` method names and the `TargetRef`/`TargetCandidate`/`AcquisitionResult` shapes instead of consuming `DES-0011`'s already-fixed versions (`R-ARC-01`, Critical). Now consumes `ITargetDiscoveryPort.ListTargetsAsync`/`ResolveAsync`, `IUiTreeAcquisitionPort.AcquireAsync`, `TargetReference`/`TargetCandidate`/`TargetDiscoveryResult`/`TargetResolveResult`/`AcquisitionResult`/`OperationStatus`/`RunDiagnostic` verbatim from `DES-0011`, and `Availability`/`AcquisitionConfidence`/`IdentityMaterial`/`IFallbackKeyDerivation`/`ElementIdentity` verbatim from `DES-0009`; renames nothing fixed elsewhere. Rung-1 detection and confidence rubric remain *delegated* scope, not redefinitions. |
-| `DRP-02` Dangling reference | fix applied. New types defined here are now `DiscoveryQuery`, `TargetProcessInfo`, `TargetIntegrityHint`, `Win32TargetHandle` (internal), `AcquisitionOptions`, `AcquisitionProvenance`, and the internal `IUiaComReader` seam; upstream types (`TargetReference`, `TargetCandidate`, `AcquisitionResult`, `OperationStatus`, `RunDiagnostic`, `IdentityMaterial`, `ElementIdentity`) resolve to `DES-0009`/`DES-0011` and are not re-declared. |
+| `DRP-02` Dangling reference | fix applied. New types defined here are now `DiscoveryQuery`, `TargetProcessInfo`, `TargetIntegrityHint`, public methodless `DiscoveryUiaBridge`, internal `WindowTargetHandleRegistry` core plus `IWindowTargetHandleRegistry`/`IWindowTargetHandleResolver`/`ResolvedWindowTarget`/`Win32TargetHandle`, `AcquisitionOptions`, `AcquisitionProvenance`, and the internal `IUiaComReader` seam; upstream types resolve to `DES-0009`/`DES-0011` and are not re-declared. |
 | `DRP-03` Data-flow closure | checked clean. The I/O derivation table traces every port output to a named consumer and every input to caller/prior-stage/outward-read, updated for the `DES-0011` method names. |
-| `DRP-04` Round-trip asymmetry | checked clean. Fixture⇄model uses the shared `DES-0009` types; `TargetReference`/`Win32TargetHandle` are now two distinct types (not one type with a visibility split) with no inward→`Win32TargetHandle` direction; no persistence round-trip introduced. |
+| `DRP-04` Round-trip asymmetry | checked clean. Fixture⇄model uses the shared `DES-0009` types; `TargetReference`/internal `ResolvedWindowTarget` are distinct, the methodless bridge exposes no public projection, and no inward→raw-handle or persistence round trip was introduced. |
 | `DRP-05` Unowned field | fix applied, twice. Field-ownership table now names `TargetReference.SessionTargetId`, `Win32TargetHandle.WithinSessionOrdinal`, `AcquisitionResult.Status`/`.HitElementCap`, and `AcquisitionProvenance` with single writer, timing, and fabrication rules consistent with the `DES-0011` shapes. The first sweep missed `AcquisitionResult.Availability` — a `DES-0011`-fixed run-level field this package inherited without ever specifying its population rule or its relationship to the per-node `UiElement.Availability` already inside `ScreenModel`; a second-pass verification review caught this, and the table/Acquisition section now define it as a deduplicated `Unavailable(reason)` rollup, explicitly not a second source of truth. |
 | `DRP-06` Rule overlap without precedence | fix applied. Confidence rubric now states explicitly that it is evaluated top-down, first-match-wins, with a counter-example fixture guarding the identity+provenance-without-property-completeness edge (`R-TEST-03`). Rung selection, timeout-vs-cancel (now delegated to `DES-0011`'s `IStageTimeoutController` race rule), and runtime-id detection remain ordered first-match lists. |
 | `DRP-07` Numeric under-specification | N/A for scoring numerics (owned by `DES-0010`); caps are integer/`TimeSpan` with fixed semantics, default values deferred to `DES-0017` with that stated. |
 | `DRP-08` Missing failure semantics | fix applied. Cancel/timeout/cap/permission/disposed-target/collision each have defined behavior mapped onto `DES-0011`'s `OperationStatus`/`IStageTimeoutController` race rule; a single hung COM call is now bounded by a COM-level timeout (`R-WIN-01`) with a documented thread-abandon fallback (`R-WIN-03`) rather than relying on cooperative cancellation alone. |
-| `DRP-09` Port ownership ambiguity | fix applied. Both ports are application-owned per `DES-0011`; adapters in `Surveyor.Adapters.*` depend inward; no UIA/`HWND` type crosses the port surface (`RQ-054`), now enforced by the `Win32TargetHandle`/`TargetReference` type split rather than a policy statement alone (`R-ARC-02`). |
-| `DRP-10` Patch regression | fix applied, twice: the `R-ARC-01` boundary reshape triggered the first `DRP-02`–`DRP-05` re-sweep; a follow-up verification review of that fix-loop then caught the `AcquisitionResult.Availability` gap the first re-sweep left behind, both recorded above. |
+| `DRP-09` Port ownership ambiguity | fix applied. Both ports are application-owned per `DES-0011`; Discovery owns the opaque token/raw table; UIA alone has friend-visible read access; no UIA/`HWND` type crosses the port or public bridge surface (`RQ-054`). The exact one-way project edge, production friend, and forbidden-consumer metadata checks are architecture-test obligations rather than an unrelated review finding ID. |
+| `DRP-10` Patch regression | fix applied: the boundary reshape re-swept version notes, source debt, contract tables, class and acquisition-sequence diagrams, diagnostics/fixture/UT intent, handoff, and residual risks. The prior `AcquisitionResult.Availability` fix remains intact. |
 
 DES-0007 §9: Trace/module-coverage/guardrails (`RQ-048` read-only audit, `RQ-051` within-session ordering scope + stable model order, `RQ-052` text-as-label-only, `RQ-054` no leak inward)/determinism/confidentiality/testability/unit-test-intent/handoff — all present above.
 
@@ -394,6 +432,8 @@ DES-0007 §9: Trace/module-coverage/guardrails (`RQ-048` read-only audit, `RQ-05
 - `TargetReference.SessionTargetId` identity is within-session only by design; cross-run correlation is the domain `ScreenKey`'s job (`DES-0009`), not discovery.
 - Cap *default values* and large-tree performance targets are deferred to `DES-0017`; until then only cap *semantics* are fixed.
 - Concrete DI wiring/lifetimes of these adapters are `DES-0018`.
+- The Discovery→UIA production friend is intentionally narrow but still creates assembly coupling. Architecture tests fix UIA as the only production friend and forbid every other consumer; adding a friend or exposing a raw member requires a DES revision and Human review.
+- The current `UiaTargetHandleRegistry` remains UIA-owned and mints `uia-target-` tokens until `IMP-0018` #113 migrates it. `IMP-0015` #73 is blocked on that prerequisite so composition cannot institutionalize the historical ownership conflict.
 
 ## Related
 

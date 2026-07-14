@@ -4,7 +4,7 @@ title: DES-0015 Capture and Snapshot Correspondence Detailed Design
 description: Detailed design for DPI-normalized window/region capture (Windows.Graphics.Capture primary, PrintWindow fallback), the physical-pixel coordinate contract shared with DES-0009's BoundingRect, the pure BoundingRect-to-RectangleDip overlay mapping, the capture failure-mode table, and multi-monitor/occlusion/offscreen handling.
 resource: ../../docs/gui-testability-analyzer-requirements.md
 tags: [detailed-design, capture, dpi, coordinate-mapping, snapshot, multi-monitor, rq-011, rq-016, rq-027, rq-028]
-timestamp: 2026-07-04T12:00:00+09:00
+timestamp: 2026-07-14T00:00:00+09:00
 ---
 
 # DES-0015 Capture and Snapshot Correspondence Detailed Design
@@ -12,6 +12,8 @@ timestamp: 2026-07-04T12:00:00+09:00
 This is detailed-design package 8 from [DES-0007](des-0007-detailed-design-execution-strategy.md) section 4. It fixes how Surveyor captures a DPI-correct image of a target window/region, how that image's pixel geometry stays honestly correlated with the `DES-0009` domain model's `BoundingRect`, and how capture failure is marked instead of silently degraded, so capture adapter slice `IMP-0014` can proceed without inventing DPI or coordinate behavior. It is the second adapter-bound package and is unblocked by the accepted [ADR-0002](../decisions/adr-0002-adapter-technology-selection.md) (Windows.Graphics.Capture primary, PrintWindow fallback, unpackaged same-integrity default).
 
 Canonical requirements stay in [gui-testability-analyzer-requirements.md](../../docs/gui-testability-analyzer-requirements.md) (`RQ-xxx`) and derived requirements in [requirements-definition.md](../requirements/requirements-definition.md) (`RD-xxx`).
+
+> **Version note (2026-07-14, per [DES-0007](des-0007-detailed-design-execution-strategy.md) §5.3):** `CaptureBlobId` is clarified as an opaque identifier for a capture artifact in an adapter-owned in-process blob store. Its confidentiality purpose is to prevent raw image bytes from crossing the capture port before policy application; it is independent of `DES-0014`'s target-token/Discovery–UIA bridge mechanism and does not rely on the obsolete claim that every opaque token's backing resource stays inside one adapter assembly.
 
 ## Trace Block
 
@@ -133,7 +135,7 @@ public sealed record CapturedRegion(
 
 `RegionId` closes the round-trip between the capture *request* (`CaptureRequest.Regions`, `RegionOfInterest.Id`) and the capture *result* (`CaptureResult.Regions`, `CapturedRegion.RegionId`) — every requested ROI has exactly one corresponding result region, in the same order as the request (`DRP-03`/`DRP-04`). `ActualBoundsDip` is reported separately from the requested `BoundsDip` because a region can be clipped (partially offscreen/off-monitor) — this keeps clipping an honest, inspectable fact instead of a silent geometry mismatch.
 
-The in-memory `byte[]` for a captured region is **not** a `CapturedRegion` field. `CapturedRegion` is the adapter/use-case-internal, pre-policy shape; the actual PNG bytes live behind `CaptureBlobId` in an adapter-owned in-process blob table (mirrors `DES-0014`'s `Win32TargetHandle` pattern: an opaque token stands in for a resource that must not leak across the port as a raw reference) until `IConfidentialityPolicy.Apply` (`M09`) resolves it into the `DES-0013`-fixed `StoredCaptureArtifact.PngBytes` for storage, or a `MaskedCapture` for export. This keeps `RQ-052` intact: nothing downstream of the adapter holds raw image bytes outside the policy gate by construction, not by convention.
+The in-memory `byte[]` for a captured region is **not** a `CapturedRegion` field. `CapturedRegion` is the adapter/use-case-internal, pre-policy shape; the actual PNG bytes live behind `CaptureBlobId` in an adapter-owned in-process blob table until `IConfidentialityPolicy.Apply` (`M09`) resolves the identifier into the `DES-0013`-fixed `StoredCaptureArtifact.PngBytes` for storage, or a `MaskedCapture` for export. `CaptureBlobId` is a capture-artifact identifier, not a target identifier: it neither aliases `TargetReference.SessionTargetId` nor depends on `DES-0014`'s Discovery→UIA bridge/assembly-visibility model. Its invariant is narrower and stable — raw image bytes do not cross `IScreenCapturePort` before the policy gate — so `RQ-052` holds by construction rather than by a cross-adapter analogy.
 
 ### `SnapshotRef` population (closes `DES-0009`'s delegation without touching `DES-0011`'s fixed shapes)
 

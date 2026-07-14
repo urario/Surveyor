@@ -4,7 +4,7 @@ title: DES-0011 Port DTOs, Status Model, and Use-Case Orchestration Detailed Des
 description: Detailed design for application-layer DTOs, run statuses, timeout and cancellation behavior, partial results, diagnostics aggregation, ROI handoff, ScreenSelectionMetadata carriage, IClock usage, and use-case orchestration.
 resource: ../../docs/gui-testability-analyzer-requirements.md
 tags: [detailed-design, application, ports, dto, orchestration, diagnostics, rq-046, rq-048, rq-050, rq-054]
-timestamp: 2026-07-03T00:00:00+09:00
+timestamp: 2026-07-14T00:00:00+09:00
 ---
 
 # DES-0011 Port DTOs, Status Model, and Use-Case Orchestration Detailed Design
@@ -12,6 +12,8 @@ timestamp: 2026-07-03T00:00:00+09:00
 This is detailed-design package 4 from [DES-0007](des-0007-detailed-design-execution-strategy.md) section 4. It fixes the application-layer contracts that implementation and tests use to connect target discovery, acquisition, scoring, capture, confidentiality policy, reporting, and storage without leaking adapter types inward. It also owns the run-level diagnostics model (`R-ARC-03`) and makes timeout, cancellation, partial-result, and `ScreenSelectionMetadata` behavior explicit.
 
 Canonical requirements stay in [gui-testability-analyzer-requirements.md](../../docs/gui-testability-analyzer-requirements.md) (`RQ-xxx`) and derived requirements in [requirements-definition.md](../requirements/requirements-definition.md) (`RD-xxx`).
+
+> **Version note (2026-07-14, target-facing category closure, per DES-0007 §5.3):** the canonical Application contract now declares methodless `ITargetFacingPort`, and `ITargetDiscoveryPort`, `IUiTreeAcquisitionPort`, and `IScreenCapturePort` inherit it. Method signatures and DTOs are unchanged. This is the binding source for `DES-0018` Invariant A; adapter-internal raw-handle registry/resolver contracts remain `DES-0014` scope and do not enter Application.
 
 ## Trace Block
 
@@ -21,7 +23,7 @@ Canonical requirements stay in [gui-testability-analyzer-requirements.md](../../
 | Upstream | [DES-0002](des-0002-module-responsibility-basic-design.md) `M03`/`M11`; [DES-0003](des-0003-module-interface-basic-design.md) port contracts; [DES-0004](des-0004-analysis-flow-basic-design.md) staged flow; [DES-0005](des-0005-vmodel-traceability-and-downstream-tests.md) `UT-0003`/`UT-0004`/`UT-0012`; [DES-0007](des-0007-detailed-design-execution-strategy.md) package 4 and `R-ARC-03`; [DES-0008](des-0008-project-structure-and-test-harness.md) project homes; [DES-0009](des-0009-domain-model-stable-keys-and-availability.md) `IClock`, keys, availability; accepted [ADR-0002](../decisions/adr-0002-adapter-technology-selection.md) threading/capture observations |
 | Requirements | `RQ-046`, `RQ-048`, `RQ-050`, `RQ-054`; derived `RD-001`, `RD-016`, `RD-023`, `RD-025`, `RD-032` |
 | Downstream | Design review issue #33; `UT-0012` issue #51; implementation issues #62 (`IMP-0004` clock), #63 (`IMP-0005` discovery), #64 (`IMP-0006` acquisition), #69 (`IMP-0011` use-case wiring); `DES-0012` report DTOs; `DES-0013` sanitization policy; `DES-0014`/`DES-0015` adapter contracts; `DES-0018` composition root |
-| Evidence | DTO catalog, status enums, timeout defaults, cancellation rules, partial-result aggregation, sanitized diagnostic shape, ROI handoff contract, metadata threading rule, orchestration sequence, fixture strategy, unit-test intent |
+| Evidence | DTO catalog, status enums, timeout defaults, cancellation rules, partial-result aggregation, sanitized diagnostic shape, ROI handoff contract, metadata threading rule, the `ITargetFacingPort` category on the three live-target Application ports, orchestration sequence, fixture strategy, unit-test intent |
 | Verification | `tools/okf/Validate-Okf.ps1`; `git diff --check`; future `dotnet test tests/Surveyor.Application.Tests --filter UT0012` once source exists |
 | Residual Risk | Concrete adapter failure maps are refined in `DES-0014`/`DES-0015`; report schema is refined in `DES-0012`; storage/export policy and final sanitizer implementation are refined in `DES-0013`; composition root wiring is refined in `DES-0018` |
 
@@ -407,9 +409,20 @@ public sealed class ExportResultUseCase
 Application ports:
 
 ```csharp
+namespace Surveyor.Application.Composition;
+
+// Methodless category metadata for DES-0018 composition validation.
+public interface ITargetFacingPort { }
+```
+
+The marker is physically declared in its own `Surveyor.Application.Composition` file. The port files consume it without adding methods or Windows types:
+
+```csharp
 namespace Surveyor.Application.Ports;
 
-public interface ITargetDiscoveryPort
+using Surveyor.Application.Composition;
+
+public interface ITargetDiscoveryPort : ITargetFacingPort
 {
     Task<TargetDiscoveryResult> ListTargetsAsync(
         DiscoveryQuery query,
@@ -420,7 +433,7 @@ public interface ITargetDiscoveryPort
         CancellationToken cancellationToken);
 }
 
-public interface IUiTreeAcquisitionPort
+public interface IUiTreeAcquisitionPort : ITargetFacingPort
 {
     Task<AcquisitionResult> AcquireAsync(
         TargetReference target,
@@ -428,7 +441,7 @@ public interface IUiTreeAcquisitionPort
         CancellationToken cancellationToken);
 }
 
-public interface IScreenCapturePort
+public interface IScreenCapturePort : ITargetFacingPort
 {
     Task<CaptureResult> CaptureAsync(
         CaptureRequest request,
