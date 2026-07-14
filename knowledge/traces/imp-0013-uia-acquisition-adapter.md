@@ -3,10 +3,12 @@ type: Trace Evidence
 title: IMP-0013 Real UIA Acquisition Adapter Implementation
 description: Implementation evidence for the real UIA acquisition adapter skeleton, raw-reader seam, read-only audit wiring, target-handle registry, and adapter contract tests under DES-0014.
 tags: [trace, implementation, imp-0013, des-0014, rq-017, rq-026, rq-048, rq-049, read-only, uia]
-timestamp: 2026-07-11T00:00:00+09:00
+timestamp: 2026-07-14T00:00:00+09:00
 ---
 
 # IMP-0013 Real UIA Acquisition Adapter Implementation
+
+> **Downstream supersede note (2026-07-14):** this artifact remains the historical evidence for the #71 implementation and its 57-test gate. PR #112 review exposed that its public, UIA-owned `UiaTargetHandleRegistry`/`uia-target-` token ownership conflicts with the now-closed Discovery ownership in `DES-0014`/`DES-0018`. `IMP-0018` #113 migrates that boundary in parallel with headless `UT-0013` #52; both must complete before `IMP-0015` #73. This note does not retroactively rewrite what #71 implemented or verified.
 
 ## Trace Block
 
@@ -14,10 +16,10 @@ timestamp: 2026-07-11T00:00:00+09:00
 | -- | -- |
 | Artifact | `IMP-0013`, real UIA acquisition adapter, implementation phase |
 | Upstream | [DES-0014](../design/des-0014-discovery-uia-msaa-acquisition-and-read-only-audit.md); [ADR-0002](../decisions/adr-0002-adapter-technology-selection.md); [IMP-0006](imp-0006-acquisition-port-implementation.md); [IMP-0007](imp-0007-read-only-audit-implementation.md); Issue #71; `RQ-017`, `RQ-026`, `RQ-048`, `RQ-049`; `RD-003`, `RD-004`, `RD-023`, `RD-032` |
-| Downstream | `IT-0001` target state-invariance, `IT-0002` live UIA legacy-edge comparison, `IT-0005` integrity/permission validation, `IT-0006` cancellation/timeout calibration, future `DES-0018` / `IMP-0015` composition wiring |
+| Downstream | `IT-0001` target state-invariance, `IT-0002` live UIA legacy-edge comparison, `IT-0005` integrity/permission validation, `IT-0006` cancellation/timeout calibration; `IMP-0018` #113 supersedes the registry ownership/public surface in parallel with headless `UT-0013` #52, and both feed `IMP-0015` #73 production wiring |
 | Evidence | Added `Surveyor.Adapters.Uia.UiaTreeAcquisitionAdapter` implementing `IUiTreeAcquisitionPort`; `UiaTargetHandleRegistry` for opaque `TargetReference` token to HWND/process-image mapping inside the adapter boundary; internal `IRawUiaReader` / `RawUiaNode` / `RawUiaReadResult` seam; `DynamicRawUiaReader` that activates the Windows UIA COM client, attempts `IUIAutomation6` call-budget configuration, and records read-only member invocations; adapter-side mapper that reuses the DES-0014 identity rung, confidence, availability, and run-level rollup semantics; read-only audit wiring using `ReadOnlyAcquisitionAudit`; and adapter tests covering mapping, audit violation, unresolved target, caller cancellation, and registry process metadata propagation. |
 | Verification | `dotnet test tests\Surveyor.Adapters.Uia.Tests\Surveyor.Adapters.Uia.Tests.csproj --no-restore -v minimal` passed 57 tests. `dotnet test eng\Surveyor.Unit.slnf --no-restore -v minimal` passed Architecture 8, Domain 59, Application 23, Policy 45; Domain line coverage 97.01%, Application 100%, Policy 100%. `powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\stryker\Run-StrykerBaseline.ps1 -SkipVersionCheck` passed with Domain mutation score 80.54% and Policy mutation score 89.02%. |
-| Residual Risk | The raw COM path is compiled and structurally wired, but this slice did not run a live Windows target smoke acquisition. `DynamicRawUiaReader` uses the installed UIA COM type information through dynamic COM dispatch; real legacy target behavior, MSAA/`WM_GETTEXT` fallback breadth, COM-level timeout calibration, and state-invariance remain `IT-0001`/`IT-0002`/`IT-0005`/`IT-0006` obligations. Discovery-owned registry population is not implemented here; `UiaTargetHandleRegistry` is the adapter-side mechanism for future `DES-0018`/`IMP-0015` wiring and now carries process image metadata when available. |
+| Residual Risk | The raw COM path is compiled and structurally wired, but this slice did not run a live Windows target smoke acquisition. Real legacy behavior, fallback breadth, timeout calibration, and state-invariance remain IT obligations. The public UIA-owned registry/token minting recorded here is historical source debt, not the accepted production boundary; `IMP-0018` #113 must migrate it to Discovery's methodless bridge/internal friend surface before #73. |
 
 ## Implemented Contract
 
@@ -31,7 +33,7 @@ timestamp: 2026-07-11T00:00:00+09:00
 ## Design Notes
 
 - Pattern: Adapter. Purpose: keep Windows UIA COM and HWND handling behind the Application-owned `IUiTreeAcquisitionPort`. Rejected simpler alternative: direct UIA calls from use cases would violate `RQ-054` layering and make `RQ-048` audit wiring untestable.
-- Public API: `UiaTreeAcquisitionAdapter` and `UiaTargetHandleRegistry` are public because composition/discovery wiring will cross the adapter assembly boundary. All raw-reader and mapper seams remain internal and test-visible through `InternalsVisibleTo`.
+- Historical public API at #71: `UiaTreeAcquisitionAdapter` and `UiaTargetHandleRegistry` were public because composition/discovery wiring was expected to cross the adapter boundary. `IMP-0018` #113 supersedes the registry part: the raw registry/resolver/result become Discovery-internal and friend-visible only to UIA, while DI receives only a public methodless bridge carrier.
 - Read-only guardrail: the real adapter evaluates the `ReadOnlyAcquisitionSpy` after every raw read. A prohibited or unlisted invocation returns `OperationStatus.Unavailable` with a safe diagnostic instead of exposing raw target data.
 
 ## Quality Gate Evidence
