@@ -4,7 +4,7 @@ title: DES-0014 Discovery, UIA/MSAA Acquisition, and Read-Only Audit Detailed De
 description: Detailed design for read-only target discovery, UIA raw-COM tree acquisition with MSAA/WM_GETTEXT legacy fallbacks, UIA apartment/threading and cooperative cancellation, the RD-032 prohibited-pattern read-only audit, the identity-source ladder rung-1 runtime-id detection, the acquisition confidence rubric, virtualized-tree handling, and the minimal-privilege policy.
 resource: ../../docs/gui-testability-analyzer-requirements.md
 tags: [detailed-design, discovery, uia, msaa, read-only, threading, legacy-edges, rq-048, rq-049, rq-050]
-timestamp: 2026-07-04T00:00:00+09:00
+timestamp: 2026-07-14T00:00:00+09:00
 ---
 
 # DES-0014 Discovery, UIA/MSAA Acquisition, and Read-Only Audit Detailed Design
@@ -12,6 +12,8 @@ timestamp: 2026-07-04T00:00:00+09:00
 This is detailed-design package 7 from [DES-0007](des-0007-detailed-design-execution-strategy.md) section 4. It fixes how Surveyor discovers a target, reads its UIA/MSAA tree into the `DES-0009` domain model, proves it never mutates the target, and marks legacy edges honestly, so discovery slice `IMP-0005`, acquisition slice `IMP-0006`, read-only audit slice `IMP-0007`, and the real UIA adapter slice `IMP-0013` can proceed without inventing acquisition behavior. It is the first adapter-bound package and is unblocked by the accepted [ADR-0002](../decisions/adr-0002-adapter-technology-selection.md) (raw-COM UIA client, same-integrity unpackaged default).
 
 Canonical requirements stay in [gui-testability-analyzer-requirements.md](../../docs/gui-testability-analyzer-requirements.md) (`RQ-xxx`) and derived requirements in [requirements-definition.md](../requirements/requirements-definition.md) (`RD-xxx`).
+
+> **Version note (2026-07-14, DES-0018 implementation handoff reconciliation):** discovery remains the single writer/owner of opaque target tokens and raw HWND entries, but the earlier "internal-only type never crosses an assembly" wording could not connect the separately deployed `Surveyor.Adapters.Discovery` and `Surveyor.Adapters.Uia` assemblies. The closed boundary is now an outward-only resolver contract owned by Discovery: UIA may resolve a selected opaque token to a raw handle through that contract, while Application/Domain still see only `TargetReference`. This deliberately permits `Surveyor.Adapters.Uia` → `Surveyor.Adapters.Discovery`; no inward project gains a Windows dependency.
 
 ## Trace Block
 
@@ -77,7 +79,9 @@ Non-goals (owned elsewhere):
 - `TargetProcessInfo` (field detail not fixed elsewhere, referenced by `TargetCandidate.Process`) — `string ProcessImageName` (file name only, non-sensitive), `int ProcessId` (diagnostics-lane only, never key material).
 - `TargetCandidate` (`DES-0011`, consumed as-is) — `TargetReference Reference`, `string SafeName`, `TargetProcessInfo Process`, `bool IsLikelyLegacyGui`, `OperationStatus Status`, `IReadOnlyList<RunDiagnostic> Diagnostics`. Single writer: the discovery adapter. `Status` is the `DES-0011` `OperationStatus` value directly (`Ok`, `Unavailable`, `PermissionDenied`, `IntegrityMismatch`, `Timeout`); this package does not define a parallel discovery-only status enum.
 
-**Adapter-internal handle (never crosses the port, closes `R-ARC-02`).** Inside `Surveyor.Adapters.Discovery`, each live candidate is tracked by an `internal`-only `Win32TargetHandle`: `nint WindowHandle`, `int ProcessId`, `string ProcessImageName`, `string WindowClass`, `int WithinSessionOrdinal`. `Win32TargetHandle` is never returned by, or accepted as a parameter of, `ITargetDiscoveryPort` or `IUiTreeAcquisitionPort` — it is the *only* place a raw `HWND` lives. The adapter keeps a process-local registry (`Dictionary<string, Win32TargetHandle>`) keyed by an adapter-minted opaque token, and `TargetReference.SessionTargetId` **is** that token (e.g. `"tgt-" + <session-scoped ulong counter>` — no title, path, or `HWND` bits encoded). `ResolveAsync`/`AcquireAsync` look the token up in this registry to reach the live `HWND`; there is no reverse mapping exposed inward, and no inward-facing method accepts or returns a `Win32TargetHandle`. This is the concrete, type-level mechanism enforcing `RQ-054` opacity — a compile error, not just a review convention, would result from any attempt to thread `Win32TargetHandle` across the port.
+**Outward-only handle registry (closes `R-ARC-02`).** Inside `Surveyor.Adapters.Discovery`, each live candidate is tracked by one session registry keyed by an adapter-minted opaque token; `TargetReference.SessionTargetId` **is** that token (for example `"tgt-" + <session-scoped ulong counter>` — no title, path, or `HWND` bits encoded). Discovery owns the writer interface `IWindowTargetHandleRegistry`; UIA consumes the read-only `IWindowTargetHandleResolver`. `TryResolve(TargetReference, out ResolvedWindowTarget)` returns `ResolvedWindowTarget(nint WindowHandle, string ProcessImageName)` only across the outward Discovery→UIA adapter boundary. The contract and result type are public solely because they cross those two outer assemblies; Application/Domain cannot reference them, and no inward-facing method accepts or returns them. The registry remains the only writer and UIA receives no enumeration/mutation method.
+
+`AddSurveyorDiscovery` registers one singleton implementation for both `IWindowTargetHandleRegistry` and `IWindowTargetHandleResolver`; `AddSurveyorUiaAcquisition` consumes that same resolver. The required project dependency is `Surveyor.Adapters.Uia` → `Surveyor.Adapters.Discovery`. The reverse dependency is forbidden, preventing a cycle. Registry tokens are session-only and the resolver never persists or logs raw handles.
 
 **Within-session ordering key** (`RQ-051`, live-selection scope): before returning `TargetDiscoveryResult.Candidates` (which `DES-0011` requires the producer to pre-sort), the discovery adapter orders candidates by the ordinal tuple `(ProcessImageName, WindowClass, WithinSessionOrdinal)`, where `WithinSessionOrdinal` is the ascending index in the deterministic top-level enumeration of that (process, class) group. Raw `HWND` and z-order are never ordering inputs, and `WithinSessionOrdinal` itself never leaves the adapter (`Win32TargetHandle`-only). This ordering is *not* report/`ScreenKey` material — report determinism is owned by `M04` keys (`DES-0009`).
 
@@ -116,8 +120,9 @@ Rationale: a too-permissive rung-1 rule silently destabilizes keys across runs (
 | Method | Input → source | Output → consumer |
 | -- | -- | -- |
 | `ITargetDiscoveryPort.ListTargetsAsync(DiscoveryQuery, ct)` | `DiscoveryQuery` = caller (`SelectTargetUseCase`) input; window/process facts = outward OS enumeration | `TargetDiscoveryResult.Candidates` → `SelectTargetUseCase` for user choice; each candidate's `TargetReference` → `ResolveAsync` |
-| `ITargetDiscoveryPort.ResolveAsync(TargetReference, ct)` | `TargetReference` = a candidate chosen by the caller; `SessionTargetId` resolves via the adapter's internal `Win32TargetHandle` registry | `TargetResolveResult.Target` (+ status) → `AnalyzeScreenUseCase` as Stage-2 input |
-| `IUiTreeAcquisitionPort.AcquireAsync(TargetReference, AcquisitionOptions, ct)` | `TargetReference` = Stage-1 output; `AcquisitionOptions` caps = caller input; tree facts = outward UIA/MSAA reads; fallback token = `IFallbackKeyDerivation` (`M09`) | `AcquisitionResult` → `AnalyzeScreenUseCase` → `M08` scoring (`ScreenModel`) and `DES-0011` diagnostics (status/provenance via `SafeArgs`) |
+| `ITargetDiscoveryPort.ResolveAsync(TargetReference, ct)` | `TargetReference` = a candidate chosen by the caller; `SessionTargetId` resolves via the Discovery-owned registry | `TargetResolveResult.Target` (+ status) → `AnalyzeScreenUseCase` as Stage-2 input |
+| `IWindowTargetHandleResolver.TryResolve(TargetReference, out ResolvedWindowTarget)` | selected opaque reference from Stage 1; table owned by Discovery | outward-only raw handle/process image → `UiaTreeAcquisitionAdapter`; never an inward DTO |
+| `IUiTreeAcquisitionPort.AcquireAsync(TargetReference, AcquisitionOptions, ct)` | `TargetReference` = Stage-1 output and is resolved through `IWindowTargetHandleResolver`; `AcquisitionOptions` caps = caller input; tree facts = outward UIA/MSAA reads; fallback token = `IFallbackKeyDerivation` (`M09`) | `AcquisitionResult` → `AnalyzeScreenUseCase` → `M08` scoring (`ScreenModel`) and `DES-0011` diagnostics (status/provenance via `SafeArgs`) |
 
 Every input is derivable from caller input, a prior-stage output, or an outward read through a defined contract; every output has a named inward consumer. No inward method needs a value it cannot obtain (guards `DRP-03`).
 
@@ -126,7 +131,8 @@ Every input is derivable from caller input, a prior-stage output, or an outward 
 | Field | Single writer | Write timing | Sync / fabrication rule |
 | -- | -- | -- | -- |
 | `TargetCandidate.Status` | discovery adapter | during enumeration | consumers never fabricate a status; `OperationStatus.Unavailable`/other non-`Ok` values are explicit, never silently upgraded |
-| `TargetReference.SessionTargetId` | discovery adapter | at candidate creation | opaque adapter-minted token; the `Win32TargetHandle` it maps to (incl. `WindowHandle`) never crosses the port, is never persisted, never key material |
+| `TargetReference.SessionTargetId` | discovery adapter | at candidate creation | opaque adapter-minted token; the raw entry crosses only the outward resolver boundary to UIA, is never persisted, logged, or key material |
+| `ResolvedWindowTarget` | Discovery registry | on UIA resolver call | outward adapter value only; UIA consumes it immediately and never copies it to Application/Domain models or diagnostics |
 | `Win32TargetHandle.WithinSessionOrdinal` | discovery adapter | at candidate creation | adapter-internal ordering only; never inward, never report/`ScreenKey` input |
 | `UiElement.Availability` / `.Confidence` | acquisition adapter | during node read | per rubric/legacy table; `Unavailable` never rewritten to a score by consumers |
 | `AcquisitionResult.Status` / `.HitElementCap` | acquisition adapter | at run completion | recorded, never converted to a score (`DES-0004` Stage 2) |
@@ -137,7 +143,7 @@ Every input is derivable from caller input, a prior-stage output, or an outward 
 ### Round-trip inventory
 
 - **Fixture tree ⇄ model**: the UT fixture serializer and `IUiTreeAcquisitionPort` fake read the same `.tree` schema into the same `ScreenModel`/`UiElement` types the live adapter produces — symmetric types, so a fixture-passing test exercises the real model shape (shared with `DES-0009` `IMP-0001` reader).
-- **`TargetReference` opaque projection**: outward (adapter holds `Win32TargetHandle`, including `HWND`/pid) vs inward (`TargetReference.SessionTargetId` opaque token plus optional `SafeDisplayHint`) are two distinct types, not one type with a visibility split — there is no field on `TargetReference` a bug could accidentally populate with `WindowHandle`. There is no inward→`Win32TargetHandle` direction (asymmetry is intentional and enforced by type separation, not an omission).
+- **`TargetReference` opaque projection**: outward (`ResolvedWindowTarget`, including HWND/process image) vs inward (`TargetReference.SessionTargetId` opaque token plus optional `SafeDisplayHint`) are distinct types. The only raw direction is Discovery resolver → UIA consumer; there is no raw-handle field or conversion in Application/Domain.
 - No persistence round-trip is introduced here (store/export symmetry is `DES-0013`).
 
 ## UIA Threading And Apartment Model (`R-WIN-01`, `R-WIN-02`, `R-WIN-03`, `RQ-050`)
@@ -357,6 +363,8 @@ This package **emits** run-level diagnostics as `DES-0011`-owned `RunDiagnostic`
 - **Unblocks**: `DES-0015` (shares `TargetReference`/DPI context), `DES-0017` (cap calibration), `DES-0018` (adapter provider wiring), and the `IT` live-Windows track.
 
 ## Self-Review Evidence (author-side, DES-0007 §5 step 8)
+
+**2026-07-14 boundary re-sweep:** the outward resolver clarification preserves the canonical inward DTOs and read-only behavior. `DRP-02`–`DRP-05` were re-run: all registry/resolver/result types now have definitions and homes; Discovery remains the single writer; UIA is the sole raw-handle consumer; the only raw data flow is Discovery→UIA; no persistence or inward round trip was added. `DRP-09` is closed by the one-way `Surveyor.Adapters.Uia`→`Surveyor.Adapters.Discovery` dependency, and `DRP-10` is satisfied by this whole-boundary re-sweep.
 
 Re-swept twice: after the `R-ARC-01` boundary-reshaping fix, and again after the follow-up verification pass found the first `DRP-05` sweep had missed `AcquisitionResult.Availability` (`DRP-10`), per the DES-0007 §5.3 fix-loop convention.
 
