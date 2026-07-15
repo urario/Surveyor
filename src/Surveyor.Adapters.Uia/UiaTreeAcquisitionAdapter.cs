@@ -1,5 +1,6 @@
 using Surveyor.Adapters.Uia.Audit;
 using Surveyor.Adapters.Uia.RawUia;
+using Surveyor.Adapters.Discovery;
 using Surveyor.Application.Dto;
 using Surveyor.Application.Ports;
 using Surveyor.Domain.Keys;
@@ -13,13 +14,13 @@ namespace Surveyor.Adapters.Uia;
 /// <remarks>
 /// 対象アプリへの操作・入力・状態変更 UIA パターン呼び出しは行わず、実呼び出し列を
 /// <see cref="ReadOnlyAcquisitionSpy"/> で監査します (RQ-048, RD-032)。
-/// HWND は <see cref="UiaTargetHandleRegistry"/> 内の opaque token からだけ解決し、
+/// HWND は <see cref="DiscoveryUiaBridge"/> 内の opaque token からだけ解決し、
 /// 取得した文字列は表示ラベルまたは fallback token 導出に限定します (RQ-049, RQ-052)。
 /// </remarks>
 public sealed class UiaTreeAcquisitionAdapter : IUiTreeAcquisitionPort
 {
     private readonly IFallbackKeyDerivation fallbackKeyDerivation;
-    private readonly UiaTargetHandleRegistry targetRegistry;
+    private readonly DiscoveryUiaBridge targetBridge;
     private readonly IRawUiaReader reader;
     private readonly ReadOnlyAcquisitionAudit audit;
 
@@ -27,25 +28,25 @@ public sealed class UiaTreeAcquisitionAdapter : IUiTreeAcquisitionPort
     /// UIA 取得アダプタを初期化します。
     /// </summary>
     /// <param name="fallbackKeyDerivation">raw 表示テキストから fallback key token を導出するポート。</param>
-    /// <param name="targetRegistry">opaque target token と HWND の対応を保持する registry。</param>
-    public UiaTreeAcquisitionAdapter(IFallbackKeyDerivation fallbackKeyDerivation, UiaTargetHandleRegistry targetRegistry)
-        : this(fallbackKeyDerivation, targetRegistry, new DynamicRawUiaReader(), new ReadOnlyAcquisitionAudit())
+    /// <param name="targetBridge">Discovery が所有する methodless target bridge。</param>
+    public UiaTreeAcquisitionAdapter(IFallbackKeyDerivation fallbackKeyDerivation, DiscoveryUiaBridge targetBridge)
+        : this(fallbackKeyDerivation, targetBridge, new DynamicRawUiaReader(), new ReadOnlyAcquisitionAudit())
     {
     }
 
     internal UiaTreeAcquisitionAdapter(
         IFallbackKeyDerivation fallbackKeyDerivation,
-        UiaTargetHandleRegistry targetRegistry,
+        DiscoveryUiaBridge targetBridge,
         IRawUiaReader reader,
         ReadOnlyAcquisitionAudit audit)
     {
         ArgumentNullException.ThrowIfNull(fallbackKeyDerivation);
-        ArgumentNullException.ThrowIfNull(targetRegistry);
+        ArgumentNullException.ThrowIfNull(targetBridge);
         ArgumentNullException.ThrowIfNull(reader);
         ArgumentNullException.ThrowIfNull(audit);
 
         this.fallbackKeyDerivation = fallbackKeyDerivation;
-        this.targetRegistry = targetRegistry;
+        this.targetBridge = targetBridge;
         this.reader = reader;
         this.audit = audit;
     }
@@ -60,13 +61,18 @@ public sealed class UiaTreeAcquisitionAdapter : IUiTreeAcquisitionPort
         ArgumentNullException.ThrowIfNull(options);
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (!targetRegistry.TryResolve(target, out UiaTargetHandle handle))
+        if (!targetBridge.TryResolve(target, out ResolvedWindowTarget resolvedTarget))
         {
             return Task.FromResult(UiaAcquisitionResultFactory.Unavailable("Acquisition.Target.NotResolved", OperationStatus.NotFound));
         }
 
         ReadOnlyAcquisitionSpy spy = new();
-        RawUiaReadResult readResult = reader.ReadTree(handle.WindowHandle, handle.ProcessImageName, options.MaxElementCount, spy, cancellationToken);
+        RawUiaReadResult readResult = reader.ReadTree(
+            resolvedTarget.WindowHandle,
+            resolvedTarget.ProcessImageName,
+            options.MaxElementCount,
+            spy,
+            cancellationToken);
         ReadOnlyAuditResult auditResult = audit.Evaluate(spy);
         if (!auditResult.IsReadOnly)
         {

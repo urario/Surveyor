@@ -16,7 +16,7 @@ public sealed class ArchitectureProjectGraphTests
             ["Surveyor.Reports"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Adapters.Discovery"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Adapters.Uia.Audit"] = [],
-            ["Surveyor.Adapters.Uia"] = ["Surveyor.Adapters.Uia.Audit", "Surveyor.Application", "Surveyor.Domain"],
+            ["Surveyor.Adapters.Uia"] = ["Surveyor.Adapters.Discovery", "Surveyor.Adapters.Uia.Audit", "Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Adapters.Capture"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Adapters.Store"] = ["Surveyor.Application", "Surveyor.Domain"],
             ["Surveyor.Presentation"] = ["Surveyor.Application", "Surveyor.Domain"],
@@ -38,7 +38,7 @@ public sealed class ArchitectureProjectGraphTests
             ["Surveyor.Domain.Tests"] = ["Surveyor.Domain"],
             ["Surveyor.Reports.Tests"] = ["Surveyor.Reports", "Surveyor.TestSupport"],
             ["Surveyor.Presentation.Tests"] = ["Surveyor.Application", "Surveyor.Domain", "Surveyor.Presentation"],
-            ["Surveyor.Adapters.Uia.Tests"] = ["Surveyor.Adapters.Uia", "Surveyor.Adapters.Uia.Audit", "Surveyor.Application"],
+            ["Surveyor.Adapters.Uia.Tests"] = ["Surveyor.Adapters.Discovery", "Surveyor.Adapters.Uia", "Surveyor.Adapters.Uia.Audit", "Surveyor.Application"],
         };
 
     private static readonly IReadOnlyDictionary<string, string> ExpectedRootNamespaces =

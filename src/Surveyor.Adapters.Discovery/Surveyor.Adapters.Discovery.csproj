@@ -7,4 +7,13 @@
     <ProjectReference Include="..\Surveyor.Application\Surveyor.Application.csproj" />
     <ProjectReference Include="..\Surveyor.Domain\Surveyor.Domain.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Surveyor.Adapters.Uia</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Surveyor.Adapters.Uia.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>

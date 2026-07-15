@@ -1,1 +1,3 @@
-
+#nullable enable
+Surveyor.Adapters.Discovery.DiscoveryUiaBridge
+Surveyor.Adapters.Discovery.DiscoveryUiaBridge.DiscoveryUiaBridge() -> void

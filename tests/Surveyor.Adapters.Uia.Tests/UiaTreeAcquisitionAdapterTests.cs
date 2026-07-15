@@ -1,6 +1,7 @@
 using Surveyor.Adapters.Uia;
 using Surveyor.Adapters.Uia.Audit;
 using Surveyor.Adapters.Uia.RawUia;
+using Surveyor.Adapters.Discovery;
 using Surveyor.Application.Dto;
 using Surveyor.Application.Ports;
 using Surveyor.Domain.Model;
@@ -28,18 +29,18 @@ public sealed class UiaTreeAcquisitionAdapterTests
 
     internal static UiaTreeAcquisitionAdapter CreateAdapter(FakeRawUiaReader reader, out TargetReference target)
     {
-        UiaTargetHandleRegistry registry = new();
-        target = registry.RegisterWindowHandle((nint)1234, "fixture", TargetIntegrityHint.SameOrLower, "fixture.exe");
-        return new UiaTreeAcquisitionAdapter(new FakeFallbackKeyDerivation(), registry, reader, new ReadOnlyAcquisitionAudit());
+        DiscoveryUiaBridge bridge = new();
+        target = bridge.Register(new Win32TargetHandle((nint)1234, 1, "fixture.exe", "FixtureWindow", 0));
+        return new UiaTreeAcquisitionAdapter(new FakeFallbackKeyDerivation(), bridge, reader, new ReadOnlyAcquisitionAudit());
     }
 
     [Fact(DisplayName = "IMP-0013: registry metadata supplies process image name to raw reader")]
     public async Task RegistryMetadataSuppliesProcessImageNameToRawReader()
     {
         FakeRawUiaReader reader = new(RawUiaFixture.Tree());
-        UiaTargetHandleRegistry registry = new();
-        TargetReference target = registry.RegisterWindowHandle((nint)5678, "fixture", TargetIntegrityHint.SameOrLower, "real-target.exe");
-        UiaTreeAcquisitionAdapter adapter = new(new FakeFallbackKeyDerivation(), registry, reader, new ReadOnlyAcquisitionAudit());
+        DiscoveryUiaBridge bridge = new();
+        TargetReference target = bridge.Register(new Win32TargetHandle((nint)5678, 1, "real-target.exe", "FixtureWindow", 0));
+        UiaTreeAcquisitionAdapter adapter = new(new FakeFallbackKeyDerivation(), bridge, reader, new ReadOnlyAcquisitionAudit());
 
         _ = await adapter.AcquireAsync(target, AcquisitionOptions.Default, CancellationToken.None);
 
@@ -66,7 +67,7 @@ public sealed class UiaTreeAcquisitionAdapterGuardrailTests
     public async Task UnresolvedTargetDoesNotInvokeRawReader()
     {
         FakeRawUiaReader reader = new(RawUiaFixture.Tree());
-        UiaTreeAcquisitionAdapter adapter = new(new FakeFallbackKeyDerivation(), new UiaTargetHandleRegistry(), reader, new ReadOnlyAcquisitionAudit());
+        UiaTreeAcquisitionAdapter adapter = new(new FakeFallbackKeyDerivation(), new DiscoveryUiaBridge(), reader, new ReadOnlyAcquisitionAudit());
 
         TargetReference target = new("missing", TargetKind.TopLevelWindow, SafeDisplayHint: null, TargetIntegrityHint.Unknown);
         AcquisitionResult result = await adapter.AcquireAsync(target, AcquisitionOptions.Default, CancellationToken.None);
@@ -96,6 +97,8 @@ internal sealed class FakeRawUiaReader(RawUiaReadResult result, string? extraInv
 
     public string? ProcessImageName { get; private set; }
 
+    public nint WindowHandle { get; private set; }
+
     public RawUiaReadResult ReadTree(
         nint windowHandle,
         string processImageName,
@@ -104,6 +107,7 @@ internal sealed class FakeRawUiaReader(RawUiaReadResult result, string? extraInv
         CancellationToken cancellationToken)
     {
         WasCalled = true;
+        WindowHandle = windowHandle;
         ProcessImageName = processImageName;
         cancellationToken.ThrowIfCancellationRequested();
         spy.RecordInvocation("IUIAutomationElement.GetCurrentPropertyValue");
