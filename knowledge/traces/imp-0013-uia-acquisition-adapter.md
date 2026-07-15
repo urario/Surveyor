@@ -8,7 +8,7 @@ timestamp: 2026-07-14T00:00:00+09:00
 
 # IMP-0013 Real UIA Acquisition Adapter Implementation
 
-> **Downstream supersede note (2026-07-14):** this artifact remains the historical evidence for the #71 implementation and its 57-test gate. PR #112 review exposed that its public, UIA-owned `UiaTargetHandleRegistry`/`uia-target-` token ownership conflicts with the now-closed Discovery ownership in `DES-0014`/`DES-0018`. `IMP-0018` #113 migrates that boundary in parallel with headless `UT-0013` #52; both must complete before `IMP-0015` #73. This note does not retroactively rewrite what #71 implemented or verified.
+> **Downstream supersede note (2026-07-16):** this artifact remains the historical evidence for the #71 implementation and its 57-test gate. PR #112 review exposed that its public, UIA-owned `UiaTargetHandleRegistry`/`uia-target-` token ownership conflicts with the now-closed Discovery ownership in `DES-0014`/`DES-0018`. [IMP-0018](imp-0018-discovery-uia-boundary.md) #113 now supersedes that registry boundary while preserving the UIA acquisition evidence recorded here. `IMP-0018` and headless `UT-0013` #52 are the two prerequisites to `IMP-0015` #73. This note does not retroactively rewrite what #71 implemented or verified.
 
 ## Trace Block
 
