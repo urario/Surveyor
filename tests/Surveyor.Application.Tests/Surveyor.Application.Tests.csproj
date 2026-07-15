@@ -2,7 +2,15 @@
   <PropertyGroup>
     <RootNamespace>Surveyor.Application.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
+    <!-- UT-0013 is a tests-only RED artifact for #52. IMP-0015 #73 removes this
+         temporary gate before implementing the composition contracts. -->
+    <EnableUT0013 Condition="'$(EnableUT0013)' == ''">false</EnableUT0013>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(EnableUT0013)' != 'true'">
+    <Compile Remove="UT0013*.cs" />
+    <None Include="UT0013*.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" PrivateAssets="all" />

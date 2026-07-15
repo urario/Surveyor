@@ -16,8 +16,8 @@ timestamp: 2026-07-15T00:00:00+09:00
 | Upstream | [DES-0018](../design/des-0018-composition-root-and-di.md) Composition support types / Injection Invariants / Unit-Test Intent / Downstream Handoff; [DES-0005](../design/des-0005-vmodel-traceability-and-downstream-tests.md) `UT-0013`; Issue #52; merged Human design gate PR #112; `RQ-048`; `RQ-054`; `RQ-051`; `RQ-052`; `RD-025`; `RD-026`; `RD-032`; guardrails `R-ARC-01`, `R-QA-01`, `R-AI-02` |
 | Downstream | `tests/Surveyor.Application.Tests/UT0013CompositionFixture.cs`; `UT0013ReadOnlyCompositionTests.cs`; `UT0013ClockAndPolicyCompositionTests.cs`; `UT0013GraphCompositionTests.cs`; `UT0013DiagnosticCompositionTests.cs`; `IMP-0015` #73 turns this tests-only RED spec GREEN after prerequisite `IMP-0018` #113 |
 | Evidence | Seventeen deterministic cases specify the valid audited graph and every designed counter-example: each sanctioned target port missing; unaudited, duplicate, forbidden, and uninspectable-factory target registrations; clock/policy missing and duplicate; unmarked clock rejected in Test but accepted in Production; four use cases resolved; all violations collected; and diagnostic shape/token sanitization. The test edge references MEDI only from `Surveyor.Application.Tests`; production/Application DI dependencies remain #73 scope. |
-| Verification | RED: `dotnet test tests\Surveyor.Application.Tests\Surveyor.Application.Tests.csproj --no-restore --filter UT0013 -v minimal` fails only because `Surveyor.Application.Composition` and its marker/exception contracts do not exist yet (`CS0234` / `CS0246`). Second pass: a temporary uncommitted contract stub made the test project build with 0 warnings / 0 errors, exposing and then eliminating an initial `CA1506` over-coupling finding by splitting graph and diagnostic tests. Regression isolation: with only `UT0013*.cs` temporarily excluded, the existing Application suite passed 31/31 with 87.56% line coverage. The temporary stub/exclusion were removed. |
-| Residual Risk | This artifact intentionally remains RED until `IMP-0015` #73 implements `Surveyor.Application.Composition`, canonical marker inheritance, `AddSurveyorCore`, `AddSurveyorFakeAdapters`, and the three still-missing use cases. #73 also owns GREEN coverage, mutation evidence where applicable, and the Windows production-registration smoke. #73 remains dependent on #113's Discovery/UIA boundary migration. Marker presence is composition-time positive proof, not real-target behavioral proof; `UT-0005` and downstream integration tests retain that obligation. |
+| Verification | Reproducible RED: `dotnet test tests\Surveyor.Application.Tests\Surveyor.Application.Tests.csproj --no-restore -p:EnableUT0013=true --filter UT0013 -v minimal` fails only because `Surveyor.Application.Composition` and its marker/exception contracts do not exist yet (`CS0234` / `CS0246`). The default project value keeps this pending tests-only artifact out of normal compilation so the merge-gating CI remains GREEN; #73 removes the gate before implementation. Second pass: a temporary uncommitted contract stub made the enabled test project build with 0 warnings / 0 errors, exposing and then eliminating an initial `CA1506` over-coupling finding by splitting graph and diagnostic tests. Default Application suite verification passed 31/31 with 87.56% line coverage. |
+| Residual Risk | The committed spec remains reproducibly RED behind the temporary `EnableUT0013` build property until `IMP-0015` #73 removes the gate and implements `Surveyor.Application.Composition`, canonical marker inheritance, `AddSurveyorCore`, `AddSurveyorFakeAdapters`, and the three still-missing use cases. Forgetting to remove the gate would leave the behavior unexecuted, so gate removal is the first explicit #73 handoff step. #73 also owns GREEN coverage, mutation evidence where applicable, and the Windows production-registration smoke, and remains dependent on #113's Discovery/UIA boundary migration. Marker presence is composition-time positive proof, not real-target behavioral proof; `UT-0005` and downstream integration tests retain that obligation. |
 
 ## Behavior Inventory
 
@@ -47,16 +47,29 @@ These cases test positive evidence at the registration boundary. They do not inf
 
 ## Failing-First And Counter-Example Evidence
 
-The committed spec is tests-only, following the established `UT-0005` → `IMP-0007` pattern. Its first restored run is RED at the absent `Surveyor.Application.Composition` namespace and layer-safe marker contracts. A temporary contract-shape stub was used only to compile-check the tests and was removed; it confirmed that the test code itself is analyzer-clean. Every mis-wired collection above is a first-class `R-QA-01` counter-example that a no-op or partial validator cannot satisfy once #73 supplies the contract.
+The committed spec is tests-only, following the established `UT-0005` → `IMP-0007` pattern. Because this spec lives in an existing CI-included project rather than a new project that can remain outside the solution, `EnableUT0013` defaults to `false`; the source files remain tracked as `None`, while `-p:EnableUT0013=true` compiles them and reproduces RED at the absent `Surveyor.Application.Composition` namespace and layer-safe marker contracts. This keeps the repository's merge-gating CI GREEN without converting #52 into #73 or pretending the pending tests pass. A temporary contract-shape stub was used only to compile-check the enabled tests and was removed; it confirmed that the test code itself is analyzer-clean. Every mis-wired collection above is a first-class `R-QA-01` counter-example that a no-op or partial validator cannot satisfy once #73 supplies the contract.
 
 The second-pass `R-AI-02` review found `CA1506` in an initially combined graph/diagnostic test class. Splitting those responsibilities and centralizing multi-invariant fixture removal produced a 0-warning build under the temporary contract without suppressing production or test code.
+
+## CI Correction Verification (2026-07-16)
+
+PR #114 initially failed both merge-gating build jobs because the pending RED sources were compiled by default. After adding the explicit pending compile gate:
+
+- `dotnet build Surveyor.slnx -c Release` passed with 0 warnings / 0 errors.
+- `dotnet build eng\Surveyor.Unit.slnf --no-restore` passed with 0 warnings / 0 errors.
+- `dotnet test eng\Surveyor.Unit.slnf --no-build -v minimal` passed: Architecture 8, Application 31, Domain 59, Policy 45, Presentation 16, Reports 7; Application line coverage 87.56%, Domain 97.01%, Policy 100%, Reports 96.94%.
+- `dotnet test tests\Surveyor.Adapters.Uia.Tests\Surveyor.Adapters.Uia.Tests.csproj --no-build -c Release -v minimal` passed 57/57.
+- `dotnet format Surveyor.slnx --verify-no-changes --no-restore --verbosity minimal` passed.
+- `Validate-Okf.ps1` passed all 68 markdown documents, and `git diff --check` passed.
+- `dotnet test tests\Surveyor.Application.Tests\Surveyor.Application.Tests.csproj --no-restore -p:EnableUT0013=true --filter UT0013 -v minimal` still fails with only the nine expected missing-composition-contract `CS0234` / `CS0246` errors.
 
 ## IMP-0015 Handoff
 
 `IMP-0015` #73 must:
 
-1. implement the exact DES-0018 composition types and marker inheritance without weakening the fixed diagnostic codes;
-2. implement `AddSurveyorCore` and the TestSupport fake registration seam so all four use cases resolve headlessly;
-3. turn all seventeen `UT0013` cases GREEN and record coverage/mutation evidence;
-4. consume #113's migrated Discovery/UIA boundary rather than the historical UIA-owned registry; and
-5. run the separate Windows production-registration smoke. Functional/manual `IT-0007` remains downstream and is not claimed here.
+1. remove the temporary `EnableUT0013` compile gate (or set it true as the first RED reproduction step) and confirm the documented `CS0234` / `CS0246` failure;
+2. implement the exact DES-0018 composition types and marker inheritance without weakening the fixed diagnostic codes;
+3. implement `AddSurveyorCore` and the TestSupport fake registration seam so all four use cases resolve headlessly;
+4. turn all seventeen `UT0013` cases GREEN and record coverage/mutation evidence;
+5. consume #113's migrated Discovery/UIA boundary rather than the historical UIA-owned registry; and
+6. run the separate Windows production-registration smoke. Functional/manual `IT-0007` remains downstream and is not claimed here.
