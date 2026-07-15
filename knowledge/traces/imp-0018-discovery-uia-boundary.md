@@ -16,7 +16,7 @@ timestamp: 2026-07-16T00:00:00+09:00
 | Upstream | [DES-0014](../design/des-0014-discovery-uia-msaa-acquisition-and-read-only-audit.md); [DES-0018](../design/des-0018-composition-root-and-di.md); [IMP-0013](imp-0013-uia-acquisition-adapter.md); Issue #113; `RQ-048`, `RQ-052`, `RQ-054`; `RD-025`, `RD-032` |
 | Downstream | `UT-0013` #52 and this artifact are prerequisites to `IMP-0015` #73 production composition; live target state-invariance, permission, and timeout behavior remain `IT-0001`, `IT-0005`, and `IT-0006` |
 | Evidence | Added public methodless `DiscoveryUiaBridge` with one internal `WindowTargetHandleRegistry`; internal writer/resolver/result/raw types; Discovery-owned `tgt-<counter>` token minting; UIA-only production friend and UIA→Discovery project edge; migrated `UiaTreeAcquisitionAdapter`; removed public `UiaTargetHandleRegistry`; closed public API baselines; added per-consumer, friend, edge, public-result, raw-member, sink, and raw-HWND diagnostic counter-examples. |
-| Verification | Failing-first architecture run reproduced four boundary violations before production changes. `dotnet build Surveyor.slnx -c Release --no-restore` passed with 0 warnings / 0 errors. UIA adapter tests passed 61; Architecture tests passed 25; full headless unit lane passed with core coverage gates; formatting, OKF validation (68 files), and `git diff --check` passed. |
+| Verification | Failing-first architecture run reproduced four boundary violations before production changes. `dotnet build Surveyor.slnx -c Release --no-restore` passed with 0 warnings / 0 errors. UIA adapter tests passed 61; Architecture tests passed 27; full headless unit lane passed with core coverage gates; formatting, OKF validation (68 files), and `git diff --check` passed. The first GitHub headless run exposed Windows-only project-reference parsing; separator normalization plus two cross-platform regression cases close that CI defect. |
 | Residual Risk | The deliberately narrow Discovery→UIA production friend remains assembly coupling; any additional production friend or consumer requires a DES revision and Human review. Live HWND behavior and target state-invariance remain assigned to the existing IT gates. No additional implementation risk is known within this unit/architecture slice. |
 
 ## Supersede Relationship
@@ -54,10 +54,10 @@ dotnet test tests\Surveyor.Adapters.Uia.Tests\Surveyor.Adapters.Uia.Tests.csproj
 Passed: 61, Failed: 0
 
 dotnet test tests\Surveyor.Architecture.Tests\Surveyor.Architecture.Tests.csproj --no-restore -v minimal
-Passed: 25, Failed: 0
+Passed: 27, Failed: 0
 
 dotnet test eng\Surveyor.Unit.slnf --no-restore -v minimal
-Architecture 25; Domain 59; Application 31; Policy 45; Reports 7; Presentation 16; all passed
+Architecture 27; Domain 59; Application 31; Policy 45; Reports 7; Presentation 16; all passed
 Domain 97.01% line; Application 87.56%; Policy 100%; Reports 96.94%
 
 dotnet format Surveyor.slnx --verify-no-changes --no-restore

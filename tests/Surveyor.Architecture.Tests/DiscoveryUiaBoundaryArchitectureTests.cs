@@ -41,6 +41,16 @@ public sealed class DiscoveryUiaBoundaryArchitectureTests
         Assert.Equal(["Surveyor.Adapters.Uia"], consumers);
     }
 
+    [Theory(DisplayName = "IMP-0018: project reference parsing is platform separator independent")]
+    [InlineData("..\\Surveyor.Adapters.Discovery\\Surveyor.Adapters.Discovery.csproj")]
+    [InlineData("../Surveyor.Adapters.Discovery/Surveyor.Adapters.Discovery.csproj")]
+    public void ProjectReferenceParsingIsPlatformSeparatorIndependent(string include)
+    {
+        ArgumentNullException.ThrowIfNull(include);
+
+        Assert.Equal("Surveyor.Adapters.Discovery", GetReferencedProjectName(include));
+    }
+
     [Fact(DisplayName = "IMP-0018: UIA is Discovery's only production friend")]
     public void UiaIsDiscoveryOnlyProductionFriend()
     {
@@ -202,8 +212,16 @@ public sealed class DiscoveryUiaBoundaryArchitectureTests
         return project.Descendants("ProjectReference")
             .Select(reference => reference.Attribute("Include")?.Value)
             .Where(include => !string.IsNullOrWhiteSpace(include))
-            .Select(include => Path.GetFileNameWithoutExtension(include))
+            .Select(include => GetReferencedProjectName(include!))
             .Contains(dependency, StringComparer.Ordinal);
+    }
+
+    private static string? GetReferencedProjectName(string include)
+    {
+        string normalizedPath = include
+            .Replace('\\', Path.DirectorySeparatorChar)
+            .Replace('/', Path.DirectorySeparatorChar);
+        return Path.GetFileNameWithoutExtension(normalizedPath);
     }
 
     private static IEnumerable<string> ReadExplicitFriends(string projectFile)
