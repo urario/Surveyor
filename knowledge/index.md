@@ -73,6 +73,7 @@ This bundle keeps project knowledge close to the source code so agents and human
 * [IMP-0012 Presentation ViewModel and Ports Implementation](traces/imp-0012-presentation-viewmodel-implementation.md) - `Surveyor.Presentation` ports and internal ViewModel reducer implementation that turns `UT-0011` green while preserving `RQ-054`.
 * [IMP-0016 Stryker.NET Baseline Implementation](traces/imp-0016-stryker-baseline.md) - CS-10 implementation evidence for the pinned Stryker.NET local tool, Domain/Policy mutation baseline scores, and below-80% improvement candidates.
 * [UT-0014 Domain / Policy Mutation-Focused Coverage Evidence](traces/ut-0014-domain-policy-mutation-coverage-evidence.md) - Focused mutation-killer behavior tests for the Domain scoring config-validation / classification branches and the Policy confidentiality, sanitizer, fallback-key export, and derivation invariants under `CS-10`.
+* [UT-0013 Composition Root Invariant Evidence](traces/ut-0013-composition-invariants-evidence.md) - Tests-only failing-first behavior spec for the DES-0018 composition invariants (`RQ-048`, `RQ-051`, `RQ-052`, `RQ-054`), with `IMP-0015` #73 owning GREEN after #113.
 
 # Process
 
